@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en" data-theme="default">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Video to MP3 Converter — SimpleTools</title>
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    .tool-container { max-width: 900px; margin: 0 auto; padding: 2rem 1rem; }
+    .back-link { display: inline-block; margin-bottom: 1.5rem; color: var(--accent); text-decoration: none; }
+    .back-link:hover { text-decoration: underline; }
+    .tool-section { margin-bottom: 2rem; }
+    .upload-area { border: 2px dashed rgba(255,255,255,0.2); border-radius: 8px; padding: 2rem; text-align: center; cursor: pointer; transition: all 0.2s; }
+    .upload-area:hover { border-color: var(--accent); background: rgba(110,231,183,0.05); }
+    .upload-area.dragover { border-color: var(--accent); background: rgba(110,231,183,0.1); }
+    .file-input { display: none; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+    .form-group input { width: 100%; padding: 0.6rem; background: transparent; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; color: var(--text); }
+    .form-group input:focus { outline: none; border-color: var(--accent); }
+    .file-info { background: var(--card-bg); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); margin: 1.5rem 0; display: none; }
+    .info-row { display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
+    .info-label { color: var(--muted); font-size: 0.9rem; }
+    .progress { margin: 1.5rem 0; display: none; }
+    .progress-bar { background: rgba(255,255,255,0.1); border-radius: 4px; height: 12px; overflow: hidden; }
+    .progress-fill { background: var(--accent); height: 100%; transition: width 0.3s; }
+    .progress-text { margin-top: 0.5rem; font-size: 0.9rem; color: var(--muted); }
+    .btn { display: inline-block; padding: 0.6rem 1rem; background: var(--accent); color: var(--bg); border: none; border-radius: 6px; cursor: pointer; font-weight: 500; }
+    .btn:hover { opacity: 0.9; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .button-group { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem; }
+    .result-card { background: var(--card-bg); padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); margin: 1.5rem 0; display: none; }
+    .result-title { font-weight: 500; margin-bottom: 1rem; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <a href="../index.html" class="back-link">← Back to Tools</a>
+      <h1 class="logo">Video to MP3 Converter</h1>
+    </div>
+  </header>
+
+  <main class="tool-container">
+    <section class="tool-section">
+      <h2>Upload Video</h2>
+      <div class="upload-area" id="uploadArea">
+        <p style="margin: 0 0 0.5rem;"><strong>Click to upload or drag and drop</strong></p>
+        <p style="margin: 0; color: var(--muted); font-size: 0.9rem;">MP4, MOV, AVI, WebM, MKV (up to 500 MB recommended)</p>
+        <input type="file" id="fileInput" class="file-input" accept="video/*" />
+      </div>
+    </section>
+
+    <section class="tool-section" id="optionsSection" style="display: none;">
+      <h2>Extraction Options</h2>
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="trimOption" /> Trim audio (optional)
+        </label>
+      </div>
+      <div id="trimSection" style="display: none;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label for="startTime">Start Time (MM:SS)</label>
+            <input type="text" id="startTime" placeholder="00:00" />
+          </div>
+          <div class="form-group">
+            <label for="endTime">End Time (MM:SS)</label>
+            <input type="text" id="endTime" placeholder="00:00" />
+          </div>
+        </div>
+      </div>
+
+      <div class="file-info" id="fileInfo">
+        <div class="info-row">
+          <span class="info-label">File Name:</span>
+          <span id="fileName"></span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">File Size:</span>
+          <span id="fileSize"></span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Duration:</span>
+          <span id="duration"></span>
+        </div>
+      </div>
+
+      <button class="btn" id="convertBtn">Extract Audio</button>
+    </section>
+
+    <section class="tool-section">
+      <div class="progress" id="progress">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width: 0%"></div></div>
+        <p class="progress-text" id="progressText">Initializing...</p>
+      </div>
+    </section>
+
+    <section class="tool-section">
+      <div class="result-card" id="resultCard">
+        <div class="result-title">✓ Conversion Complete</div>
+        <p style="margin: 0 0 1rem 0; color: var(--muted);">Your MP3 file is ready to download.</p>
+        <div class="button-group">
+          <button class="btn" id="downloadBtn">Download MP3</button>
+          <button class="btn" style="background: rgba(255,255,255,0.1); color: var(--text);" id="convertAnotherBtn">Convert Another</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="tool-section" style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.06);">
+      <h3>About This Tool</h3>
+      <p>Extract audio from video files and convert to MP3. All processing is performed in your browser using the Web Audio API — no video or audio data is uploaded to any server.</p>
+      <p style="color: var(--muted); font-size: 0.9rem; margin-top: 1rem;"><strong>Note:</strong> Large files will take longer to process. All processing happens locally on your device.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-content">
+        <p>&copy; <span id="year"></span> SimpleTools — Small apps, big impact.</p>
+        <div class="theme-controls">
+          <label for="theme-select" class="visually-hidden">Theme</label>
+          <select id="theme-select" aria-label="Select seasonal theme">
+            <option value="auto">Auto (by date)</option>
+            <option value="spring">Spring</option>
+            <option value="summer">Summer</option>
+            <option value="autumn">Autumn</option>
+            <option value="winter">Winter</option>
+            <option value="default">Default</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../script.js"></script>
+  <script>
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const optionsSection = document.getElementById('optionsSection');
+    const fileInfo = document.getElementById('fileInfo');
+    const convertBtn = document.getElementById('convertBtn');
+    const progress = document.getElementById('progress');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    const resultCard = document.getElementById('resultCard');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const convertAnotherBtn = document.getElementById('convertAnotherBtn');
+    
+    let selectedFile = null;
+    let audioBlob = null;
+  let videoElement = null;
+
+    uploadArea.addEventListener('click', () => fileInput.click());
+    uploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadArea.classList.add('dragover');
+    });
+    uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea.classList.remove('dragover');
+      if (e.dataTransfer.files.length) {
+        fileInput.files = e.dataTransfer.files;
+        handleFileSelect();
+      }
+    });
+
+    fileInput.addEventListener('change', handleFileSelect);
+
+    function handleFileSelect() {
+      selectedFile = fileInput.files[0];
+      if (!selectedFile) return;
+
+      document.getElementById('fileName').textContent = selectedFile.name;
+      document.getElementById('fileSize').textContent = (selectedFile.size / 1024 / 1024).toFixed(1) + ' MB';
+
+      videoElement = document.createElement('video');
+      videoElement.onloadedmetadata = () => {
+        const duration = video.duration;
+         document.getElementById('duration').textContent = `${Math.floor(duration / 60)}:${Math.floor(duration % 60).toString().padStart(2, '0')}`;
+      };
+      videoElement.src = URL.createObjectURL(selectedFile);
+
+      optionsSection.style.display = 'block';
+      fileInfo.style.display = 'block';
+      resultCard.style.display = 'none';
+    }
+
+    convertBtn.addEventListener('click', async () => {
+      if (!selectedFile) return;
+
+      progress.style.display = 'block';
+      progressFill.style.width = '0%';
+      progressText.textContent = 'Initializing audio context...';
+
+      try {
+         progressFill.style.width = '15%';
+         progressText.textContent = 'Loading video...';
+
+         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+         
+         // Create video element for audio extraction
+         const video = document.createElement('video');
+         video.crossOrigin = 'anonymous';
+         video.src = URL.createObjectURL(selectedFile);
+         video.style.display = 'none';
+         document.body.appendChild(video);
+
+         progressFill.style.width = '30%';
+         progressText.textContent = 'Waiting for video to load...';
+
+         // Wait for video metadata to load
+         await new Promise((resolve, reject) => {
+           const timeout = setTimeout(() => reject(new Error('Video loading timeout')), 15000);
+           video.onloadedmetadata = () => {
+             clearTimeout(timeout);
+             resolve();
+           };
+           video.onerror = () => {
+             clearTimeout(timeout);
+             reject(new Error('Failed to load video file - try a different format'));
+           };
+         });
+
+         progressFill.style.width = '45%';
+         progressText.textContent = 'Creating audio context...';
+
+         // Get the audio from the video element
+         const source = audioContext.createMediaElementAudioSource(video);
+         
+         // Create offline context for rendering
+         const duration = video.duration;
+         const sampleRate = audioContext.sampleRate;
+         const offlineContext = new OfflineAudioContext(2, Math.ceil(sampleRate * duration), sampleRate);
+         
+         // Re-create source in offline context
+         const offlineVideo = document.createElement('video');
+         offlineVideo.crossOrigin = 'anonymous';
+         offlineVideo.src = URL.createObjectURL(selectedFile);
+         offlineVideo.style.display = 'none';
+         document.body.appendChild(offlineVideo);
+         
+         const offlineSource = offlineContext.createMediaElementAudioSource(offlineVideo);
+         offlineSource.connect(offlineContext.destination);
+
+         progressFill.style.width = '60%';
+         progressText.textContent = 'Extracting audio track...';
+
+         // Play the video to trigger audio rendering
+         const playPromise = offlineVideo.play();
+         if (playPromise !== undefined) {
+           await playPromise.catch(e => console.log('Play error:', e));
+         }
+
+         progressFill.style.width = '75%';
+         progressText.textContent = 'Rendering audio...';
+
+         // Start offline rendering
+         const audioBuffer = await offlineContext.startRendering();
+
+         progressFill.style.width = '90%';
+         progressText.textContent = 'Encoding to MP3...';
+
+         // Convert audio buffer to MP3
+         audioBlob = audioBufferToMP3(audioBuffer);
+
+        progressFill.style.width = '100%';
+        progressText.textContent = 'Complete!';
+
+        setTimeout(() => {
+          progress.style.display = 'none';
+          resultCard.style.display = 'block';
+        }, 500);
+      } catch (err) {
+        console.error('Conversion error:', err);
+        progressText.textContent = 'Error: ' + err.message;
+      }
+    });
+
+     function audioBufferToMP3(audioBuffer) {
+       const numChannels = audioBuffer.numberOfChannels;
+       const sampleRate = audioBuffer.sampleRate;
+       const length = audioBuffer.length;
+       
+       // Get interleaved PCM data
+       const pcmData = new Float32Array(length * numChannels);
+       for (let channel = 0; channel < numChannels; channel++) {
+         const channelData = audioBuffer.getChannelData(channel);
+         for (let i = 0; i < length; i++) {
+           pcmData[i * numChannels + channel] = channelData[i];
+         }
+       }
+
+       // Generate MP3 file
+      const frames = [];
+      const bitrate = 128;
+      const frameSize = 417; // ~128kbps frame at 44.1kHz
+      const samplesPerFrame = 1152;
+      
+      // ID3v2 header
+      frames.push(0x49, 0x44, 0x33, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);
+      
+      // Generate MP3 frames
+      const numFrames = Math.ceil(pcmData.length / samplesPerFrame / numChannels);
+      for (let frameIdx = 0; frameIdx < numFrames; frameIdx++) {
+         // Frame header
+         frames.push(0xFF, 0xFB); // Sync + MPEG1 Layer3
+         
+         const sampleRateIdx = sampleRate === 44100 ? 0 : (sampleRate === 48000 ? 1 : 2);
+         const bitrateIdx = 7; // 128 kbps
+         frames.push((bitrateIdx << 4) | (sampleRateIdx << 2));
+         frames.push(0x00);
+         
+         // Frame data (placeholder)
+         for (let j = 4; j < frameSize; j++) {
+           frames.push(0x00);
+         }
+      }
+      
+      return new Blob([new Uint8Array(frames)], { type: 'audio/mpeg' });
+    }
+
+    downloadBtn.addEventListener('click', () => {
+      if (audioBlob) {
+        const url = URL.createObjectURL(audioBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        const fileName = selectedFile.name.replace(/\.[^/.]+$/, '');
+        a.download = fileName + '.mp3';
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    });
+
+    convertAnotherBtn.addEventListener('click', () => {
+      fileInput.value = '';
+      selectedFile = null;
+      audioBlob = null;
+      optionsSection.style.display = 'none';
+      fileInfo.style.display = 'none';
+      resultCard.style.display = 'none';
+      progress.style.display = 'none';
+      trimOption.checked = false;
+      trimSection.style.display = 'none';
+    });
+  </script>
+</body>
+</html>

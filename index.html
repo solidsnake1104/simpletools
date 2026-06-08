@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en" data-theme="default">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SimpleTools — Landing</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <h1 class="logo">SimpleTools</h1>
+      <p class="tagline">Select a tool to get started</p>
+    </div>
+  </header>
+
+  <main>
+    <section id="tools" class="tools-hub container">
+      <h2 class="section-title">Available Tools</h2>
+      <nav class="tools-list">
+        <a href="tools/pdf-ocr.html" class="tool-item">
+          <h3>PDF to Text (OCR)</h3>
+          <p>Extract text from PDFs with optical character recognition.</p>
+        </a>
+        <a href="tools/pdf-joiner.html" class="tool-item">
+          <h3>PDF/DOCX Joiner & Separator</h3>
+          <p>Combine, split, or convert documents and images to PDF.</p>
+        </a>
+        <a href="tools/heic-converter.html" class="tool-item">
+          <h3>HEIC to JPG Converter</h3>
+          <p>Convert Apple HEIC images to universal JPG format.</p>
+        </a>
+        <a href="tools/video-to-mp3.html" class="tool-item">
+          <h3>Video to MP3 Converter</h3>
+          <p>Extract audio from videos and save as MP3.</p>
+        </a>
+        <a href="tools/qr-generator.html" class="tool-item">
+          <h3>QR Code Generator</h3>
+          <p>Create scannable QR codes from URLs, text, or contact info.</p>
+        </a>
+        <a href="tools/unit-converter.html" class="tool-item">
+          <h3>Unit Converter</h3>
+          <p>Convert between length, weight, temperature, and more.</p>
+        </a>
+        <a href="tools/loan-calculator.html" class="tool-item">
+          <h3>Loan Calculator</h3>
+          <p>Calculate payments and create amortization schedules.</p>
+        </a>
+        <a href="tools/mortgage-calculator.html" class="tool-item">
+          <h3>Mortgage Calculator</h3>
+          <p>Estimate mortgage payments with PITI breakdown.</p>
+        </a>
+        <a href="tools/bmi-calculator.html" class="tool-item">
+          <h3>BMI Calculator</h3>
+          <p>Calculate your Body Mass Index and category.</p>
+        </a>
+        <a href="tools/tip-calculator.html" class="tool-item">
+          <h3>Tip Calculator</h3>
+          <p>Calculate tips and split bills instantly.</p>
+        </a>
+        <a href="tools/fuel-calculator.html" class="tool-item">
+          <h3>Fuel Cost Calculator</h3>
+          <p>Estimate fuel costs for road trips with multi-leg support.</p>
+        </a>
+        <a href="tools/bill-splitter.html" class="tool-item">
+          <h3>Simple Bill Splitter</h3>
+          <p>Divide bills equally or unevenly with tip and tax.</p>
+        </a>
+        <a href="tools/countdown-timer.html" class="tool-item">
+          <h3>Countdown Timer</h3>
+          <p>Track time to upcoming dates and events.</p>
+        </a>
+      </nav>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-content">
+        <p>&copy; <span id="year"></span> SimpleTools — Small apps, big impact.</p>
+        <div class="theme-controls">
+          <label for="theme-select" class="visually-hidden">Theme</label>
+          <select id="theme-select" aria-label="Select seasonal theme">
+            <option value="auto">Auto (by date)</option>
+            <option value="spring">Spring</option>
+            <option value="summer">Summer</option>
+            <option value="autumn">Autumn</option>
+            <option value="winter">Winter</option>
+            <option value="default">Default</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en" data-theme="default">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Countdown Timer — SimpleTools</title>
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    .tool-container { max-width: 900px; margin: 0 auto; padding: 2rem 1rem; }
+    .back-link { display: inline-block; margin-bottom: 1.5rem; color: var(--accent); text-decoration: none; }
+    .back-link:hover { text-decoration: underline; }
+    .tool-section { margin-bottom: 2rem; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+    .form-group input { width: 100%; padding: 0.6rem; background: transparent; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; color: var(--text); }
+    .form-group input:focus { outline: none; border-color: var(--accent); }
+    .button-group { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem; }
+    .btn { display: inline-block; padding: 0.6rem 1rem; background: var(--accent); color: var(--bg); border: none; border-radius: 6px; cursor: pointer; font-weight: 500; }
+    .btn:hover { opacity: 0.9; }
+    .btn.secondary { background: rgba(255,255,255,0.1); color: var(--text); }
+    .timers-container { margin-top: 2rem; }
+    .timer-card { background: var(--card-bg); padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); margin-bottom: 1rem; }
+    .timer-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .timer-title { font-weight: 500; color: var(--accent); }
+    .timer-delete { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: none; padding: 0.3rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
+    .timer-display { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin: 1rem 0; text-align: center; }
+    .timer-unit { background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 6px; }
+    .timer-number { font-size: 1.8rem; font-weight: bold; color: var(--accent); }
+    .timer-label { font-size: 0.75rem; color: var(--muted); margin-top: 0.25rem; }
+    .timer-passed { color: var(--muted); opacity: 0.6; }
+    .share-url { display: flex; gap: 0.5rem; }
+    .share-url input { flex: 1; padding: 0.5rem; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; color: var(--text); font-size: 0.85rem; }
+    .copy-share { background: rgba(255,255,255,0.1); color: var(--text); border: none; padding: 0.5rem 0.8rem; border-radius: 4px; cursor: pointer; }
+    @media (max-width: 768px) { 
+      .form-grid { grid-template-columns: 1fr; }
+      .timer-display { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <a href="../index.html" class="back-link">← Back to Tools</a>
+      <h1 class="logo">Countdown Timer</h1>
+    </div>
+  </header>
+
+  <main class="tool-container">
+    <section class="tool-section">
+      <h2>Create a Countdown</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="eventDate">Date</label>
+          <input type="date" id="eventDate" />
+        </div>
+        <div class="form-group">
+          <label for="eventTime">Time</label>
+          <input type="time" id="eventTime" />
+        </div>
+        <div class="form-group" style="grid-column: 1 / -1;">
+          <label for="eventName">Event Name (optional)</label>
+          <input type="text" id="eventName" placeholder="e.g., Project Deadline" />
+        </div>
+      </div>
+      <div class="button-group">
+        <button class="btn" id="createTimerBtn">Create Timer</button>
+      </div>
+    </section>
+
+    <section class="timers-container">
+      <div id="timersListContainer"></div>
+    </section>
+
+    <section class="tool-section" style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.06);">
+      <h3>About This Tool</h3>
+      <p>Create countdowns to upcoming dates and events. Timers are stored in your browser and can be shared via URL without any server involvement.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-content">
+        <p>&copy; <span id="year"></span> SimpleTools — Small apps, big impact.</p>
+        <div class="theme-controls">
+          <label for="theme-select" class="visually-hidden">Theme</label>
+          <select id="theme-select" aria-label="Select seasonal theme">
+            <option value="auto">Auto (by date)</option>
+            <option value="spring">Spring</option>
+            <option value="summer">Summer</option>
+            <option value="autumn">Autumn</option>
+            <option value="winter">Winter</option>
+            <option value="default">Default</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../script.js"></script>
+  <script>
+    const eventDate = document.getElementById('eventDate');
+    const eventTime = document.getElementById('eventTime');
+    const eventName = document.getElementById('eventName');
+    const createTimerBtn = document.getElementById('createTimerBtn');
+    const timersListContainer = document.getElementById('timersListContainer');
+    let timers = [];
+
+    // Set default values
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    eventDate.valueAsDate = tomorrow;
+    eventTime.value = '12:00';
+
+    createTimerBtn.addEventListener('click', createTimer);
+
+    function createTimer() {
+      const date = eventDate.value;
+      const time = eventTime.value;
+      const name = eventName.value || 'Untitled Event';
+
+      if (!date || !time) {
+        alert('Please set both date and time');
+        return;
+      }
+
+      const timer = {
+        id: Date.now(),
+        targetDate: new Date(date + 'T' + time),
+        name: name,
+        interval: null
+      };
+
+      timers.push(timer);
+      saveTimers();
+      renderTimers();
+      eventName.value = '';
+    }
+
+    function renderTimers() {
+      if (timers.length === 0) {
+        timersListContainer.innerHTML = '<p style="color: var(--muted); text-align: center; margin: 2rem 0;">No timers yet. Create one to get started!</p>';
+        return;
+      }
+
+      timersListContainer.innerHTML = timers.map(timer => {
+        const shareUrl = generateShareUrl(timer);
+        return `
+          <div class="timer-card" data-timer-id="${timer.id}">
+            <div class="timer-header">
+              <div class="timer-title">${timer.name}</div>
+              <button class="timer-delete" onclick="deleteTimer(${timer.id})">Delete</button>
+            </div>
+            <div class="timer-display" data-timer-display="${timer.id}">
+              <div class="timer-unit">
+                <div class="timer-number">0</div>
+                <div class="timer-label">Days</div>
+              </div>
+              <div class="timer-unit">
+                <div class="timer-number">0</div>
+                <div class="timer-label">Hours</div>
+              </div>
+              <div class="timer-unit">
+                <div class="timer-number">0</div>
+                <div class="timer-label">Minutes</div>
+              </div>
+              <div class="timer-unit">
+                <div class="timer-number">0</div>
+                <div class="timer-label">Seconds</div>
+              </div>
+            </div>
+            <div class="share-url">
+              <input type="text" readonly value="${shareUrl}" />
+              <button class="copy-share" onclick="copyShareUrl('${shareUrl}')">Copy</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      updateAllTimers();
+    }
+
+    function updateAllTimers() {
+      timers.forEach(timer => {
+        clearInterval(timer.interval);
+        updateTimer(timer);
+        timer.interval = setInterval(() => updateTimer(timer), 1000);
+      });
+    }
+
+    function updateTimer(timer) {
+      const now = new Date().getTime();
+      const target = timer.targetDate.getTime();
+      const diff = target - now;
+
+      const display = document.querySelector(`[data-timer-display="${timer.id}"]`);
+      if (!display) return;
+
+      if (diff <= 0) {
+        display.classList.add('timer-passed');
+        const units = display.querySelectorAll('.timer-unit');
+        units.forEach(unit => {
+          unit.querySelector('.timer-number').textContent = '0';
+        });
+        display.parentElement.querySelector('.timer-header').insertAdjacentHTML('beforeend', '<p style="color: #ef4444; margin: 0; font-size: 0.9rem;">Event has passed</p>');
+        clearInterval(timer.interval);
+        return;
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      const units = display.querySelectorAll('.timer-unit');
+      units[0].querySelector('.timer-number').textContent = days;
+      units[1].querySelector('.timer-number').textContent = hours;
+      units[2].querySelector('.timer-number').textContent = minutes;
+      units[3].querySelector('.timer-number').textContent = seconds;
+    }
+
+    function generateShareUrl(timer) {
+      const date = timer.targetDate.toISOString().split('T')[0];
+      const time = timer.targetDate.toTimeString().slice(0, 5);
+      const params = new URLSearchParams({
+        date: date,
+        time: time,
+        name: timer.name
+      });
+      return window.location.origin + window.location.pathname + '?' + params.toString();
+    }
+
+    function copyShareUrl(url) {
+      navigator.clipboard.writeText(url);
+      alert('Share URL copied to clipboard!');
+    }
+
+    window.deleteTimer = function(id) {
+      const timer = timers.find(t => t.id === id);
+      if (timer) {
+        clearInterval(timer.interval);
+        timers = timers.filter(t => t.id !== id);
+        saveTimers();
+        renderTimers();
+      }
+    };
+
+    window.copyShareUrl = copyShareUrl;
+
+    function saveTimers() {
+      const data = timers.map(t => ({
+        id: t.id,
+        targetDate: t.targetDate.toISOString(),
+        name: t.name
+      }));
+      localStorage.setItem('simpletools-timers', JSON.stringify(data));
+    }
+
+    function loadTimers() {
+      const data = localStorage.getItem('simpletools-timers');
+      if (data) {
+        try {
+          const parsed = JSON.parse(data);
+          timers = parsed.map(t => ({
+            id: t.id,
+            targetDate: new Date(t.targetDate),
+            name: t.name,
+            interval: null
+          }));
+        } catch (e) {
+          console.error('Failed to load timers:', e);
+        }
+      }
+    }
+
+    function loadFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.has('date') && params.has('time')) {
+        eventDate.value = params.get('date');
+        eventTime.value = params.get('time');
+        eventName.value = params.get('name') || '';
+        createTimer();
+      }
+    }
+
+    loadTimers();
+    loadFromUrl();
+    renderTimers();
+  </script>
+</body>
+</html>

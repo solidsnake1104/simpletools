@@ -1,0 +1,10 @@
+{
+  "name": "simpletools-landing",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "npx http-server . -o",
+    "dev": "npx live-server .",
+    "test": "echo \"No tests configured\" && exit 0"
+  }
+}

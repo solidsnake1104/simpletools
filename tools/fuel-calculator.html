@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en" data-theme="default">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Fuel Cost Calculator — SimpleTools</title>
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    .tool-container { max-width: 900px; margin: 0 auto; padding: 2rem 1rem; }
+    .back-link { display: inline-block; margin-bottom: 1.5rem; color: var(--accent); text-decoration: none; }
+    .back-link:hover { text-decoration: underline; }
+    .tool-section { margin-bottom: 2rem; }
+    .mode-toggle { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+    .mode-btn { padding: 0.6rem 1rem; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; cursor: pointer; color: var(--text); }
+    .mode-btn.active { background: var(--accent); color: var(--bg); }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+    .form-group input, .form-group select { width: 100%; padding: 0.6rem; background: transparent; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; color: var(--text); }
+    .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--accent); }
+    .leg-row { background: var(--card-bg); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); margin-bottom: 1rem; display: grid; grid-template-columns: 1fr 1fr 1fr 50px; gap: 0.75rem; align-items: flex-end; }
+    .leg-row input { padding: 0.5rem; background: transparent; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; color: var(--text); font-size: 0.9rem; }
+    .delete-leg { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: none; padding: 0.5rem; border-radius: 4px; cursor: pointer; }
+    .summary-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin: 2rem 0; }
+    .summary-card { background: var(--card-bg); padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); text-align: center; }
+    .summary-card-label { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
+    .summary-card-value { font-size: 1.5rem; font-weight: bold; color: var(--accent); }
+    .btn { display: inline-block; padding: 0.6rem 1rem; background: var(--accent); color: var(--bg); border: none; border-radius: 6px; cursor: pointer; font-weight: 500; }
+    .btn:hover { opacity: 0.9; }
+    .btn.secondary { background: rgba(255,255,255,0.1); color: var(--text); }
+    @media (max-width: 768px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .leg-row { grid-template-columns: 1fr; }
+      .summary-cards { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <a href="../index.html" class="back-link">← Back to Tools</a>
+      <h1 class="logo">Fuel Cost Calculator</h1>
+    </div>
+  </header>
+
+  <main class="tool-container">
+    <section class="tool-section">
+      <h2>Trip Mode</h2>
+      <div class="mode-toggle">
+        <button class="mode-btn active" data-mode="single">Single Trip</button>
+        <button class="mode-btn" data-mode="multi">Multi-Leg Trip</button>
+      </div>
+    </section>
+
+    <section class="tool-section">
+      <h2>Trip Details</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="fuelEfficiency">Fuel Efficiency</label>
+          <select id="fuelEfficiency">
+            <option value="mpg">Miles per Gallon (MPG)</option>
+            <option value="l100km">Liters per 100km (L/100km)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="currency">Currency</label>
+          <select id="currency">
+            <option value="USD">USD ($)</option>
+            <option value="EUR">EUR (€)</option>
+            <option value="GBP">GBP (£)</option>
+            <option value="CAD">CAD ($)</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section class="tool-section" id="singleSection">
+      <h2>Enter Trip Details</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="singleDistance">Distance (miles)</label>
+          <input type="number" id="singleDistance" placeholder="500" min="0" step="1" />
+        </div>
+        <div class="form-group">
+          <label for="singleMpg">MPG</label>
+          <input type="number" id="singleMpg" placeholder="25" min="0.1" step="0.1" />
+        </div>
+        <div class="form-group">
+          <label for="singlePrice">Price per Gallon ($)</label>
+          <input type="number" id="singlePrice" placeholder="3.50" min="0" step="0.01" />
+        </div>
+      </div>
+    </section>
+
+    <section class="tool-section" id="multiSection" style="display: none;">
+      <h2>Trip Legs</h2>
+      <div id="legsContainer"></div>
+      <button class="btn secondary" id="addLegBtn">Add Leg</button>
+    </section>
+
+    <section class="tool-section">
+      <h2>Trip Summary</h2>
+      <div class="summary-cards">
+        <div class="summary-card">
+          <div class="summary-card-label">Total Distance</div>
+          <div class="summary-card-value" id="totalDistance">0 mi</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-card-label">Fuel Used</div>
+          <div class="summary-card-value" id="totalFuel">0 gal</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-card-label">Average MPG</div>
+          <div class="summary-card-value" id="avgMpg">0</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-card-label">Total Cost</div>
+          <div class="summary-card-value" id="totalCost">$0.00</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tool-section" style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.06);">
+      <h3>About This Tool</h3>
+      <p>Estimate fuel costs for road trips with support for single or multi-leg journeys. All calculations are performed locally in your browser.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-content">
+        <p>&copy; <span id="year"></span> SimpleTools — Small apps, big impact.</p>
+        <div class="theme-controls">
+          <label for="theme-select" class="visually-hidden">Theme</label>
+          <select id="theme-select" aria-label="Select seasonal theme">
+            <option value="auto">Auto (by date)</option>
+            <option value="spring">Spring</option>
+            <option value="summer">Summer</option>
+            <option value="autumn">Autumn</option>
+            <option value="winter">Winter</option>
+            <option value="default">Default</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../script.js"></script>
+  <script>
+    const modeButtons = document.querySelectorAll('.mode-btn');
+    const singleSection = document.getElementById('singleSection');
+    const multiSection = document.getElementById('multiSection');
+    const legsContainer = document.getElementById('legsContainer');
+    const addLegBtn = document.getElementById('addLegBtn');
+    const fuelEfficiency = document.getElementById('fuelEfficiency');
+    const currency = document.getElementById('currency');
+    let currentMode = 'single';
+    let legs = [];
+
+    modeButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        modeButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentMode = btn.dataset.mode;
+        
+        singleSection.style.display = currentMode === 'single' ? 'block' : 'none';
+        multiSection.style.display = currentMode === 'multi' ? 'block' : 'none';
+        
+        if (currentMode === 'multi' && legs.length === 0) {
+          addLeg();
+        }
+        calculate();
+      });
+    });
+
+    function addLeg() {
+      const leg = { id: Date.now(), distance: '', mpg: '', price: '' };
+      legs.push(leg);
+      renderLegs();
+    }
+
+    function removeLeg(id) {
+      legs = legs.filter(l => l.id !== id);
+      renderLegs();
+      calculate();
+    }
+
+    function renderLegs() {
+      legsContainer.innerHTML = legs.map((leg, idx) => `
+        <div class="leg-row" data-leg-id="${leg.id}">
+          <input type="number" placeholder="Distance" value="${leg.distance}" data-field="distance" />
+          <input type="number" placeholder="MPG" value="${leg.mpg}" data-field="mpg" step="0.1" />
+          <input type="number" placeholder="Price/gal ($)" value="${leg.price}" data-field="price" step="0.01" />
+          <button class="delete-leg" onclick="window.removeLeg(${leg.id})">−</button>
+        </div>
+      `).join('');
+
+      document.querySelectorAll('.leg-row input').forEach(input => {
+        input.addEventListener('change', (e) => {
+          const legId = parseInt(e.target.closest('.leg-row').dataset.legId);
+          const field = e.target.dataset.field;
+          const leg = legs.find(l => l.id === legId);
+          if (leg) leg[field] = e.target.value;
+          calculate();
+        });
+      });
+    }
+
+    addLegBtn.addEventListener('click', addLeg);
+    
+    document.getElementById('singleDistance').addEventListener('input', calculate);
+    document.getElementById('singleMpg').addEventListener('input', calculate);
+    document.getElementById('singlePrice').addEventListener('input', calculate);
+    fuelEfficiency.addEventListener('change', calculate);
+
+    window.removeLeg = removeLeg;
+
+    function calculate() {
+      let totalDistance = 0, totalFuel = 0, totalCost = 0;
+
+      if (currentMode === 'single') {
+        const dist = parseFloat(document.getElementById('singleDistance').value) || 0;
+        const mpg = parseFloat(document.getElementById('singleMpg').value) || 1;
+        const price = parseFloat(document.getElementById('singlePrice').value) || 0;
+        totalDistance = dist;
+        totalFuel = dist / mpg;
+        totalCost = totalFuel * price;
+      } else {
+        legs.forEach(leg => {
+          const dist = parseFloat(leg.distance) || 0;
+          const mpg = parseFloat(leg.mpg) || 1;
+          const price = parseFloat(leg.price) || 0;
+          totalDistance += dist;
+          totalFuel += dist / mpg;
+          totalCost += (dist / mpg) * price;
+        });
+      }
+
+      const avgMpg = totalFuel > 0 ? (totalDistance / totalFuel).toFixed(1) : 0;
+      const currSymbol = { USD: '$', EUR: '€', GBP: '£', CAD: '$' }[currency.value] || '$';
+
+      document.getElementById('totalDistance').textContent = totalDistance.toFixed(0) + ' mi';
+      document.getElementById('totalFuel').textContent = totalFuel.toFixed(1) + ' gal';
+      document.getElementById('avgMpg').textContent = avgMpg;
+      document.getElementById('totalCost').textContent = currSymbol + totalCost.toFixed(2);
+    }
+
+    calculate();
+  </script>
+</body>
+</html>

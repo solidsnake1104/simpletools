@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en" data-theme="default">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BMI Calculator — SimpleTools</title>
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    .tool-container { max-width: 900px; margin: 0 auto; padding: 2rem 1rem; }
+    .back-link { display: inline-block; margin-bottom: 1.5rem; color: var(--accent); text-decoration: none; }
+    .back-link:hover { text-decoration: underline; }
+    .tool-section { margin-bottom: 2rem; }
+    .unit-toggle { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+    .unit-toggle button { padding: 0.6rem 1rem; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; cursor: pointer; color: var(--text); }
+    .unit-toggle button.active { background: var(--accent); color: var(--bg); }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+    .form-group input { width: 100%; padding: 0.6rem; background: transparent; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; color: var(--text); }
+    .form-group input:focus { outline: none; border-color: var(--accent); }
+    .result-card { background: var(--card-bg); padding: 2rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); text-align: center; margin: 2rem 0; }
+    .bmi-value { font-size: 2.5rem; font-weight: bold; color: var(--accent); margin-bottom: 0.5rem; }
+    .bmi-category { font-size: 1.2rem; margin-bottom: 1rem; }
+    .gauge { width: 100%; height: 30px; background: linear-gradient(to right, #4ade80, #fbbf24, #fb923c, #ef4444); border-radius: 4px; margin: 1.5rem 0; position: relative; }
+    .gauge-marker { position: absolute; width: 3px; height: 36px; background: white; top: -3px; transform: translateX(-50%); }
+    .bmi-table { width: 100%; margin: 1.5rem 0; font-size: 0.9rem; border-collapse: collapse; }
+    .bmi-table th, .bmi-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .bmi-table th { background: rgba(255,255,255,0.05); }
+    .disclaimer { background: rgba(255,255,255,0.05); border-left: 3px solid var(--accent); padding: 1rem; border-radius: 4px; margin: 1.5rem 0; font-size: 0.9rem; }
+    @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <a href="../index.html" class="back-link">← Back to Tools</a>
+      <h1 class="logo">BMI Calculator</h1>
+    </div>
+  </header>
+
+  <main class="tool-container">
+    <section class="tool-section">
+      <h2>Measurement Units</h2>
+      <div class="unit-toggle">
+        <button class="active" data-unit="imperial">Imperial (lbs, ft/in)</button>
+        <button data-unit="metric">Metric (kg, cm)</button>
+      </div>
+    </section>
+
+    <section class="tool-section">
+      <h2>Your Measurements</h2>
+      <div class="form-grid" id="imperialInputs">
+        <div class="form-group">
+          <label for="imperialHeight">Height (feet and inches)</label>
+          <div style="display: flex; gap: 0.5rem;">
+            <input type="number" id="imperialFeet" placeholder="5" min="0" max="9" style="width: 50%;" />
+            <input type="number" id="imperialInches" placeholder="8" min="0" max="11" style="width: 50%;" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="imperialWeight">Weight (pounds)</label>
+          <input type="number" id="imperialWeight" placeholder="170" min="0" />
+        </div>
+      </div>
+
+      <div class="form-grid" id="metricInputs" style="display: none;">
+        <div class="form-group">
+          <label for="metricHeight">Height (centimeters)</label>
+          <input type="number" id="metricHeight" placeholder="173" min="0" />
+        </div>
+        <div class="form-group">
+          <label for="metricWeight">Weight (kilograms)</label>
+          <input type="number" id="metricWeight" placeholder="77" min="0" />
+        </div>
+      </div>
+    </section>
+
+    <section class="tool-section">
+      <div class="result-card" id="resultCard" style="display: none;">
+        <div class="bmi-value" id="bmiValue">0.0</div>
+        <div class="bmi-category" id="bmiCategory"></div>
+        <div class="gauge">
+          <div class="gauge-marker" id="gaugeMarker" style="left: 50%;"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tool-section">
+      <table class="bmi-table">
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>BMI Range</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Underweight</td>
+            <td>&lt; 18.5</td>
+          </tr>
+          <tr>
+            <td>Normal Weight</td>
+            <td>18.5 – 24.9</td>
+          </tr>
+          <tr>
+            <td>Overweight</td>
+            <td>25.0 – 29.9</td>
+          </tr>
+          <tr>
+            <td>Obese</td>
+            <td>≥ 30.0</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="disclaimer">
+        <strong>⚠️ Health Disclaimer:</strong> BMI is a general screening tool and is not a substitute for professional medical advice. It does not account for muscle mass, bone density, age, or other individual factors. Consult a healthcare provider for a complete health assessment.
+      </div>
+    </section>
+
+    <section class="tool-section" style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.06);">
+      <h3>About This Tool</h3>
+      <p>Calculate your Body Mass Index instantly. All calculations are performed locally in your browser and no data is stored or transmitted.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-content">
+        <p>&copy; <span id="year"></span> SimpleTools — Small apps, big impact.</p>
+        <div class="theme-controls">
+          <label for="theme-select" class="visually-hidden">Theme</label>
+          <select id="theme-select" aria-label="Select seasonal theme">
+            <option value="auto">Auto (by date)</option>
+            <option value="spring">Spring</option>
+            <option value="summer">Summer</option>
+            <option value="autumn">Autumn</option>
+            <option value="winter">Winter</option>
+            <option value="default">Default</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../script.js"></script>
+  <script>
+    const unitToggle = document.querySelectorAll('.unit-toggle button');
+    const imperialInputs = document.getElementById('imperialInputs');
+    const metricInputs = document.getElementById('metricInputs');
+    const resultCard = document.getElementById('resultCard');
+    let currentUnit = 'imperial';
+
+    unitToggle.forEach(btn => {
+      btn.addEventListener('click', () => {
+        unitToggle.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentUnit = btn.dataset.unit;
+        
+        if (currentUnit === 'imperial') {
+          imperialInputs.style.display = 'grid';
+          metricInputs.style.display = 'none';
+        } else {
+          imperialInputs.style.display = 'none';
+          metricInputs.style.display = 'grid';
+        }
+        calculate();
+      });
+    });
+
+    function calculate() {
+      let bmi = 0;
+      if (currentUnit === 'imperial') {
+        const feet = parseFloat(document.getElementById('imperialFeet').value) || 0;
+        const inches = parseFloat(document.getElementById('imperialInches').value) || 0;
+        const weight = parseFloat(document.getElementById('imperialWeight').value) || 0;
+        const totalInches = feet * 12 + inches;
+        if (totalInches > 0 && weight > 0) {
+          bmi = (weight / (totalInches * totalInches)) * 703;
+        }
+      } else {
+        const height = parseFloat(document.getElementById('metricHeight').value) || 0;
+        const weight = parseFloat(document.getElementById('metricWeight').value) || 0;
+        if (height > 0 && weight > 0) {
+          bmi = weight / ((height / 100) ** 2);
+        }
+      }
+
+      if (bmi === 0) {
+        resultCard.style.display = 'none';
+        return;
+      }
+
+      let category = '';
+      if (bmi < 18.5) category = 'Underweight';
+      else if (bmi < 25) category = 'Normal Weight';
+      else if (bmi < 30) category = 'Overweight';
+      else category = 'Obese';
+
+      document.getElementById('bmiValue').textContent = bmi.toFixed(1);
+      document.getElementById('bmiCategory').textContent = category;
+      
+      const percentage = Math.min(100, Math.max(0, (bmi - 10) / 40 * 100));
+      document.getElementById('gaugeMarker').style.left = percentage + '%';
+
+      resultCard.style.display = 'block';
+    }
+
+    document.getElementById('imperialFeet').addEventListener('input', calculate);
+    document.getElementById('imperialInches').addEventListener('input', calculate);
+    document.getElementById('imperialWeight').addEventListener('input', calculate);
+    document.getElementById('metricHeight').addEventListener('input', calculate);
+    document.getElementById('metricWeight').addEventListener('input', calculate);
+  </script>
+</body>
+</html>

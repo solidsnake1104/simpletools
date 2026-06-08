@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en" data-theme="default">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PDF to Text (OCR) — SimpleTools</title>
+  <link rel="stylesheet" href="../styles.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <style>
+    .tool-container { max-width: 900px; margin: 0 auto; padding: 2rem 1rem; }
+    .back-link { display: inline-block; margin-bottom: 1.5rem; color: var(--accent); text-decoration: none; }
+    .back-link:hover { text-decoration: underline; }
+    .tool-section { margin-bottom: 2rem; }
+    .upload-area { border: 2px dashed rgba(255,255,255,0.2); border-radius: 8px; padding: 2rem; text-align: center; cursor: pointer; transition: all 0.2s; }
+    .upload-area:hover { border-color: var(--accent); background: rgba(110,231,183,0.05); }
+    .upload-area.dragover { border-color: var(--accent); background: rgba(110,231,183,0.1); }
+    .file-input { display: none; }
+    .output-area { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 1.5rem; min-height: 200px; max-height: 400px; overflow-y: auto; }
+    .output-text { white-space: pre-wrap; word-wrap: break-word; font-family: 'Courier New', monospace; font-size: 0.9rem; line-height: 1.5; }
+    .progress { margin: 1rem 0; }
+    .progress-bar { background: rgba(255,255,255,0.1); border-radius: 4px; height: 8px; overflow: hidden; }
+    .progress-fill { background: var(--accent); height: 100%; transition: width 0.3s; }
+    .button-group { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem; }
+    .btn { display: inline-block; padding: 0.6rem 1rem; background: var(--accent); color: var(--bg); border: none; border-radius: 6px; cursor: pointer; text-decoration: none; font-weight: 500; }
+    .btn:hover { opacity: 0.9; }
+    .btn.secondary { background: rgba(255,255,255,0.1); color: var(--text); }
+    .page-range { display: flex; gap: 0.5rem; align-items: center; margin: 1rem 0; }
+    .page-range input { padding: 0.4rem; background: transparent; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; color: var(--text); width: 100px; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <a href="../index.html" class="back-link">← Back to Tools</a>
+      <h1 class="logo">PDF to Text (OCR)</h1>
+    </div>
+  </header>
+
+  <main class="tool-container">
+    <section class="tool-section">
+      <h2>Upload a PDF</h2>
+      <div class="upload-area" id="uploadArea">
+        <p style="margin: 0 0 0.5rem;"><strong>Click to upload or drag and drop</strong></p>
+        <p style="margin: 0; color: var(--muted); font-size: 0.9rem;">PDF files (scanned or image-based PDFs supported)</p>
+        <input type="file" id="fileInput" class="file-input" accept=".pdf" />
+      </div>
+    </section>
+
+    <section class="tool-section" id="optionsSection" style="display: none;">
+      <h3>Options</h3>
+      <div class="page-range">
+        <label for="startPage">Extract pages:</label>
+        <input type="number" id="startPage" value="1" min="1" />
+        <span>to</span>
+        <input type="number" id="endPage" value="1" min="1" />
+        <small style="color: var(--muted);">Leave empty for all pages</small>
+      </div>
+      <button class="btn" id="extractBtn">Extract Text</button>
+    </section>
+
+    <section class="tool-section" id="progressSection" style="display: none;">
+      <div class="progress">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width: 0%"></div></div>
+        <p id="progressText" style="margin: 0.5rem 0 0; font-size: 0.9rem; color: var(--muted);">Processing...</p>
+      </div>
+    </section>
+
+    <section class="tool-section" id="outputSection" style="display: none;">
+      <h3>Extracted Text</h3>
+      <div class="output-area">
+        <div class="output-text" id="outputText"></div>
+      </div>
+      <div class="button-group">
+        <button class="btn" id="copyBtn">Copy to Clipboard</button>
+        <button class="btn secondary" id="downloadBtn">Download as .txt</button>
+        <button class="btn secondary" id="resetBtn">Process Another PDF</button>
+      </div>
+    </section>
+
+    <section class="tool-section" style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.06);">
+      <h3>About This Tool</h3>
+      <p>This tool extracts text from PDF files using optical character recognition (OCR). It works entirely in your browser — no files are uploaded to any server. OCR accuracy depends on scan quality.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-content">
+        <p>&copy; <span id="year"></span> SimpleTools — Small apps, big impact.</p>
+        <div class="theme-controls">
+          <label for="theme-select" class="visually-hidden">Theme</label>
+          <select id="theme-select" aria-label="Select seasonal theme">
+            <option value="auto">Auto (by date)</option>
+            <option value="spring">Spring</option>
+            <option value="summer">Summer</option>
+            <option value="autumn">Autumn</option>
+            <option value="winter">Winter</option>
+            <option value="default">Default</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../script.js"></script>
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const uploadArea = document.getElementById('uploadArea');
+    const optionsSection = document.getElementById('optionsSection');
+    const progressSection = document.getElementById('progressSection');
+    const outputSection = document.getElementById('outputSection');
+    const extractBtn = document.getElementById('extractBtn');
+    const outputText = document.getElementById('outputText');
+    const copyBtn = document.getElementById('copyBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const startPageInput = document.getElementById('startPage');
+    const endPageInput = document.getElementById('endPage');
+    let currentPdf = null;
+    let extractedText = '';
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    uploadArea.addEventListener('click', () => fileInput.click());
+    uploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadArea.classList.add('dragover');
+    });
+    uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea.classList.remove('dragover');
+      if (e.dataTransfer.files.length) fileInput.files = e.dataTransfer.files;
+      handleFileSelect();
+    });
+
+    fileInput.addEventListener('change', handleFileSelect);
+
+    async function handleFileSelect() {
+      const file = fileInput.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const pdf = await pdfjsLib.getDocument(e.target.result).promise;
+        currentPdf = pdf;
+        endPageInput.value = pdf.numPages;
+        optionsSection.style.display = 'block';
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    extractBtn.addEventListener('click', extractTextFromPdf);
+
+    async function extractTextFromPdf() {
+      if (!currentPdf) return;
+
+      const startPage = Math.max(1, parseInt(startPageInput.value) || 1);
+      const endPage = Math.min(currentPdf.numPages, parseInt(endPageInput.value) || currentPdf.numPages);
+      
+      progressSection.style.display = 'block';
+      outputSection.style.display = 'none';
+      extractedText = '';
+
+      const totalPages = endPage - startPage + 1;
+      
+      for (let pageNum = startPage; pageNum <= endPage; pageNum++) {
+        const page = await currentPdf.getPage(pageNum);
+        const canvas = document.createElement('canvas');
+        const viewport = page.getViewport({ scale: 2 });
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+
+        const context = canvas.getContext('2d');
+        await page.render({ canvasContext: context, viewport }).promise;
+
+        document.getElementById('progressFill').style.width = ((pageNum - startPage + 1) / totalPages * 100) + '%';
+        document.getElementById('progressText').textContent = `Processing page ${pageNum} of ${endPage}...`;
+
+        try {
+          const { data: { text } } = await Tesseract.recognize(canvas, 'eng');
+          extractedText += text + '\n\n';
+        } catch (err) {
+          console.error('OCR error:', err);
+        }
+      }
+
+      progressSection.style.display = 'none';
+      outputText.textContent = extractedText;
+      outputSection.style.display = 'block';
+    }
+
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(extractedText);
+      copyBtn.textContent = 'Copied!';
+      setTimeout(() => copyBtn.textContent = 'Copy to Clipboard', 2000);
+    });
+
+    downloadBtn.addEventListener('click', () => {
+      const blob = new Blob([extractedText], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'extracted-text.txt';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    resetBtn.addEventListener('click', () => {
+      fileInput.value = '';
+      currentPdf = null;
+      extractedText = '';
+      optionsSection.style.display = 'none';
+      outputSection.style.display = 'none';
+      progressSection.style.display = 'none';
+      uploadArea.style.display = 'block';
+    });
+  </script>
+</body>
+</html>

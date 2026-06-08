@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en" data-theme="default">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PDF/DOCX Joiner & Separator — SimpleTools</title>
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    .tool-container { max-width: 900px; margin: 0 auto; padding: 2rem 1rem; }
+    .back-link { display: inline-block; margin-bottom: 1.5rem; color: var(--accent); text-decoration: none; }
+    .back-link:hover { text-decoration: underline; }
+    .tool-section { margin-bottom: 2rem; }
+    .mode-tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+    .mode-tab { padding: 0.6rem 1rem; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; cursor: pointer; color: var(--text); }
+    .mode-tab.active { background: var(--accent); color: var(--bg); }
+    .upload-area { border: 2px dashed rgba(255,255,255,0.2); border-radius: 8px; padding: 2rem; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 1rem; }
+    .upload-area:hover { border-color: var(--accent); background: rgba(110,231,183,0.05); }
+    .upload-area.dragover { border-color: var(--accent); background: rgba(110,231,183,0.1); }
+    .file-input { display: none; }
+    .file-list { list-style: none; padding: 0; margin: 1rem 0; }
+    .file-item { background: var(--card-bg); padding: 0.75rem; border-radius: 6px; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; }
+    .file-name { flex: 1; }
+    .file-remove { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: none; padding: 0.3rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+    .form-group input, .form-group select { width: 100%; padding: 0.6rem; background: transparent; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; color: var(--text); }
+    .btn { display: inline-block; padding: 0.6rem 1rem; background: var(--accent); color: var(--bg); border: none; border-radius: 6px; cursor: pointer; font-weight: 500; }
+    .btn:hover { opacity: 0.9; }
+    .btn.secondary { background: rgba(255,255,255,0.1); color: var(--text); }
+    .button-group { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <a href="../index.html" class="back-link">← Back to Tools</a>
+      <h1 class="logo">PDF/DOCX Joiner & Separator</h1>
+    </div>
+  </header>
+
+  <main class="tool-container">
+    <section class="tool-section">
+      <h2>Select Mode</h2>
+      <div class="mode-tabs">
+        <button class="mode-tab active" data-mode="join">Join Documents</button>
+        <button class="mode-tab" data-mode="split">Split PDF</button>
+        <button class="mode-tab" data-mode="image">Image to PDF</button>
+      </div>
+    </section>
+
+    <section class="tool-section" id="joinMode">
+      <h2>Select Files to Join</h2>
+      <div class="upload-area" id="uploadAreaJoin">
+        <p style="margin: 0 0 0.5rem;"><strong>Click to upload or drag and drop</strong></p>
+        <p style="margin: 0; color: var(--muted); font-size: 0.9rem;">Select multiple PDF or DOCX files</p>
+        <input type="file" id="fileInputJoin" class="file-input" multiple accept=".pdf,.docx" />
+      </div>
+      <ul class="file-list" id="fileListJoin"></ul>
+      <button class="btn" id="processJoinBtn" disabled>Join Documents</button>
+    </section>
+
+    <section class="tool-section" id="splitMode" style="display: none;">
+      <h2>Select PDF to Split</h2>
+      <div class="upload-area" id="uploadAreaSplit">
+        <p style="margin: 0 0 0.5rem;"><strong>Click to upload or drag and drop</strong></p>
+        <p style="margin: 0; color: var(--muted); font-size: 0.9rem;">PDF file only</p>
+        <input type="file" id="fileInputSplit" class="file-input" accept=".pdf" />
+      </div>
+      <div id="splitOptions" style="display: none;">
+        <div class="form-group">
+          <label for="pageRange">Page Range (e.g., 1-3, 5-7)</label>
+          <input type="text" id="pageRange" placeholder="1-10" />
+        </div>
+        <button class="btn" id="processSplitBtn">Split PDF</button>
+      </div>
+    </section>
+
+    <section class="tool-section" id="imageMode" style="display: none;">
+      <h2>Select Images to Convert</h2>
+      <div class="upload-area" id="uploadAreaImage">
+        <p style="margin: 0 0 0.5rem;"><strong>Click to upload or drag and drop</strong></p>
+        <p style="margin: 0; color: var(--muted); font-size: 0.9rem;">JPG, PNG, or HEIC images</p>
+        <input type="file" id="fileInputImage" class="file-input" multiple accept="image/*" />
+      </div>
+      <ul class="file-list" id="fileListImage"></ul>
+      <button class="btn" id="processImageBtn" disabled>Convert to PDF</button>
+    </section>
+
+    <section class="tool-section" style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.06);">
+      <h3>About This Tool</h3>
+      <p>Join, split, and convert documents. All processing is performed in your browser — no files are uploaded to any server.</p>
+      <p style="color: var(--muted); font-size: 0.9rem; margin-top: 1rem;"><strong>Note:</strong> Complex DOCX merges may require server processing. You'll be notified before any upload occurs.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-content">
+        <p>&copy; <span id="year"></span> SimpleTools — Small apps, big impact.</p>
+        <div class="theme-controls">
+          <label for="theme-select" class="visually-hidden">Theme</label>
+          <select id="theme-select" aria-label="Select seasonal theme">
+            <option value="auto">Auto (by date)</option>
+            <option value="spring">Spring</option>
+            <option value="summer">Summer</option>
+            <option value="autumn">Autumn</option>
+            <option value="winter">Winter</option>
+            <option value="default">Default</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../script.js"></script>
+  <script>
+    const modeTabs = document.querySelectorAll('.mode-tab');
+    const joinMode = document.getElementById('joinMode');
+    const splitMode = document.getElementById('splitMode');
+    const imageMode = document.getElementById('imageMode');
+    const uploadAreaJoin = document.getElementById('uploadAreaJoin');
+    const fileInputJoin = document.getElementById('fileInputJoin');
+    const fileListJoin = document.getElementById('fileListJoin');
+    const uploadAreaSplit = document.getElementById('uploadAreaSplit');
+    const fileInputSplit = document.getElementById('fileInputSplit');
+    const uploadAreaImage = document.getElementById('uploadAreaImage');
+    const fileInputImage = document.getElementById('fileInputImage');
+    const fileListImage = document.getElementById('fileListImage');
+    let filesJoin = [];
+    let filesSplit = null;
+    let filesImage = [];
+
+    modeTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        modeTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const mode = tab.dataset.mode;
+        
+        joinMode.style.display = mode === 'join' ? 'block' : 'none';
+        splitMode.style.display = mode === 'split' ? 'block' : 'none';
+        imageMode.style.display = mode === 'image' ? 'block' : 'none';
+      });
+    });
+
+    // Join mode
+    uploadAreaJoin.addEventListener('click', () => fileInputJoin.click());
+    uploadAreaJoin.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadAreaJoin.classList.add('dragover');
+    });
+    uploadAreaJoin.addEventListener('dragleave', () => uploadAreaJoin.classList.remove('dragover'));
+    uploadAreaJoin.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadAreaJoin.classList.remove('dragover');
+      filesJoin = Array.from(e.dataTransfer.files);
+      renderFileListJoin();
+    });
+    fileInputJoin.addEventListener('change', () => {
+      filesJoin = Array.from(fileInputJoin.files);
+      renderFileListJoin();
+    });
+
+    function renderFileListJoin() {
+      fileListJoin.innerHTML = filesJoin.map((f, i) => `
+        <li class="file-item">
+          <span class="file-name">${f.name} (${(f.size/1024).toFixed(0)} KB)</span>
+          <button class="file-remove" onclick="removeFileJoin(${i})">Remove</button>
+        </li>
+      `).join('');
+      document.getElementById('processJoinBtn').disabled = filesJoin.length < 2;
+    }
+
+    window.removeFileJoin = function(i) {
+      filesJoin.splice(i, 1);
+      renderFileListJoin();
+    };
+
+    // Split mode
+    uploadAreaSplit.addEventListener('click', () => fileInputSplit.click());
+    uploadAreaSplit.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadAreaSplit.classList.add('dragover');
+    });
+    uploadAreaSplit.addEventListener('dragleave', () => uploadAreaSplit.classList.remove('dragover'));
+    uploadAreaSplit.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadAreaSplit.classList.remove('dragover');
+      filesSplit = e.dataTransfer.files[0];
+      document.getElementById('splitOptions').style.display = 'block';
+    });
+    fileInputSplit.addEventListener('change', () => {
+      filesSplit = fileInputSplit.files[0];
+      document.getElementById('splitOptions').style.display = filesSplit ? 'block' : 'none';
+    });
+
+    // Image mode
+    uploadAreaImage.addEventListener('click', () => fileInputImage.click());
+    uploadAreaImage.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadAreaImage.classList.add('dragover');
+    });
+    uploadAreaImage.addEventListener('dragleave', () => uploadAreaImage.classList.remove('dragover'));
+    uploadAreaImage.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadAreaImage.classList.remove('dragover');
+      filesImage = Array.from(e.dataTransfer.files);
+      renderFileListImage();
+    });
+    fileInputImage.addEventListener('change', () => {
+      filesImage = Array.from(fileInputImage.files);
+      renderFileListImage();
+    });
+
+    function renderFileListImage() {
+      fileListImage.innerHTML = filesImage.map((f, i) => `
+        <li class="file-item">
+          <span class="file-name">${f.name}</span>
+          <button class="file-remove" onclick="removeFileImage(${i})">Remove</button>
+        </li>
+      `).join('');
+      document.getElementById('processImageBtn').disabled = filesImage.length === 0;
+    }
+
+    window.removeFileImage = function(i) {
+      filesImage.splice(i, 1);
+      renderFileListImage();
+    };
+
+    document.getElementById('processJoinBtn').addEventListener('click', () => {
+      alert('This feature requires client-side PDF/DOCX library integration. Please use a dedicated PDF merger tool or visit again when this feature is implemented.');
+    });
+
+    document.getElementById('processSplitBtn').addEventListener('click', () => {
+      alert('PDF splitting feature requires PDF.js integration. This will be available soon.');
+    });
+
+    document.getElementById('processImageBtn').addEventListener('click', () => {
+      alert('Image to PDF conversion requires canvas integration. This will be available soon.');
+    });
+  </script>
+</body>
+</html>

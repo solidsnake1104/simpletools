@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en" data-theme="default">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Bill Splitter — SimpleTools</title>
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    .tool-container { max-width: 900px; margin: 0 auto; padding: 2rem 1rem; }
+    .back-link { display: inline-block; margin-bottom: 1.5rem; color: var(--accent); text-decoration: none; }
+    .back-link:hover { text-decoration: underline; }
+    .tool-section { margin-bottom: 2rem; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+    .form-group input, .form-group select { width: 100%; padding: 0.6rem; background: transparent; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; color: var(--text); }
+    .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--accent); }
+    .mode-toggle { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+    .mode-btn { padding: 0.6rem 1rem; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; cursor: pointer; color: var(--text); }
+    .mode-btn.active { background: var(--accent); color: var(--bg); }
+    .people-list { margin: 1.5rem 0; }
+    .person-row { background: var(--card-bg); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); margin-bottom: 0.75rem; display: grid; grid-template-columns: 150px 1fr 50px; gap: 0.75rem; align-items: flex-end; }
+    .person-row input { padding: 0.5rem; background: transparent; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; color: var(--text); }
+    .delete-person { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: none; padding: 0.5rem; border-radius: 4px; cursor: pointer; }
+    .btn { display: inline-block; padding: 0.6rem 1rem; background: var(--accent); color: var(--bg); border: none; border-radius: 6px; cursor: pointer; font-weight: 500; }
+    .btn:hover { opacity: 0.9; }
+    .btn.secondary { background: rgba(255,255,255,0.1); color: var(--text); }
+    .summary-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+    .summary-table th { background: rgba(255,255,255,0.06); padding: 0.75rem; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .summary-table td { padding: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .summary-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+    @media (max-width: 768px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .person-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <a href="../index.html" class="back-link">← Back to Tools</a>
+      <h1 class="logo">Simple Bill Splitter</h1>
+    </div>
+  </header>
+
+  <main class="tool-container">
+    <section class="tool-section">
+      <h2>Split Mode</h2>
+      <div class="mode-toggle">
+        <button class="mode-btn active" data-mode="equal">Equal Split</button>
+        <button class="mode-btn" data-mode="custom">Custom Split</button>
+      </div>
+    </section>
+
+    <section class="tool-section" id="billSection">
+      <h2>Bill Details</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="totalBill">Total Bill ($)</label>
+          <input type="number" id="totalBill" placeholder="100.00" min="0" step="0.01" />
+        </div>
+        <div class="form-group">
+          <label for="tipPercent">Tip (%)</label>
+          <input type="number" id="tipPercent" placeholder="0" min="0" step="0.5" />
+        </div>
+        <div class="form-group">
+          <label for="taxAmount">Tax ($)</label>
+          <input type="number" id="taxAmount" placeholder="0.00" min="0" step="0.01" />
+        </div>
+      </div>
+    </section>
+
+    <section class="tool-section">
+      <h2>People</h2>
+      <div class="people-list" id="peopleContainer"></div>
+      <button class="btn secondary" id="addPersonBtn">Add Person</button>
+    </section>
+
+    <section class="tool-section">
+      <h2>Summary</h2>
+      <table class="summary-table">
+        <thead>
+          <tr>
+            <th>Person</th>
+            <th>Subtotal</th>
+            <th>Tip Share</th>
+            <th>Tax Share</th>
+            <th><strong>Total</strong></th>
+          </tr>
+        </thead>
+        <tbody id="summaryBody"></tbody>
+      </table>
+      <div style="background: var(--card-bg); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div>
+            <div style="color: var(--muted); font-size: 0.85rem;">Grand Total</div>
+            <div style="font-size: 1.3rem; font-weight: bold; color: var(--accent);" id="grandTotal">$0.00</div>
+          </div>
+          <div>
+            <div style="color: var(--muted); font-size: 0.85rem;">Per Person</div>
+            <div style="font-size: 1.3rem; font-weight: bold; color: var(--accent);" id="perPersonTotal">$0.00</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tool-section" style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.06);">
+      <h3>About This Tool</h3>
+      <p>Divide bills equally or unevenly among a group with automatic tip and tax distribution. All calculations are performed locally in your browser.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-content">
+        <p>&copy; <span id="year"></span> SimpleTools — Small apps, big impact.</p>
+        <div class="theme-controls">
+          <label for="theme-select" class="visually-hidden">Theme</label>
+          <select id="theme-select" aria-label="Select seasonal theme">
+            <option value="auto">Auto (by date)</option>
+            <option value="spring">Spring</option>
+            <option value="summer">Summer</option>
+            <option value="autumn">Autumn</option>
+            <option value="winter">Winter</option>
+            <option value="default">Default</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../script.js"></script>
+  <script>
+    const modeButtons = document.querySelectorAll('.mode-btn');
+    const totalBillInput = document.getElementById('totalBill');
+    const tipPercentInput = document.getElementById('tipPercent');
+    const taxAmountInput = document.getElementById('taxAmount');
+    const peopleContainer = document.getElementById('peopleContainer');
+    const addPersonBtn = document.getElementById('addPersonBtn');
+    const summaryBody = document.getElementById('summaryBody');
+    const grandTotalDisplay = document.getElementById('grandTotal');
+    const perPersonDisplay = document.getElementById('perPersonTotal');
+    let people = [];
+    let currentMode = 'equal';
+
+    modeButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        modeButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentMode = btn.dataset.mode;
+        renderPeople();
+        calculate();
+      });
+    });
+
+    function addPerson() {
+      people.push({ id: Date.now(), name: 'Person ' + (people.length + 1), subtotal: '' });
+      renderPeople();
+    }
+
+    function removePerson(id) {
+      people = people.filter(p => p.id !== id);
+      renderPeople();
+      calculate();
+    }
+
+    function renderPeople() {
+      peopleContainer.innerHTML = people.map(person => {
+        if (currentMode === 'equal') {
+          return `<div class="person-row" data-person-id="${person.id}">
+            <input type="text" placeholder="Name" value="${person.name}" data-field="name" />
+            <button class="delete-person" onclick="window.removePerson(${person.id})">−</button>
+          </div>`;
+        } else {
+          return `<div class="person-row" data-person-id="${person.id}">
+            <input type="text" placeholder="Name" value="${person.name}" data-field="name" />
+            <input type="number" placeholder="Amount" value="${person.subtotal}" data-field="subtotal" step="0.01" />
+            <button class="delete-person" onclick="window.removePerson(${person.id})">−</button>
+          </div>`;
+        }
+      }).join('');
+
+      document.querySelectorAll('.person-row input').forEach(input => {
+        input.addEventListener('change', (e) => {
+          const personId = parseInt(e.target.closest('.person-row').dataset.personId);
+          const field = e.target.dataset.field;
+          const person = people.find(p => p.id === personId);
+          if (person) person[field] = e.target.value;
+          calculate();
+        });
+      });
+    }
+
+    function calculate() {
+      const totalBill = parseFloat(totalBillInput.value) || 0;
+      const tipPercent = parseFloat(tipPercentInput.value) || 0;
+      const taxAmount = parseFloat(taxAmountInput.value) || 0;
+      const tipAmount = totalBill * (tipPercent / 100);
+      const grandTotal = totalBill + tipAmount + taxAmount;
+
+      let results = [];
+
+      if (currentMode === 'equal') {
+        const perPersonAmount = grandTotal / (people.length || 1);
+        results = people.map(person => ({
+          name: person.name,
+          subtotal: totalBill / (people.length || 1),
+          tipShare: tipAmount / (people.length || 1),
+          taxShare: taxAmount / (people.length || 1),
+          total: perPersonAmount
+        }));
+      } else {
+        const totalSubtotal = people.reduce((sum, p) => sum + (parseFloat(p.subtotal) || 0), 0);
+        results = people.map(person => {
+          const subtotal = parseFloat(person.subtotal) || 0;
+          const proportion = totalSubtotal > 0 ? subtotal / totalSubtotal : 0;
+          return {
+            name: person.name,
+            subtotal: subtotal,
+            tipShare: tipAmount * proportion,
+            taxShare: taxAmount * proportion,
+            total: subtotal + (tipAmount * proportion) + (taxAmount * proportion)
+          };
+        });
+      }
+
+      summaryBody.innerHTML = results.map(r => `
+        <tr>
+          <td>${r.name}</td>
+          <td>$${r.subtotal.toFixed(2)}</td>
+          <td>$${r.tipShare.toFixed(2)}</td>
+          <td>$${r.taxShare.toFixed(2)}</td>
+          <td><strong>$${r.total.toFixed(2)}</strong></td>
+        </tr>
+      `).join('');
+
+      grandTotalDisplay.textContent = '$' + grandTotal.toFixed(2);
+      const perPerson = people.length > 0 ? grandTotal / people.length : 0;
+      perPersonDisplay.textContent = '$' + perPerson.toFixed(2);
+    }
+
+    totalBillInput.addEventListener('input', calculate);
+    tipPercentInput.addEventListener('input', calculate);
+    taxAmountInput.addEventListener('input', calculate);
+    addPersonBtn.addEventListener('click', addPerson);
+
+    window.removePerson = removePerson;
+
+    addPerson();
+  </script>
+</body>
+</html>

@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en" data-theme="default">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>HEIC to JPG Converter — SimpleTools</title>
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    .tool-container { max-width: 900px; margin: 0 auto; padding: 2rem 1rem; }
+    .back-link { display: inline-block; margin-bottom: 1.5rem; color: var(--accent); text-decoration: none; }
+    .back-link:hover { text-decoration: underline; }
+    .tool-section { margin-bottom: 2rem; }
+    .upload-area { border: 2px dashed rgba(255,255,255,0.2); border-radius: 8px; padding: 2rem; text-align: center; cursor: pointer; transition: all 0.2s; }
+    .upload-area:hover { border-color: var(--accent); background: rgba(110,231,183,0.05); }
+    .upload-area.dragover { border-color: var(--accent); background: rgba(110,231,183,0.1); }
+    .file-input { display: none; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+    .form-group input[type="range"] { width: 100%; }
+    .quality-display { margin-top: 0.5rem; font-size: 0.9rem; color: var(--muted); }
+    .file-list { list-style: none; padding: 0; margin: 1.5rem 0; }
+    .file-item { background: var(--card-bg); padding: 1rem; border-radius: 8px; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; }
+    .file-name { flex: 1; }
+    .file-status { font-size: 0.85rem; color: var(--muted); }
+    .file-remove { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: none; padding: 0.3rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
+    .preview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+    .preview-item { background: var(--card-bg); border-radius: 8px; overflow: hidden; }
+    .preview-image { width: 100%; height: 150px; object-fit: cover; }
+    .btn { display: inline-block; padding: 0.6rem 1rem; background: var(--accent); color: var(--bg); border: none; border-radius: 6px; cursor: pointer; font-weight: 500; }
+    .btn:hover { opacity: 0.9; }
+    .btn.secondary { background: rgba(255,255,255,0.1); color: var(--text); }
+    .button-group { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem; }
+    .progress { margin: 1rem 0; display: none; }
+    .progress-bar { background: rgba(255,255,255,0.1); border-radius: 4px; height: 8px; overflow: hidden; }
+    .progress-fill { background: var(--accent); height: 100%; transition: width 0.3s; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <a href="../index.html" class="back-link">← Back to Tools</a>
+      <h1 class="logo">HEIC to JPG Converter</h1>
+    </div>
+  </header>
+
+  <main class="tool-container">
+    <section class="tool-section">
+      <h2>Upload HEIC Images</h2>
+      <div class="upload-area" id="uploadArea">
+        <p style="margin: 0 0 0.5rem;"><strong>Click to upload or drag and drop</strong></p>
+        <p style="margin: 0; color: var(--muted); font-size: 0.9rem;">HEIC, HEIF, or JPEG images (supports batch conversion)</p>
+        <input type="file" id="fileInput" class="file-input" multiple accept=".heic,.heif,.jpg,.jpeg,.png" />
+      </div>
+    </section>
+
+    <section class="tool-section">
+      <h2>Conversion Settings</h2>
+      <div class="form-group">
+        <label for="quality">JPG Quality: <span id="qualityValue">85</span>%</label>
+        <input type="range" id="quality" min="50" max="100" value="85" />
+        <div class="quality-display">Higher quality = larger file size. 85% is recommended for most use cases.</div>
+      </div>
+    </section>
+
+    <section class="tool-section" id="filesSection" style="display: none;">
+      <h2>Selected Images (<span id="fileCount">0</span>)</h2>
+      <ul class="file-list" id="fileList"></ul>
+      <div class="progress" id="progress">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width: 0%"></div></div>
+        <p id="progressText" style="margin: 0.5rem 0 0; font-size: 0.9rem; color: var(--muted);">Processing...</p>
+      </div>
+      <div class="button-group">
+        <button class="btn" id="convertBtn">Convert All</button>
+        <button class="btn secondary" id="downloadZipBtn" style="display: none;">Download as ZIP</button>
+        <button class="btn secondary" id="resetBtn">Convert More</button>
+      </div>
+    </section>
+
+    <section class="tool-section" id="previewSection" style="display: none;">
+      <h2>Preview</h2>
+      <div class="preview-grid" id="previewGrid"></div>
+    </section>
+
+    <section class="tool-section" style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.06);">
+      <h3>About This Tool</h3>
+      <p>Convert Apple HEIC/HEIF images to universal JPG format. All conversion is performed in your browser — no images are uploaded to any server.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-content">
+        <p>&copy; <span id="year"></span> SimpleTools — Small apps, big impact.</p>
+        <div class="theme-controls">
+          <label for="theme-select" class="visually-hidden">Theme</label>
+          <select id="theme-select" aria-label="Select seasonal theme">
+            <option value="auto">Auto (by date)</option>
+            <option value="spring">Spring</option>
+            <option value="summer">Summer</option>
+            <option value="autumn">Autumn</option>
+            <option value="winter">Winter</option>
+            <option value="default">Default</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+  <script src="../script.js"></script>
+  <script>
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const quality = document.getElementById('quality');
+    const qualityValue = document.getElementById('qualityValue');
+    const fileList = document.getElementById('fileList');
+    const filesSection = document.getElementById('filesSection');
+    const convertBtn = document.getElementById('convertBtn');
+    const downloadZipBtn = document.getElementById('downloadZipBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const progress = document.getElementById('progress');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    const previewGrid = document.getElementById('previewGrid');
+    const previewSection = document.getElementById('previewSection');
+    const fileCountDisplay = document.getElementById('fileCount');
+    let selectedFiles = [];
+    let convertedImages = [];
+
+    quality.addEventListener('input', (e) => qualityValue.textContent = e.target.value);
+
+    uploadArea.addEventListener('click', () => fileInput.click());
+    uploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadArea.classList.add('dragover');
+    });
+    uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea.classList.remove('dragover');
+      if (e.dataTransfer.files.length) {
+        fileInput.files = e.dataTransfer.files;
+        handleFileSelect();
+      }
+    });
+
+    fileInput.addEventListener('change', handleFileSelect);
+
+    function handleFileSelect() {
+      selectedFiles = Array.from(fileInput.files);
+      fileCountDisplay.textContent = selectedFiles.length;
+      
+      fileList.innerHTML = selectedFiles.map((f, i) => `
+        <li class="file-item">
+          <span class="file-name">${f.name}</span>
+          <span class="file-status">${(f.size / 1024).toFixed(1)} KB</span>
+        </li>
+      `).join('');
+
+      filesSection.style.display = 'block';
+      convertedImages = [];
+      previewSection.style.display = 'none';
+      convertBtn.style.display = 'inline-block';
+      downloadZipBtn.style.display = 'none';
+    }
+
+    convertBtn.addEventListener('click', async () => {
+      if (selectedFiles.length === 0) return;
+
+      progress.style.display = 'block';
+      convertedImages = [];
+      const qualityValue = parseFloat(quality.value) / 100;
+
+      for (let i = 0; i < selectedFiles.length; i++) {
+        const file = selectedFiles[i];
+        progressFill.style.width = ((i / selectedFiles.length) * 100) + '%';
+        progressText.textContent = `Processing ${i + 1} of ${selectedFiles.length}...`;
+
+        try {
+          let blob;
+          if (file.type === 'image/heic' || file.type === 'image/heif') {
+            const converted = await heic2any({ blob: file, toType: 'image/jpeg' });
+            blob = Array.isArray(converted) ? converted[0] : converted;
+          } else {
+            blob = file;
+          }
+
+          const canvas = document.createElement('canvas');
+          const img = new Image();
+          img.onload = () => {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            canvas.toBlob((jpgBlob) => {
+              const name = file.name.replace(/\.(heic|heif)$/i, '.jpg');
+              convertedImages.push({ name, blob: jpgBlob, url: URL.createObjectURL(jpgBlob) });
+            }, 'image/jpeg', qualityValue);
+          };
+          img.src = URL.createObjectURL(blob);
+        } catch (err) {
+          console.error('Conversion error:', err);
+        }
+      }
+
+      setTimeout(() => {
+        progress.style.display = 'none';
+        progressFill.style.width = '100%';
+        progressText.textContent = 'Complete!';
+        
+        renderPreviews();
+        convertBtn.style.display = 'none';
+        downloadZipBtn.style.display = 'inline-block';
+      }, 1000);
+    });
+
+    function renderPreviews() {
+      previewGrid.innerHTML = convertedImages.map(img => `
+        <div class="preview-item">
+          <img src="${img.url}" class="preview-image" alt="${img.name}" />
+          <div style="padding: 0.5rem; font-size: 0.75rem; color: var(--muted); word-break: break-word;">
+            ${img.name}
+            <button class="btn secondary" style="display: block; width: 100%; margin-top: 0.5rem; padding: 0.3rem;" onclick="downloadImage('${img.name}', '${img.url}')">Download</button>
+          </div>
+        </div>
+      `).join('');
+      previewSection.style.display = 'block';
+    }
+
+    window.downloadImage = function(name, url) {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name;
+      a.click();
+    };
+
+    downloadZipBtn.addEventListener('click', () => {
+      alert('ZIP download requires JSZip library. Individual downloads are available for each image.');
+    });
+
+    resetBtn.addEventListener('click', () => {
+      fileInput.value = '';
+      selectedFiles = [];
+      convertedImages = [];
+      filesSection.style.display = 'none';
+      previewSection.style.display = 'none';
+      progress.style.display = 'none';
+    });
+  </script>
+</body>
+</html>
