@@ -78,18 +78,20 @@
 
     <!-- JOIN MODE ONLY (Select Mode removed) -->
     <section class="tool-section" id="joinMode">
-      <h2>Select Files to Join</h2>
+  <h2>Select Files to Join</h2>
 
-      <div class="upload-area" id="uploadAreaJoin">
-        <p><strong>Click to upload or drag and drop</strong></p>
-        <p style="color:var(--muted);font-size:0.9rem;">Select multiple PDF or DOCX files</p>
-        <input type="file" id="fileInputJoin" class="file-input" multiple accept=".pdf,.docx" />
-      </div>
+  <div class="upload-area" id="uploadAreaJoin">
+    <p><strong>Click to upload or drag and drop</strong></p>
+    <p style="color:var(--muted);font-size:0.9rem;">Select multiple PDF or DOCX files</p>
+    <input type="file" id="fileInputJoin" class="file-input" multiple accept=".pdf,.docx" />
+  </div>
 
-      <ul class="file-list" id="fileListJoin"></ul>
+  <ul class="file-list" id="fileListJoin"></ul>
 
-      <!-- Join Documents button removed -->
-    </section>
+  <!-- NEW LIQUID GLASS BUTTON -->
+  <button class="glass-btn" id="processJoinBtn" disabled>Join Documents</button>
+</section>
+
 
     <section class="tool-section" style="margin-top:3rem;padding-top:2rem;border-top:1px solid rgba(255,255,255,0.06);">
       <h3>About This Tool</h3>
@@ -111,12 +113,12 @@
             <option value="summer">Summer</option>
             <option value="autumn">Autumn</option>
             <option value="winter">Winter</option>
-            <option value="default">Default</option>
           </select>
         </div>
       </div>
     </div>
   </footer>
+<script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
 
   <script src="../script.js"></script>
 </body>

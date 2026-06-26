@@ -15,7 +15,9 @@
 
   const saved = localStorage.getItem('simplertools-theme');
   if(saved){
-    if(saved==='auto') setTheme(detectSeason()); else setTheme(saved);
+    if(saved==='auto') setTheme(detectSeason()); 
+    else setTheme(saved);
+
     if(select) select.value = saved;
   } else {
     if(select) select.value = 'auto';
@@ -26,13 +28,14 @@
     select.addEventListener('change', (e)=>{
       const v = e.target.value;
       localStorage.setItem('simplertools-theme', v);
-      if(v==='auto') setTheme(detectSeason()); else setTheme(v);
+      if(v==='auto') setTheme(detectSeason()); 
+      else setTheme(v);
     });
   }
 })();
 
 /* -----------------------------------------------------------
-   PDF JOINER — UPDATED WITH REORDER + ADD FILES BUTTON
+   PDF JOINER — REORDER + ADD FILES + MERGE + CONFIRMATION
 ----------------------------------------------------------- */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -40,9 +43,85 @@ document.addEventListener("DOMContentLoaded", () => {
   const uploadAreaJoin = document.getElementById('uploadAreaJoin');
   const fileInputJoin = document.getElementById('fileInputJoin');
   const fileListJoin = document.getElementById('fileListJoin');
+  const processJoinBtn = document.getElementById('processJoinBtn');
 
   let filesJoin = [];
   let dragIndex = null;
+
+  /* JOIN BUTTON — ENABLE/DISABLE */
+  function updateJoinButton() {
+    if (processJoinBtn) {
+      processJoinBtn.disabled = filesJoin.length < 2;
+    }
+  }
+
+  /* CONFIRMATION TOAST */
+  function showToast(message) {
+    const toast = document.createElement("div");
+    toast.textContent = message;
+    toast.style.position = "fixed";
+    toast.style.bottom = "20px";
+    toast.style.right = "20px";
+    toast.style.padding = "12px 18px";
+    toast.style.background = "rgba(0,0,0,0.65)";
+    toast.style.color = "white";
+    toast.style.borderRadius = "8px";
+    toast.style.fontSize = "0.95rem";
+    toast.style.backdropFilter = "blur(6px)";
+    toast.style.zIndex = "9999";
+    toast.style.opacity = "0";
+    toast.style.transition = "opacity .3s ease";
+
+    document.body.appendChild(toast);
+
+    requestAnimationFrame(() => toast.style.opacity = "1");
+
+    setTimeout(() => {
+      toast.style.opacity = "0";
+      setTimeout(() => toast.remove(), 300);
+    }, 2500);
+  }
+
+  /* MERGE LOGIC USING PDF-LIB */
+  async function mergePDFs() {
+    const { PDFDocument } = PDFLib;
+
+    const mergedPdf = await PDFDocument.create();
+
+    for (const file of filesJoin) {
+      const bytes = await file.arrayBuffer();
+      const pdf = await PDFDocument.load(bytes);
+      const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+      copiedPages.forEach(p => mergedPdf.addPage(p));
+    }
+
+    const mergedBytes = await mergedPdf.save();
+
+    const blob = new Blob([mergedBytes], { type: "application/pdf" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "merged.pdf";
+    a.click();
+
+    URL.revokeObjectURL(url);
+
+    showToast("Merged PDF Ready");
+  }
+
+  /* JOIN BUTTON CLICK HANDLER */
+  if (processJoinBtn) {
+    processJoinBtn.addEventListener("click", async () => {
+      processJoinBtn.disabled = true;
+      processJoinBtn.textContent = "Merging...";
+
+      await mergePDFs();
+
+      processJoinBtn.textContent = "Join Documents";
+      updateJoinButton();
+    });
+  }
 
   /* CLICK TO OPEN FILE PICKER */
   if (uploadAreaJoin) {
@@ -78,6 +157,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!exists) filesJoin.push(file);
     });
     renderJoinList();
+    updateJoinButton();
   }
 
   /* Render file list with drag handles */
@@ -93,6 +173,7 @@ document.addEventListener("DOMContentLoaded", () => {
     `).join('');
 
     enableDragReorder();
+    updateJoinButton();
   }
 
   /* Drag + Drop Reorder Logic */
@@ -126,6 +207,7 @@ document.addEventListener("DOMContentLoaded", () => {
   window.removeFileJoin = function(i) {
     filesJoin.splice(i, 1);
     renderJoinList();
+    updateJoinButton();
   };
 
 });
