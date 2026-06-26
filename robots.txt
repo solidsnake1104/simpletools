@@ -1,0 +1,27 @@
+User-agent: *
+Allow: /
+
+# Block internal or non-public folders (adjust as needed)
+Disallow: /admin/
+Disallow: /private/
+Disallow: /temp/
+Disallow: /drafts/
+
+# Allow AI crawlers explicitly
+User-agent: GPTBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+# Sitemap
+Sitemap: https://simplertools.net/sitemap.xml
