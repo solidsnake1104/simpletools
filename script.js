@@ -32,21 +32,19 @@
 })();
 
 /* -----------------------------------------------------------
-   PDF JOINER — CLEANED + UPDATED
+   PDF JOINER — UPDATED WITH REORDER + ADD FILES BUTTON
 ----------------------------------------------------------- */
 
 document.addEventListener("DOMContentLoaded", () => {
 
-  /* JOIN MODE ELEMENTS */
   const uploadAreaJoin = document.getElementById('uploadAreaJoin');
   const fileInputJoin = document.getElementById('fileInputJoin');
   const fileListJoin = document.getElementById('fileListJoin');
-  const processJoinBtn = document.getElementById('processJoinBtn');
 
-  /* Store all selected files (append behavior) */
   let filesJoin = [];
+  let dragIndex = null;
 
-  /* JOIN MODE — CLICK TO OPEN FILE PICKER */
+  /* CLICK TO OPEN FILE PICKER */
   if (uploadAreaJoin) {
     uploadAreaJoin.addEventListener('click', () => fileInputJoin.click());
 
@@ -62,17 +60,14 @@ document.addEventListener("DOMContentLoaded", () => {
     uploadAreaJoin.addEventListener('drop', e => {
       e.preventDefault();
       uploadAreaJoin.classList.remove('dragover');
-
-      const dropped = Array.from(e.dataTransfer.files);
-      appendJoinFiles(dropped);
+      appendJoinFiles(Array.from(e.dataTransfer.files));
     });
   }
 
-  /* JOIN MODE — FILE INPUT CHANGE */
+  /* FILE INPUT CHANGE */
   if (fileInputJoin) {
     fileInputJoin.addEventListener('change', () => {
-      const selected = Array.from(fileInputJoin.files);
-      appendJoinFiles(selected);
+      appendJoinFiles(Array.from(fileInputJoin.files));
     });
   }
 
@@ -82,24 +77,49 @@ document.addEventListener("DOMContentLoaded", () => {
       const exists = filesJoin.some(f => f.name === file.name && f.size === file.size);
       if (!exists) filesJoin.push(file);
     });
-
     renderJoinList();
   }
 
-  /* Render file list */
+  /* Render file list with drag handles */
   function renderJoinList() {
     if (!fileListJoin) return;
 
     fileListJoin.innerHTML = filesJoin.map((f, i) => `
-      <li class="file-item">
+      <li class="file-item" draggable="true" data-index="${i}">
+        <span class="drag-handle">☰</span>
         <span class="file-name">${f.name}</span>
         <button class="file-remove" onclick="removeFileJoin(${i})">Remove</button>
       </li>
     `).join('');
 
-    if (processJoinBtn) {
-      processJoinBtn.disabled = filesJoin.length < 2;
-    }
+    enableDragReorder();
+  }
+
+  /* Drag + Drop Reorder Logic */
+  function enableDragReorder() {
+    const items = fileListJoin.querySelectorAll('.file-item');
+
+    items.forEach(item => {
+      item.addEventListener('dragstart', e => {
+        dragIndex = Number(e.target.dataset.index);
+        e.dataTransfer.effectAllowed = "move";
+      });
+
+      item.addEventListener('dragover', e => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+      });
+
+      item.addEventListener('drop', e => {
+        e.preventDefault();
+        const dropIndex = Number(e.target.closest('.file-item').dataset.index);
+
+        const moved = filesJoin.splice(dragIndex, 1)[0];
+        filesJoin.splice(dropIndex, 0, moved);
+
+        renderJoinList();
+      });
+    });
   }
 
   /* Remove file */
