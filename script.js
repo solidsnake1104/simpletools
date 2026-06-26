@@ -13,7 +13,7 @@
   const year = document.getElementById('year');
   if(year) year.textContent = new Date().getFullYear();
 
-  const saved = localStorage.getItem('simpletools-theme');
+  const saved = localStorage.getItem('simplertools-theme');
   if(saved){
     if(saved==='auto') setTheme(detectSeason()); else setTheme(saved);
     if(select) select.value = saved;
@@ -25,7 +25,7 @@
   if(select){
     select.addEventListener('change', (e)=>{
       const v = e.target.value;
-      localStorage.setItem('simpletools-theme', v);
+      localStorage.setItem('simplertools-theme', v);
       if(v==='auto') setTheme(detectSeason()); else setTheme(v);
     });
   }
