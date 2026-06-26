@@ -6,7 +6,7 @@
 
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>PDF/DOCX Joiner & Separator • SimpleTools</title>
+  <title>PDF Joiner • SimpleTools</title>
   <link rel="stylesheet" href="../styles.css" />
   <link rel="icon" type="image/png" href="../site_icon.png" />
   <link rel="shortcut icon" type="image/png" href="../site_icon.png" />
@@ -19,65 +19,37 @@
         <img src="../logo_transparent.png" alt="SimpleTools logo" class="site-logo" />
       </a>
 
-      <h1 class="logo">PDF/DOCX Joiner & Separator</h1>
+      <h1 class="logo">PDF Joiner</h1>
     </div>
   </header>
 
   <main class="tool-container">
+
+    <!-- MODE TABS (only Join remains) -->
     <section class="tool-section">
       <h2>Select Mode</h2>
       <div class="mode-tabs">
         <button class="mode-tab active" data-mode="join">Join Documents</button>
-        <button class="mode-tab" data-mode="split">Split PDF</button>
-        <button class="mode-tab" data-mode="image">Image to PDF</button>
       </div>
     </section>
 
-    <!-- JOIN MODE -->
+    <!-- JOIN MODE ONLY -->
     <section class="tool-section" id="joinMode">
       <h2>Select Files to Join</h2>
       <div class="upload-area" id="uploadAreaJoin">
         <p><strong>Click to upload or drag and drop</strong></p>
-        <p style="color:var(--muted);font-size:0.9rem;">Select multiple PDF or DOCX files</p>
-        <input type="file" id="fileInputJoin" class="file-input" multiple accept=".pdf,.docx" />
+        <p style="color:var(--muted);font-size:0.9rem;">Select multiple PDF files</p>
+        <input type="file" id="fileInputJoin" class="file-input" multiple accept=".pdf" />
       </div>
       <ul class="file-list" id="fileListJoin"></ul>
       <button class="btn" id="processJoinBtn" disabled>Join Documents</button>
     </section>
 
-    <!-- SPLIT MODE -->
-    <section class="tool-section" id="splitMode" style="display:none;">
-      <h2>Select PDF to Split</h2>
-      <div class="upload-area" id="uploadAreaSplit">
-        <p><strong>Click to upload or drag and drop</strong></p>
-        <p style="color:var(--muted);font-size:0.9rem;">PDF file only</p>
-        <input type="file" id="fileInputSplit" class="file-input" accept=".pdf" />
-      </div>
-      <div id="splitOptions" style="display:none;">
-        <div class="form-group">
-          <label for="pageRange">Page Range (e.g., 1-3, 5-7)</label>
-          <input type="text" id="pageRange" placeholder="1-10" />
-        </div>
-        <button class="btn" id="processSplitBtn">Split PDF</button>
-      </div>
-    </section>
-
-    <!-- IMAGE MODE -->
-    <section class="tool-section" id="imageMode" style="display:none;">
-      <h2>Select Images to Convert</h2>
-      <div class="upload-area" id="uploadAreaImage">
-        <p><strong>Click to upload or drag and drop</strong></p>
-        <p style="color:var(--muted);font-size:0.9rem;">JPG, PNG, or HEIC images</p>
-        <input type="file" id="fileInputImage" class="file-input" multiple accept="image/*" />
-      </div>
-      <ul class="file-list" id="fileListImage"></ul>
-      <button class="btn" id="processImageBtn" disabled>Convert to PDF</button>
-    </section>
-
     <section class="tool-section" style="margin-top:3rem;padding-top:2rem;border-top:1px solid rgba(255,255,255,0.06);">
       <h3>About This Tool</h3>
-      <p>Join, split, and convert documents. All processing is performed in your browser — no files are uploaded to any server.</p>
+      <p>Join documents directly in your browser — no files are uploaded to any server.</p>
     </section>
+
   </main>
 
   <footer class="site-footer">
