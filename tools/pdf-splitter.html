@@ -1,0 +1,1496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PDF Page Picker</title>
+<script>
+  // Inject favicon links dynamically to avoid any markup mangling
+  (function addFavicons() {
+    const links = [
+      { rel: 'icon',           type: 'image/x-icon', href: 'icon.ico' },
+      { rel: 'icon',           type: 'image/png',    href: 'icon.png' },
+      { rel: 'shortcut icon',  type: 'image/x-icon', href: 'icon.ico' },
+      { rel: 'apple-touch-icon',                     href: 'icon.png' }
+    ];
+    links.forEach(opts => {
+      const l = document.createElement('link');
+      Object.keys(opts).forEach(k => l[k === 'rel' ? 'rel' : k] = opts[k]);
+      document.head.appendChild(l);
+    });
+  })();
+
+  function loadScript(url) {
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = url;
+      s.onload = () => resolve(url);
+      s.onerror = () => reject(new Error('Failed to load ' + url));
+      document.head.appendChild(s);
+    });
+  }
+  window.__libsReady = (async () => {
+    try {
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+      await loadScript('https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js');
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      return true;
+    } catch (e) {
+      console.error(e);
+      alert('Could not load PDF libraries: ' + e.message);
+      return false;
+    }
+  })();
+</script>
+<style>
+  :root {
+    --bg-1: #07090f;
+    --bg-2: #0e1320;
+    --panel: #12161f;
+    --panel-hover: #1c2230;
+    --border: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.16);
+    --accent: #4ea8ff;
+    --accent-2: #6bc1ff;
+    --accent-glow: rgba(78, 168, 255, 0.35);
+    --success: #4ade80;
+    --success-glow: rgba(74, 222, 128, 0.4);
+    --danger: #ff6b6b;
+    --danger-glow: rgba(255, 107, 107, 0.4);
+    --text: #e6e8ee;
+    --text-dim: #8a909e;
+    --text-faint: #5b6170;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--text);
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(78,168,255,0.08), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgba(140,90,255,0.06), transparent 60%),
+      linear-gradient(180deg, var(--bg-2) 0%, var(--bg-1) 100%);
+    background-attachment: fixed;
+    overflow: hidden;
+  }
+  body { display: flex; flex-direction: column; height: 100vh; }
+
+  header {
+    flex: 0 0 auto;
+    padding: 12px 18px;
+    background: rgba(10, 12, 18, 0.7);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  header h1 { font-size: 16px; font-weight: 600; margin-right: auto; }
+  .btn {
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border-strong);
+    background: var(--panel);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+  }
+  .btn:hover { background: var(--panel-hover); border-color: rgba(255,255,255,0.25); }
+  .btn:active { transform: translateY(1px); }
+  .btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #08111c;
+    box-shadow: 0 0 0 1px rgba(78,168,255,0.35), 0 4px 18px var(--accent-glow);
+  }
+  .btn.primary:hover { background: var(--accent-2); border-color: var(--accent-2); }
+  .btn.success {
+    background: var(--success);
+    border-color: var(--success);
+    color: #062a13;
+    box-shadow: 0 0 0 1px rgba(74,222,128,0.35), 0 4px 18px var(--success-glow);
+  }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  input[type="file"] { display: none; }
+  .count-pill {
+    padding: 6px 12px;
+    border-radius: 16px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .num-input {
+    width: 100%;
+    padding: 7px 8px;
+    border-radius: 8px;
+    border: 1px solid var(--border-strong);
+    background: #0b0e16;
+    color: var(--text);
+    font-size: 13px;
+    text-align: center;
+  }
+  .num-input:focus { outline: none; border-color: var(--accent); }
+  #status { font-size: 12px; color: var(--text-dim); min-width: 80px; }
+
+  .body-wrap { flex: 1 1 auto; display: flex; overflow: hidden; min-height: 0; }
+
+  aside {
+    flex: 0 0 310px;
+    background: rgba(10, 12, 18, 0.6);
+    border-right: 1px solid var(--border);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    overflow-y: auto;
+    padding: 12px 8px;
+    height: 100%;
+  }
+  .right-col {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .side-title {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    color: var(--text-faint);
+    padding: 10px 10px 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .side-title .mini-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .side-title .mini-btn:hover { background: var(--panel-hover); color: var(--text); }
+  .side-jump {
+    padding: 4px 8px 10px;
+    display: flex;
+    gap: 6px;
+  }
+  .side-jump .num-input { flex: 1; width: auto; }
+
+  .tree-node { }
+  .outline-row {
+    padding: 6px 8px 6px 6px;
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text);
+    transition: background 0.15s;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .outline-row:hover { background: var(--panel-hover); }
+  .outline-row.has-children > .label { font-weight: 500; }
+  .outline-row .twisty {
+    flex: 0 0 16px;
+    width: 16px;
+    height: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-faint);
+    font-size: 10px;
+    transition: transform 0.18s ease;
+    user-select: none;
+  }
+  .outline-row.has-children.expanded .twisty { transform: rotate(90deg); color: var(--accent-2); }
+  .outline-row .twisty.empty { visibility: hidden; }
+  .outline-row .label {
+    flex: 1 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .outline-row .pg {
+    flex: 0 0 auto;
+    font-size: 11px;
+    color: var(--text-faint);
+    font-variant-numeric: tabular-nums;
+  }
+  .outline-children {
+    margin-left: 14px;
+    border-left: 1px solid var(--border);
+    padding-left: 4px;
+    overflow: hidden;
+    display: none;
+  }
+  .outline-row.has-children.expanded + .outline-children { display: block; }
+  .side-note {
+    padding: 6px 10px 12px;
+    font-size: 11px;
+    color: var(--text-faint);
+    font-style: italic;
+    line-height: 1.5;
+  }
+
+  main {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 16px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 14px;
+    align-content: start;
+  }
+  main::-webkit-scrollbar, aside::-webkit-scrollbar { width: 8px; }
+  main::-webkit-scrollbar-thumb, aside::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.08);
+    border-radius: 4px;
+  }
+  .page-card {
+    position: relative;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+    display: flex;
+    flex-direction: column;
+  }
+  .page-card:hover { transform: translateY(-2px); border-color: rgba(255, 255, 255, 0.22); }
+  .page-card .thumb {
+    position: relative;
+    aspect-ratio: 3 / 4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #1a1a1a;
+    flex: 0 0 auto;
+  }
+  .page-card canvas {
+    width: 100%; height: 100%;
+    object-fit: contain;
+    background: #1a1a1a;
+    display: block;
+  }
+  .page-card .title-bar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    z-index: 2;
+    padding: 6px 38px 8px 38px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #ffffff;
+    text-align: center;
+    background: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.55) 70%, rgba(0,0,0,0) 100%);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    letter-spacing: 0.3px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+    pointer-events: none;
+  }
+  .page-card .title-bar.dim { color: rgba(255,255,255,0.65); font-weight: 500; font-style: italic; }
+  .page-card.selected {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent), 0 6px 22px var(--accent-glow);
+  }
+  .page-card.target {
+    outline: 2px dashed var(--accent-2);
+    outline-offset: 2px;
+  }
+  .page-card .num {
+    position: absolute; top: 6px; left: 6px; z-index: 3;
+    background: rgba(0, 0, 0, 0.78); color: #fff;
+    padding: 2px 7px; border-radius: 6px;
+    font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums;
+  }
+  .page-card .check {
+    position: absolute; top: 6px; right: 6px; z-index: 3;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--accent); display: none;
+    align-items: center; justify-content: center;
+    color: #08111c; font-weight: bold; font-size: 13px;
+  }
+  .page-card.selected .check { display: flex; }
+  .page-card .card-foot {
+    flex: 0 0 auto;
+    padding: 8px 10px;
+    background: rgba(0,0,0,0.35);
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: center;
+  }
+  .page-card .view-btn {
+    height: 32px;
+    padding: 0 16px;
+    border-radius: 16px;
+    background: var(--accent);
+    color: #08111c;
+    border: 2px solid #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    font-size: 13px;
+    font-weight: 700;
+    font-family: inherit;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .page-card .view-btn:hover {
+    background: var(--accent-2);
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(78,168,255,0.5);
+  }
+  .page-card .view-btn svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+  .page-card.loading .thumb::before {
+    content: ''; position: absolute; inset: 0; z-index: 1;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+    animation: shimmer 1.4s infinite;
+  }
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+  .empty-state {
+    grid-column: 1 / -1; text-align: center;
+    padding: 60px 20px; color: var(--text-dim); font-size: 14px;
+  }
+  .empty-state small { display:block; margin-top: 8px; font-size: 12px; color: var(--text-faint); }
+
+  footer {
+    flex: 0 0 auto;
+    background: rgba(8, 10, 16, 0.85);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    border-top: 1px solid var(--border);
+    padding: 10px 18px;
+    max-height: 200px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .preview-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-faint); }
+  .preview-strip {
+    display: flex; gap: 8px;
+    overflow-x: auto; padding: 4px 2px 6px;
+    min-height: 130px; align-items: center;
+  }
+  .preview-strip::-webkit-scrollbar { height: 7px; }
+  .preview-strip::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.12); border-radius: 4px; }
+  .preview-item {
+    flex: 0 0 auto; height: 118px; aspect-ratio: 3 / 4;
+    border-radius: 7px; overflow: hidden;
+    background: #1a1a1a; border: 1px solid var(--border);
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .preview-item:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent);
+    box-shadow: 0 6px 18px rgba(78,168,255,0.35);
+  }
+  .preview-item:hover .pnum {
+    background: var(--accent);
+    color: #08111c;
+  }
+  .preview-item img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .preview-item .pnum {
+    position: absolute; bottom: 3px; right: 3px;
+    background: rgba(0, 0, 0, 0.78); color: #fff;
+    font-size: 10px; padding: 2px 5px; border-radius: 4px;
+    font-variant-numeric: tabular-nums;
+    transition: background 0.15s, color 0.15s;
+  }
+  .preview-empty {
+    color: var(--text-faint); font-size: 12px;
+    padding: 38px 0; width: 100%; text-align: center;
+  }
+  .preview-more { color: var(--text-dim); font-size: 12px; padding: 0 14px; flex: 0 0 auto; }
+
+  .modal-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.65);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 30px;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: linear-gradient(180deg, #161b27, #0f1320);
+    border: 1px solid var(--border-strong);
+    border-radius: 16px;
+    max-width: 1100px;
+    width: 100%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  }
+  .modal-head {
+    padding: 16px 22px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .modal-head h2 {
+    font-size: 17px;
+    font-weight: 600;
+    margin-right: auto;
+  }
+  .filename-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--panel);
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    padding: 4px 8px;
+  }
+  .filename-group label { font-size: 12px; color: var(--text-dim); padding-right: 4px; }
+  .filename-group input {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-size: 14px;
+    padding: 6px 4px;
+  }
+  .filename-group input:focus { outline: none; }
+  .filename-group input.wo { width: 130px; }
+  .filename-group input.suffix-input { width: 180px; text-align: left; }
+  .filename-group .sep { color: var(--text-faint); font-size: 13px; padding: 0 2px; }
+  .filename-group .ext { font-size: 13px; color: var(--text-faint); padding-left: 4px; }
+
+  .modal-body {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 18px 22px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+    align-content: start;
+  }
+  .modal-body::-webkit-scrollbar { width: 8px; }
+  .modal-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+  .lg-preview {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .lg-preview .lp-thumb {
+    position: relative;
+    aspect-ratio: 3 / 4;
+    background: #1a1a1a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .lg-preview .lp-thumb img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .lg-preview .lp-title {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    z-index: 2;
+    padding: 8px 12px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 14px;
+    color: #ffffff;
+    background: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.55) 70%, rgba(0,0,0,0) 100%);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+    pointer-events: none;
+    letter-spacing: 0.3px;
+  }
+  .lg-preview .lp-foot {
+    padding: 6px 10px;
+    font-size: 11px;
+    color: var(--text-faint);
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    border-top: 1px solid var(--border);
+  }
+  .modal-foot {
+    padding: 14px 22px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    align-items: center;
+  }
+  .modal-foot .modal-info { margin-right: auto; font-size: 12px; color: var(--text-dim); }
+
+  .result-modal {
+    background: linear-gradient(180deg, #161b27, #0f1320);
+    border: 1px solid var(--border-strong);
+    border-radius: 16px;
+    max-width: 460px;
+    width: 100%;
+    padding: 28px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  }
+  .result-icon {
+    width: 64px; height: 64px;
+    margin: 0 auto 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    font-weight: bold;
+  }
+  .result-icon.success {
+    background: rgba(74,222,128,0.15);
+    color: var(--success);
+    box-shadow: 0 0 0 6px rgba(74,222,128,0.07);
+  }
+  .result-icon.error {
+    background: rgba(255,107,107,0.15);
+    color: var(--danger);
+    box-shadow: 0 0 0 6px rgba(255,107,107,0.07);
+  }
+  .result-title { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+  .result-msg {
+    font-size: 14px;
+    color: var(--text-dim);
+    margin-bottom: 20px;
+    line-height: 1.5;
+    word-break: break-word;
+  }
+  .result-actions {
+    display: flex; gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .reader-overlay {
+    position: fixed; inset: 0;
+    background: rgba(5, 7, 12, 0.97);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    display: none;
+    flex-direction: column;
+    z-index: 1500;
+  }
+  .reader-overlay.open { display: flex; }
+  .reader-head {
+    flex: 0 0 auto;
+    padding: 10px 18px;
+    background: rgba(10, 12, 18, 0.85);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .reader-head h3 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-right: auto;
+    color: var(--text);
+  }
+  .reader-head .rtitle {
+    color: var(--accent-2);
+    font-weight: 600;
+    margin-left: 8px;
+  }
+  .reader-nav {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--panel);
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    padding: 3px 6px;
+  }
+  .reader-nav .nav-btn {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    padding: 6px 10px;
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.15s;
+  }
+  .reader-nav .nav-btn:hover { background: var(--panel-hover); }
+  .reader-nav .nav-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .reader-nav .page-display {
+    font-size: 13px;
+    color: var(--text-dim);
+    padding: 0 6px;
+    font-variant-numeric: tabular-nums;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .reader-nav .page-display input {
+    width: 60px;
+    padding: 5px 6px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: #0b0e16;
+    color: var(--text);
+    font-size: 13px;
+    text-align: center;
+  }
+  .reader-nav .page-display input:focus { outline: none; border-color: var(--accent); }
+  .reader-stage {
+    flex: 1 1 auto;
+    overflow: auto;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+  }
+  .reader-stage::-webkit-scrollbar { width: 10px; height: 10px; }
+  .reader-stage::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 5px; }
+  .reader-canvas-wrap {
+    background: #fff;
+    border-radius: 6px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+    position: relative;
+    line-height: 0;
+  }
+  .reader-canvas-wrap canvas { display: block; max-width: 100%; height: auto; }
+  .reader-canvas-wrap.loading::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    animation: shimmer 1.4s infinite;
+    border-radius: 6px;
+  }
+  .reader-select-toggle { margin-left: 8px; }
+  .reader-select-toggle.selected {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #08111c;
+  }
+  .reader-close {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .reader-close:hover { background: var(--panel-hover); }
+  .reader-hint {
+    font-size: 11px;
+    color: var(--text-faint);
+    padding: 6px 18px;
+    text-align: center;
+    border-top: 1px solid var(--border);
+    background: rgba(10, 12, 18, 0.85);
+  }
+</style>
+</head>
+<body>
+  <header>
+    <h1>PDF Page Picker</h1>
+    <label for="fileInput" class="btn">Open PDF</label>
+    <input type="file" id="fileInput" accept="application/pdf" />
+    <button class="btn" id="clearBtn" disabled>Clear All</button>
+    <span class="count-pill" id="countPill">0 selected</span>
+    <span id="status"></span>
+    <button class="btn primary" id="openSaveBtn" disabled>Save as PDF</button>
+  </header>
+
+  <div class="body-wrap">
+    <aside id="sidebar">
+      <div class="side-title">Jump to page</div>
+      <div class="side-jump">
+        <input type="number" id="jumpInput" class="num-input" placeholder="Page #" min="1" />
+        <button class="btn" id="jumpBtn" disabled>Go</button>
+      </div>
+      <div class="side-title">
+        <span id="navTitle">Navigation</span>
+        <button class="mini-btn" id="expandAllBtn" type="button">Expand all</button>
+      </div>
+      <div id="outlineList">
+        <div class="side-note">Open a PDF to see navigation here.</div>
+      </div>
+    </aside>
+
+    <div class="right-col">
+      <main id="pageGrid">
+        <div class="empty-state">
+          Open a PDF to begin.
+          <small>Use the navigation on the left to jump to sections after the file loads.</small>
+        </div>
+      </main>
+
+      <footer>
+        <div class="preview-label">Live preview of selected pages (click any to jump to it)</div>
+        <div class="preview-strip" id="previewStrip">
+          <div class="preview-empty">No pages selected yet</div>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="saveModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h2>Review selected pages</h2>
+        <div class="filename-group">
+          <label>File name:</label>
+          <input type="text" id="woInput" class="wo" placeholder="WO#" />
+          <span class="sep">·</span>
+          <input type="text" id="suffixInput" class="suffix-input" value="standards" />
+          <span class="ext">.pdf</span>
+        </div>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-foot">
+        <span class="modal-info" id="modalInfo"></span>
+        <button class="btn" id="cancelSaveBtn">Cancel</button>
+        <button class="btn primary" id="confirmSaveBtn">Save PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="resultModal">
+    <div class="result-modal">
+      <div class="result-icon" id="resultIcon"></div>
+      <div class="result-title" id="resultTitle"></div>
+      <div class="result-msg" id="resultMsg"></div>
+      <div class="result-actions" id="resultActions"></div>
+    </div>
+  </div>
+
+  <div class="reader-overlay" id="readerOverlay">
+    <div class="reader-head">
+      <h3>Document Reader<span class="rtitle" id="readerTitle"></span></h3>
+      <div class="reader-nav">
+        <button class="nav-btn" id="readerPrev" title="Previous page (←)">‹ Prev</button>
+        <div class="page-display">
+          Page
+          <input type="number" id="readerPageInput" min="1" />
+          <span id="readerTotal">/ 0</span>
+        </div>
+        <button class="nav-btn" id="readerNext" title="Next page (→)">Next ›</button>
+      </div>
+      <button class="btn reader-select-toggle" id="readerToggleSelect">Add to selection</button>
+      <button class="reader-close" id="readerClose" title="Close (Esc)">✕</button>
+    </div>
+    <div class="reader-stage" id="readerStage">
+      <div class="reader-canvas-wrap" id="readerCanvasWrap">
+        <canvas id="readerCanvas"></canvas>
+      </div>
+    </div>
+    <div class="reader-hint">← → arrow keys to navigate · Esc to close · Spacebar to toggle selection</div>
+  </div>
+
+<script>
+  const fileInput     = document.getElementById('fileInput');
+  const pageGrid      = document.getElementById('pageGrid');
+  const previewStrip  = document.getElementById('previewStrip');
+  const countPill     = document.getElementById('countPill');
+  const openSaveBtn   = document.getElementById('openSaveBtn');
+  const clearBtn      = document.getElementById('clearBtn');
+  const outlineList   = document.getElementById('outlineList');
+  const navTitle      = document.getElementById('navTitle');
+  const jumpInput     = document.getElementById('jumpInput');
+  const jumpBtn       = document.getElementById('jumpBtn');
+  const statusEl      = document.getElementById('status');
+  const expandAllBtn  = document.getElementById('expandAllBtn');
+  const saveModal     = document.getElementById('saveModal');
+  const modalBody     = document.getElementById('modalBody');
+  const modalInfo     = document.getElementById('modalInfo');
+  const woInput       = document.getElementById('woInput');
+  const suffixInput   = document.getElementById('suffixInput');
+  const cancelSaveBtn = document.getElementById('cancelSaveBtn');
+  const confirmSaveBtn= document.getElementById('confirmSaveBtn');
+  const resultModal   = document.getElementById('resultModal');
+  const resultIcon    = document.getElementById('resultIcon');
+  const resultTitle   = document.getElementById('resultTitle');
+  const resultMsg     = document.getElementById('resultMsg');
+  const resultActions = document.getElementById('resultActions');
+
+  const readerOverlay   = document.getElementById('readerOverlay');
+  const readerTitle     = document.getElementById('readerTitle');
+  const readerPrev      = document.getElementById('readerPrev');
+  const readerNext      = document.getElementById('readerNext');
+  const readerPageInput = document.getElementById('readerPageInput');
+  const readerTotal     = document.getElementById('readerTotal');
+  const readerToggleSel = document.getElementById('readerToggleSelect');
+  const readerClose     = document.getElementById('readerClose');
+  const readerStage     = document.getElementById('readerStage');
+  const readerCanvas    = document.getElementById('readerCanvas');
+  const readerCanvasWrap= document.getElementById('readerCanvasWrap');
+
+  let pdfDoc = null;
+  let originalFile = null;
+  const selected = new Set();
+  const previewCache = new Map();
+  const titleCache = new Map();
+  let renderToken = 0;
+  let readerToken = 0;
+  let readerPage = 1;
+  const PAGE_WINDOW_AFTER = 5;
+  const MAX_RANGE = 300;
+  const PREVIEW_CAP = 80;
+
+  function setStatus(msg) { statusEl.textContent = msg || ''; }
+
+  fileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    await beginLoad(file);
+    e.target.value = '';
+  });
+
+  async function beginLoad(file) {
+    try {
+      setStatus('Loading libraries…');
+      const ok = await window.__libsReady;
+      if (!ok) { setStatus('Libraries failed to load'); return; }
+      setStatus('Loading PDF…');
+      originalFile = file;
+      const arrayBuf = await file.arrayBuffer();
+      const data = new Uint8Array(arrayBuf);
+      await loadPdf(data);
+      setStatus('');
+    } catch (err) {
+      console.error('PDF open failed:', err);
+      let msg = 'Failed to open PDF';
+      if (err && err.name === 'PasswordException') msg = 'PDF is password-protected';
+      else if (err && err.name === 'InvalidPDFException') msg = 'Invalid or corrupted PDF';
+      else if (err && err.message) msg = 'Open failed: ' + err.message;
+      setStatus(msg);
+      alert(msg);
+    }
+  }
+
+  async function loadPdf(data) {
+    const loadingTask = pdfjsLib.getDocument({ data, disableAutoFetch: true, disableStream: true });
+    pdfDoc = await loadingTask.promise;
+    selected.clear();
+    previewCache.clear();
+    titleCache.clear();
+    refreshPreviewFull();
+    const total = pdfDoc.numPages;
+    jumpInput.max = total;
+    clearBtn.disabled = false;
+    jumpBtn.disabled = false;
+    await buildNavigation();
+    pageGrid.innerHTML = `
+      <div class="empty-state">
+        Loaded ${total} page${total === 1 ? '' : 's'}.
+        <small>Pick a section from the navigation or jump to a page to render.</small>
+      </div>`;
+    updateUI();
+  }
+
+  async function buildNavigation() {
+    outlineList.innerHTML = '';
+    let outline = null;
+    try { outline = await pdfDoc.getOutline(); } catch (e) { console.warn('getOutline failed', e); }
+    if (outline && outline.length > 0) {
+      navTitle.textContent = 'Document Outline';
+      const tree = document.createElement('div');
+      const resolveQueue = [];
+      buildOutlineNodes(outline, tree, resolveQueue);
+      outlineList.appendChild(tree);
+      let resolvedCount = 0;
+      await Promise.all(resolveQueue.map(async ({ node, row, pgLabel }) => {
+        try {
+          let dest = node.dest;
+          if (typeof dest === 'string') dest = await pdfDoc.getDestination(dest);
+          if (Array.isArray(dest) && dest[0]) {
+            const idx = await pdfDoc.getPageIndex(dest[0]);
+            const pageNum = idx + 1;
+            pgLabel.textContent = 'p. ' + pageNum;
+            row.dataset.pageNum = pageNum;
+            const t = (node.title || '').trim();
+            if (t && !titleCache.has(pageNum)) titleCache.set(pageNum, t);
+            resolvedCount++;
+          }
+        } catch (e) { }
+      }));
+      if (resolvedCount === 0) {
+        outlineList.innerHTML = '';
+        buildChunkNavigation('Outline could not be resolved. Showing page chunks instead.');
+      }
+    } else {
+      buildChunkNavigation('This PDF has no bookmarks. Use the chunks below or jump to a page.');
+    }
+  }
+
+  function buildOutlineNodes(nodes, parent, queue) {
+    for (const node of nodes) {
+      const wrap = document.createElement('div');
+      wrap.className = 'tree-node';
+      const row = document.createElement('div');
+      row.className = 'outline-row';
+      const twisty = document.createElement('span');
+      twisty.className = 'twisty';
+      const hasKids = !!(node.items && node.items.length);
+      if (hasKids) { row.classList.add('has-children'); twisty.textContent = '\u25B6'; }
+      else { twisty.classList.add('empty'); }
+      row.appendChild(twisty);
+      const label = document.createElement('span');
+      label.className = 'label';
+      label.textContent = node.title || '(untitled)';
+      row.appendChild(label);
+      const pgLabel = document.createElement('span');
+      pgLabel.className = 'pg';
+      row.appendChild(pgLabel);
+      wrap.appendChild(row);
+      queue.push({ node, row, pgLabel });
+      if (hasKids) {
+        const childWrap = document.createElement('div');
+        childWrap.className = 'outline-children';
+        wrap.appendChild(childWrap);
+        buildOutlineNodes(node.items, childWrap, queue);
+      }
+      twisty.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        if (hasKids) row.classList.toggle('expanded');
+      });
+      row.addEventListener('click', (ev) => {
+        if (ev.target === twisty) return;
+        const pn = parseInt(row.dataset.pageNum, 10);
+        if (Number.isFinite(pn)) jumpToPage(pn);
+        else if (hasKids) row.classList.toggle('expanded');
+      });
+      parent.appendChild(wrap);
+    }
+  }
+
+  function buildChunkNavigation(note) {
+    navTitle.textContent = 'Page Sections';
+    const noteDiv = document.createElement('div');
+    noteDiv.className = 'side-note';
+    noteDiv.textContent = note;
+    outlineList.appendChild(noteDiv);
+    const total = pdfDoc.numPages;
+    let chunk = 100;
+    if (total > 1000) chunk = 200;
+    if (total > 3000) chunk = 500;
+    for (let s = 1; s <= total; s += chunk) {
+      const e = Math.min(s + chunk - 1, total);
+      const wrap = document.createElement('div');
+      wrap.className = 'tree-node';
+      const row = document.createElement('div');
+      row.className = 'outline-row';
+      const twisty = document.createElement('span');
+      twisty.className = 'twisty empty';
+      const label = document.createElement('span');
+      label.className = 'label';
+      label.textContent = `Pages ${s}–${e}`;
+      const pgLabel = document.createElement('span');
+      pgLabel.className = 'pg';
+      pgLabel.textContent = `${e - s + 1} pgs`;
+      row.appendChild(twisty);
+      row.appendChild(label);
+      row.appendChild(pgLabel);
+      wrap.appendChild(row);
+      row.addEventListener('click', () => renderRange(s, e, s));
+      outlineList.appendChild(wrap);
+    }
+  }
+
+  expandAllBtn.addEventListener('click', () => {
+    const rows = outlineList.querySelectorAll('.outline-row.has-children');
+    const anyCollapsed = [...rows].some(r => !r.classList.contains('expanded'));
+    rows.forEach(r => r.classList.toggle('expanded', anyCollapsed));
+    expandAllBtn.textContent = anyCollapsed ? 'Collapse all' : 'Expand all';
+  });
+
+  function jumpToPage(pageNum) {
+    if (!pdfDoc) return;
+    const total = pdfDoc.numPages;
+    const start = Math.max(1, Math.min(total, pageNum));
+    const end = Math.min(total, start + PAGE_WINDOW_AFTER);
+    renderRange(start, end, start);
+  }
+
+  async function detectPageTitle(pageNum) {
+    if (titleCache.has(pageNum)) return titleCache.get(pageNum);
+    try {
+      const page = await pdfDoc.getPage(pageNum);
+      const tc = await page.getTextContent();
+      if (!tc.items.length) { titleCache.set(pageNum, null); return null; }
+      const vp = page.getViewport({ scale: 1 });
+      const candidates = tc.items
+        .filter(it => it.str && it.str.trim())
+        .map(it => {
+          const y = it.transform ? it.transform[5] : 0;
+          const topY = vp.height - y;
+          return { str: it.str.trim(), topY };
+        });
+      if (!candidates.length) { titleCache.set(pageNum, null); return null; }
+      const topZoneCutoff = vp.height * 0.18;
+      const topZone = candidates.filter(c => c.topY <= topZoneCutoff);
+      const pool = topZone.length ? topZone : candidates.slice(0, 8);
+      const codeRe = /^[A-Z0-9][A-Z0-9.\-/]{2,30}$/i;
+      let best = pool.find(c => codeRe.test(c.str));
+      if (!best) best = pool.slice().sort((a,b) => a.topY - b.topY).find(c => c.str.length <= 60);
+      const title = best ? best.str : null;
+      titleCache.set(pageNum, title);
+      return title;
+    } catch (e) {
+      titleCache.set(pageNum, null);
+      return null;
+    }
+  }
+
+  async function renderRange(start, end, targetPage = null) {
+    if (!pdfDoc) return;
+    start = Math.max(1, Math.min(pdfDoc.numPages, start|0));
+    end   = Math.max(start, Math.min(pdfDoc.numPages, end|0));
+    if (end - start + 1 > MAX_RANGE) end = start + MAX_RANGE - 1;
+    const myToken = ++renderToken;
+    pageGrid.innerHTML = '';
+    setStatus(`Rendering pages ${start}–${end}…`);
+
+    const cards = [];
+    for (let i = start; i <= end; i++) {
+      const card = document.createElement('div');
+      card.className = 'page-card loading';
+      card.dataset.page = i;
+
+      const thumb = document.createElement('div');
+      thumb.className = 'thumb';
+      const numTag = document.createElement('div');
+      numTag.className = 'num';
+      numTag.textContent = i;
+      const checkTag = document.createElement('div');
+      checkTag.className = 'check';
+      checkTag.innerHTML = '&#10003;';
+      const canvas = document.createElement('canvas');
+      const titleBar = document.createElement('div');
+      titleBar.className = 'title-bar dim';
+      titleBar.textContent = '…';
+
+      const viewBtn = document.createElement('button');
+      viewBtn.className = 'view-btn';
+      viewBtn.title = 'Open this page in the full document reader';
+      viewBtn.type = 'button';
+      viewBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="20" y1="20" x2="16.5" y2="16.5"/></svg><span>View</span>';
+      viewBtn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        ev.preventDefault();
+        openReader(i);
+      });
+
+      thumb.appendChild(canvas);
+      thumb.appendChild(titleBar);
+      thumb.appendChild(numTag);
+      thumb.appendChild(checkTag);
+      card.appendChild(thumb);
+
+      const cardFoot = document.createElement('div');
+      cardFoot.className = 'card-foot';
+      cardFoot.appendChild(viewBtn);
+      card.appendChild(cardFoot);
+
+      pageGrid.appendChild(card);
+      if (selected.has(i)) card.classList.add('selected');
+      if (targetPage && i === targetPage) card.classList.add('target');
+      card.addEventListener('click', () => toggleSelect(i, card));
+      cards.push({ i, card, canvas, titleBar });
+    }
+
+    if (targetPage) {
+      const tgt = pageGrid.querySelector(`.page-card[data-page="${targetPage}"]`);
+      if (tgt) tgt.scrollIntoView({ block: 'center', behavior: 'auto' });
+    }
+
+    for (const { i, card, canvas, titleBar } of cards) {
+      if (myToken !== renderToken) return;
+      try {
+        const page = await pdfDoc.getPage(i);
+        if (myToken !== renderToken) return;
+        const viewport = page.getViewport({ scale: 0.6 });
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+        card.classList.remove('loading');
+        detectPageTitle(i).then(t => {
+          if (t) { titleBar.textContent = t; titleBar.classList.remove('dim'); }
+          else   { titleBar.textContent = `Page ${i}`; }
+        });
+      } catch (e) {
+        if (myToken === renderToken) console.warn('Page render failed', i, e);
+      }
+    }
+    if (myToken === renderToken) setStatus('');
+  }
+
+  async function toggleSelect(pageNum, card) {
+    if (selected.has(pageNum)) {
+      selected.delete(pageNum);
+      if (card) card.classList.remove('selected');
+    } else {
+      selected.add(pageNum);
+      if (card) card.classList.add('selected');
+    }
+    document.querySelectorAll(`.page-card[data-page="${pageNum}"]`).forEach(c => {
+      c.classList.toggle('selected', selected.has(pageNum));
+    });
+    await refreshPreviewIncremental();
+    updateUI();
+  }
+
+  async function getPreviewDataUrl(pn, scale = 0.4) {
+    const key = `${pn}@${scale}`;
+    if (previewCache.has(key)) return previewCache.get(key);
+    const page = await pdfDoc.getPage(pn);
+    const viewport = page.getViewport({ scale });
+    const canvas = document.createElement('canvas');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+    const url = canvas.toDataURL('image/jpeg', 0.75);
+    previewCache.set(key, url);
+    return url;
+  }
+
+  function refreshPreviewFull() {
+    previewStrip.innerHTML = '';
+    if (selected.size === 0) {
+      previewStrip.innerHTML = '<div class="preview-empty">No pages selected yet</div>';
+    }
+  }
+
+  async function refreshPreviewIncremental() {
+    const sortedPages = [...selected].sort((a, b) => a - b);
+    previewStrip.innerHTML = '';
+    if (sortedPages.length === 0) {
+      previewStrip.innerHTML = '<div class="preview-empty">No pages selected yet</div>';
+      return;
+    }
+    const showList = sortedPages.slice(0, PREVIEW_CAP);
+    const items = showList.map(pn => {
+      const item = document.createElement('div');
+      item.className = 'preview-item';
+      item.title = 'Jump to page ' + pn;
+      const img = document.createElement('img');
+      const tag = document.createElement('div');
+      tag.className = 'pnum';
+      tag.textContent = 'p. ' + pn;
+      item.appendChild(img);
+      item.appendChild(tag);
+      item.addEventListener('click', () => {
+        jumpToPage(pn);
+        setTimeout(() => {
+          const tgt = pageGrid.querySelector(`.page-card[data-page="${pn}"]`);
+          if (tgt) tgt.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }, 80);
+      });
+      previewStrip.appendChild(item);
+      return { pn, img };
+    });
+    if (sortedPages.length > PREVIEW_CAP) {
+      const more = document.createElement('div');
+      more.className = 'preview-more';
+      more.textContent = `+${sortedPages.length - PREVIEW_CAP} more`;
+      previewStrip.appendChild(more);
+    }
+    for (const { pn, img } of items) {
+      try { img.src = await getPreviewDataUrl(pn, 0.4); } catch (e) { }
+    }
+  }
+
+  function updateUI() {
+    countPill.textContent = `${selected.size} selected`;
+    openSaveBtn.disabled = selected.size === 0;
+  }
+
+  jumpBtn.addEventListener('click', () => {
+    const n = parseInt(jumpInput.value, 10);
+    if (Number.isFinite(n)) jumpToPage(n);
+  });
+  jumpInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') jumpBtn.click(); });
+
+  clearBtn.addEventListener('click', async () => {
+    selected.clear();
+    document.querySelectorAll('.page-card').forEach(c => c.classList.remove('selected'));
+    refreshPreviewFull();
+    updateUI();
+  });
+
+  openSaveBtn.addEventListener('click', async () => {
+    if (selected.size === 0 || !originalFile) return;
+    openSaveModal();
+  });
+
+  cancelSaveBtn.addEventListener('click', () => closeSaveModal());
+  saveModal.addEventListener('click', (e) => { if (e.target === saveModal) closeSaveModal(); });
+
+  async function openSaveModal() {
+    saveModal.classList.add('open');
+    woInput.focus();
+    const sortedPages = [...selected].sort((a, b) => a - b);
+    modalInfo.textContent = `${sortedPages.length} page${sortedPages.length === 1 ? '' : 's'} selected`;
+    modalBody.innerHTML = '';
+    const cards = sortedPages.map(pn => {
+      const card = document.createElement('div');
+      card.className = 'lg-preview';
+      const tw = document.createElement('div');
+      tw.className = 'lp-thumb';
+      const t = document.createElement('div');
+      t.className = 'lp-title';
+      t.textContent = titleCache.get(pn) || `Page ${pn}`;
+      const img = document.createElement('img');
+      tw.appendChild(img);
+      tw.appendChild(t);
+      const f = document.createElement('div');
+      f.className = 'lp-foot';
+      f.textContent = 'p. ' + pn;
+      card.appendChild(tw);
+      card.appendChild(f);
+      modalBody.appendChild(card);
+      return { pn, img, t };
+    });
+    for (const { pn, img, t } of cards) {
+      try {
+        img.src = await getPreviewDataUrl(pn, 0.9);
+        const cached = titleCache.get(pn);
+        if (cached) t.textContent = cached;
+        else { const detected = await detectPageTitle(pn); if (detected) t.textContent = detected; }
+      } catch (e) { }
+    }
+  }
+  function closeSaveModal() { saveModal.classList.remove('open'); }
+
+  function showResult({ kind, title, message, actions }) {
+    resultIcon.className = 'result-icon ' + kind;
+    resultIcon.textContent = kind === 'success' ? '\u2713' : '\u2715';
+    resultTitle.textContent = title;
+    resultMsg.textContent = message;
+    resultActions.innerHTML = '';
+    actions.forEach(a => {
+      const btn = document.createElement('button');
+      btn.className = 'btn ' + (a.style || '');
+      btn.textContent = a.label;
+      btn.addEventListener('click', a.onClick);
+      resultActions.appendChild(btn);
+    });
+    resultModal.classList.add('open');
+  }
+  function closeResult() { resultModal.classList.remove('open'); }
+
+  function sanitizeFileName(s) {
+    return (s || '').replace(/[\\/:*?"<>|]+/g, '').trim();
+  }
+
+  confirmSaveBtn.addEventListener('click', async () => {
+    if (selected.size === 0 || !originalFile) return;
+    const wo = sanitizeFileName(woInput.value);
+    let suffix = sanitizeFileName(suffixInput.value) || 'standards';
+    const parts = [wo, suffix].filter(Boolean);
+    const fname = (parts.join(' ') || 'document') + '.pdf';
+    try {
+      setStatus('Reading source PDF…');
+      const srcBytes = new Uint8Array(await originalFile.arrayBuffer());
+      setStatus('Building new PDF…');
+      const { PDFDocument } = PDFLib;
+      const srcPdf = await PDFDocument.load(srcBytes, { ignoreEncryption: true });
+      const newPdf = await PDFDocument.create();
+      const sortedPages = [...selected].sort((a, b) => a - b);
+      const zeroIdx = sortedPages.map(p => p - 1);
+      const copied = await newPdf.copyPages(srcPdf, zeroIdx);
+      copied.forEach(p => newPdf.addPage(p));
+      const bytes = await newPdf.save();
+      const blob = new Blob([bytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fname;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+      setStatus('');
+      closeSaveModal();
+      showResult({
+        kind: 'success',
+        title: 'PDF saved successfully',
+        message: `${sortedPages.length} page${sortedPages.length === 1 ? '' : 's'} saved as "${fname}". Check your Downloads folder.`,
+        actions: [
+          {
+            label: 'Close tab',
+            onClick: () => {
+              closeResult();
+              const w = window.open('', '_self');
+              try { w.close(); } catch(e) {}
+              if (!window.closed) {
+                showResult({
+                  kind: 'success',
+                  title: 'Ready to close',
+                  message: 'Browsers will not let a page auto-close a tab it did not open. You can close this tab manually now.',
+                  actions: [{ label: 'OK', style: 'primary', onClick: closeResult }]
+                });
+              }
+            }
+          },
+          {
+            label: 'Back to selection (redo)',
+            style: 'primary',
+            onClick: () => { closeResult(); openSaveModal(); }
+          }
+        ]
+      });
+    } catch (e) {
+      console.error('Save failed:', e);
+      setStatus('');
+      showResult({
+        kind: 'error',
+        title: 'Save failed',
+        message: (e && e.message) ? e.message : 'An unknown error occurred while building the PDF.',
+        actions: [
+          { label: 'Try again', style: 'primary', onClick: () => { closeResult(); confirmSaveBtn.click(); } },
+          { label: 'Back to selection', onClick: closeResult }
+        ]
+      });
+    }
+  });
+
+  function openReader(pageNum) {
+    if (!pdfDoc) return;
+    readerPage = Math.max(1, Math.min(pdfDoc.numPages, pageNum));
+    readerPageInput.max = pdfDoc.numPages;
+    readerTotal.textContent = '/ ' + pdfDoc.numPages;
+    readerOverlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    renderReaderPage();
+  }
+
+  function closeReader() {
+    readerOverlay.classList.remove('open');
+    document.body.style.overflow = '';
+    readerToken++;
+  }
+
+  async function renderReaderPage() {
+    if (!pdfDoc) return;
+    const pn = readerPage;
+    readerPageInput.value = pn;
+    const t = titleCache.get(pn) || await detectPageTitle(pn) || `Page ${pn}`;
+    readerTitle.textContent = ' — ' + t;
+    readerPrev.disabled = pn <= 1;
+    readerNext.disabled = pn >= pdfDoc.numPages;
+    updateReaderSelectButton();
+
+    const myToken = ++readerToken;
+    readerCanvasWrap.classList.add('loading');
+    try {
+      const page = await pdfDoc.getPage(pn);
+      if (myToken !== readerToken) return;
+      const stageRect = readerStage.getBoundingClientRect();
+      const baseVp = page.getViewport({ scale: 1 });
+      const padding = 40;
+      const availW = Math.max(200, stageRect.width - padding);
+      const availH = Math.max(200, stageRect.height - padding);
+      const scaleW = availW / baseVp.width;
+      const scaleH = availH / baseVp.height;
+      const cssScale = Math.min(scaleW, scaleH);
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const vp = page.getViewport({ scale: cssScale * dpr });
+      readerCanvas.width = vp.width;
+      readerCanvas.height = vp.height;
+      readerCanvas.style.width = (vp.width / dpr) + 'px';
+      readerCanvas.style.height = (vp.height / dpr) + 'px';
+      await page.render({ canvasContext: readerCanvas.getContext('2d'), viewport: vp }).promise;
+      if (myToken !== readerToken) return;
+      readerCanvasWrap.classList.remove('loading');
+    } catch (e) {
+      console.warn('Reader render failed', e);
+      readerCanvasWrap.classList.remove('loading');
+    }
+  }
+
+  function updateReaderSelectButton() {
+    const isSel = selected.has(readerPage);
+    readerToggleSel.textContent = isSel ? '✓ Selected (click to remove)' : 'Add to selection';
+    readerToggleSel.classList.toggle('selected', isSel);
+  }
+
+  readerPrev.addEventListener('click', () => {
+    if (readerPage > 1) { readerPage--; renderReaderPage(); }
+  });
+  readerNext.addEventListener('click', () => {
+    if (readerPage < pdfDoc.numPages) { readerPage++; renderReaderPage(); }
+  });
+  readerPageInput.addEventListener('change', () => {
+    const n = parseInt(readerPageInput.value, 10);
+    if (Number.isFinite(n)) {
+      readerPage = Math.max(1, Math.min(pdfDoc.numPages, n));
+      renderReaderPage();
+    }
+  });
+  readerPageInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.target.blur(); }
+    e.stopPropagation();
+  });
+  readerToggleSel.addEventListener('click', async () => {
+    await toggleSelect(readerPage, null);
+    updateReaderSelectButton();
+  });
+  readerClose.addEventListener('click', closeReader);
+
+  document.addEventListener('keydown', (e) => {
+    if (!readerOverlay.classList.contains('open')) return;
+    if (document.activeElement === readerPageInput) return;
+    if (e.key === 'Escape') { closeReader(); }
+    else if (e.key === 'ArrowLeft') { if (readerPage > 1) { readerPage--; renderReaderPage(); } e.preventDefault(); }
+    else if (e.key === 'ArrowRight') { if (pdfDoc && readerPage < pdfDoc.numPages) { readerPage++; renderReaderPage(); } e.preventDefault(); }
+    else if (e.key === ' ') {
+      e.preventDefault();
+      toggleSelect(readerPage, null).then(updateReaderSelectButton);
+    }
+  });
+
+  let resizeTimer = null;
+  window.addEventListener('resize', () => {
+    if (!readerOverlay.classList.contains('open')) return;
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(renderReaderPage, 150);
+  });
+</script>
+</body>
+</html>
