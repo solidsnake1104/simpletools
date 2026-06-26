@@ -12,6 +12,7 @@
   <link rel="shortcut icon" type="image/png" href="../site_icon.png" />
   <link rel="apple-touch-icon" href="../site_icon.png" />
 </head>
+
 <body>
   <header class="site-header">
     <div class="container">
@@ -25,7 +26,7 @@
 
   <main class="tool-container">
 
-    <!-- MODE TABS (only Join remains) -->
+    <!-- MODE TABS (Join only) -->
     <section class="tool-section">
       <h2>Select Mode</h2>
       <div class="mode-tabs">
@@ -33,15 +34,18 @@
       </div>
     </section>
 
-    <!-- JOIN MODE ONLY -->
+    <!-- JOIN MODE -->
     <section class="tool-section" id="joinMode">
       <h2>Select Files to Join</h2>
+
       <div class="upload-area" id="uploadAreaJoin">
         <p><strong>Click to upload or drag and drop</strong></p>
-        <p style="color:var(--muted);font-size:0.9rem;">Select multiple PDF files</p>
-        <input type="file" id="fileInputJoin" class="file-input" multiple accept=".pdf" />
+        <p style="color:var(--muted);font-size:0.9rem;">Select multiple PDF or DOCX files</p>
+        <input type="file" id="fileInputJoin" class="file-input" multiple accept=".pdf,.docx" />
       </div>
+
       <ul class="file-list" id="fileListJoin"></ul>
+
       <button class="btn" id="processJoinBtn" disabled>Join Documents</button>
     </section>
 
@@ -56,6 +60,7 @@
     <div class="container">
       <div class="footer-content">
         <p>&copy; <span id="year"></span> SimpleTools • Small apps, big impact.</p>
+
         <div class="theme-controls">
           <label for="theme-select" class="visually-hidden">Theme</label>
           <select id="theme-select">
