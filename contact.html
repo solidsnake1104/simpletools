@@ -1,20 +1,59 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="auto">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Contact — SimplerTools</title>
-  <meta name="description" content="Contact SimplerTools for questions, feedback, or support.">
+  <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
-  <h1>Contact Us</h1>
+  <header class="site-header">
+    <div class="container">
+      <a href="index.html" class="logo-link">
+        <img src="logo_transparent.png" alt="SimplerTools logo" class="site-logo">
+      </a>
+      <p class="tagline">Small apps, big impact</p>
+    </div>
+  </header>
 
-  <p>If you have questions, feedback, or suggestions for new tools, we’d love to hear from you.</p>
+  <main class="container" style="padding-top:2rem; padding-bottom:2rem;">
+    <h1>Contact Us</h1>
 
-  <p>You can reach us at:</p>
+    <p>If you have questions, feedback, or suggestions for new tools, we’d love to hear from you.</p>
 
-  <p><strong>[YOUR EMAIL HERE]</strong></p>
+    <p>You can reach us at:</p>
 
-  <p>We typically respond within 1–2 business days.</p>
+    <p><strong>contact@simplertools.net</strong></p>
 
+    <p>We typically respond within 1–2 business days.</p>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-content">
+        <p><span id="year"></span> SimplerTools • Small apps, big impact.</p>
+
+        <nav class="footer-links">
+          <a href="about.html">About</a>
+          <a href="contact.html">Contact</a>
+          <a href="privacy.html">Privacy Policy</a>
+        </nav>
+
+        <div class="theme-controls">
+          <select id="theme-select">
+            <option value="auto">Auto (by date)</option>
+            <option value="spring">Spring</option>
+            <option value="summer">Summer</option>
+            <option value="autumn">Autumn</option>
+            <option value="winter">Winter</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
 </body>
 </html>

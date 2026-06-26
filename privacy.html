@@ -1,52 +1,85 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="auto">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Privacy Policy — SimplerTools</title>
-  <meta name="description" content="Privacy Policy for SimplerTools, a collection of fast, private, browser-based tools.">
+  <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
-  <h1>Privacy Policy</h1>
+  <header class="site-header">
+    <div class="container">
+      <a href="index.html" class="logo-link">
+        <img src="logo_transparent.png" alt="SimplerTools logo" class="site-logo">
+      </a>
+      <p class="tagline">Small apps, big impact</p>
+    </div>
+  </header>
 
-  <p>Last updated: [DATE]</p>
+  <main class="container" style="padding-top:2rem; padding-bottom:2rem;">
+    <h1>Privacy Policy</h1>
 
-  <p>SimplerTools provides fast, free, browser‑based utilities designed to run entirely on your device. We do not upload, store, or transmit your files. Your privacy is important to us, and this policy explains what information we collect and how it is used.</p>
+    <p>Last updated: 06/26/2026</p>
 
-  <h2>Information We Do Not Collect</h2>
-  <p>We do not collect, store, or process the files you use inside our tools. All processing happens locally in your browser.</p>
+    <p>SimplerTools provides fast, free, browser‑based utilities designed to run entirely on your device. We do not upload, store, or transmit your files. Your privacy is important to us, and this policy explains what information we collect and how it is used.</p>
 
-  <h2>Information We Collect</h2>
-  <p>We may collect basic, non‑personal information such as:</p>
-  <ul>
-    <li>Browser type</li>
-    <li>Device type</li>
-    <li>Anonymous usage statistics</li>
-  </ul>
-  <p>This information helps us improve site performance and reliability.</p>
+    <h2>Information We Do Not Collect</h2>
+    <p>We do not collect, store, or process the files you use inside our tools. All processing happens locally in your browser.</p>
 
-  <h2>Cookies and Third‑Party Services</h2>
-  <p>SimplerTools uses Google AdSense to display ads. Google may use cookies or web beacons to serve personalized or non‑personalized ads.</p>
+    <h2>Information We Collect</h2>
+    <p>We may collect basic, non‑personal information such as:</p>
+    <ul>
+      <li>Browser type</li>
+      <li>Device type</li>
+      <li>Anonymous usage statistics</li>
+    </ul>
 
-  <p>Google’s advertising partners may collect:</p>
-  <ul>
-    <li>IP address</li>
-    <li>Browser information</li>
-    <li>General location</li>
-    <li>Ad interaction data</li>
-  </ul>
+    <h2>Cookies and Third‑Party Services</h2>
+    <p>SimplerTools uses Google AdSense to display ads. Google may use cookies or web beacons to serve personalized or non‑personalized ads.</p>
 
-  <p>You can learn more about how Google uses data here:<br>
-  <a href="https://policies.google.com/technologies/partner-sites">https://policies.google.com/technologies/partner-sites</a></p>
+    <p>You can learn more about how Google uses data here:<br>
+      <a href="https://policies.google.com/technologies/partner-sites">
+        https://policies.google.com/technologies/partner-sites
+      </a>
+    </p>
 
-  <h2>Third‑Party Links</h2>
-  <p>SimplerTools may link to external websites. We are not responsible for the content or privacy practices of those sites.</p>
+    <h2>Third‑Party Links</h2>
+    <p>SimplerTools may link to external websites. We are not responsible for the content or privacy practices of those sites.</p>
 
-  <h2>Your Choices</h2>
-  <p>You may disable cookies through your browser settings. You may also opt out of personalized advertising through Google’s Ad Settings.</p>
+    <h2>Your Choices</h2>
+    <p>You may disable cookies through your browser settings. You may also opt out of personalized advertising through Google’s Ad Settings.</p>
 
-  <h2>Contact Us</h2>
-  <p>If you have questions about this Privacy Policy, you may contact us at:</p>
-  <p><strong>[YOUR EMAIL HERE]</strong></p>
+    <h2>Contact Us</h2>
+    <p>If you have questions about this Privacy Policy, you may contact us at:</p>
+    <p><strong>contact@simplertools.net</strong></p>
+  </main>
 
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-content">
+        <p>&copy; <span id="year"></span> SimplerTools • Small apps, big impact.</p>
+
+        <nav class="footer-links">
+          <a href="about.html">About</a>
+          <a href="contact.html">Contact</a>
+          <a href="privacy.html">Privacy Policy</a>
+        </nav>
+
+        <div class="theme-controls">
+          <select id="theme-select">
+            <option value="auto">Auto (by date)</option>
+            <option value="spring">Spring</option>
+            <option value="summer">Summer</option>
+            <option value="autumn">Autumn</option>
+            <option value="winter">Winter</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
 </body>
 </html>
