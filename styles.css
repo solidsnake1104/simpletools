@@ -279,3 +279,18 @@ html[data-theme="summer"] .upload-area {
   cursor: not-allowed;
   transform: none;
 }
+
+.footer-links {
+  display: flex;
+  gap: 1rem;
+}
+
+.footer-links a {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.footer-links a:hover {
+  color: var(--accent);
+}

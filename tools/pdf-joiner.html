@@ -100,24 +100,31 @@
 
   </main>
 
-  <footer class="site-footer">
-    <div class="container">
-      <div class="footer-content">
-        <p>&copy; <span id="year"></span> SimplerTools • Small apps, big impact.</p>
+ <footer class="site-footer">
+  <div class="container">
+    <div class="footer-content">
+      <p>&copy; <span id="year"></span> SimplerTools • Small apps, big impact.</p>
 
-        <div class="theme-controls">
-          <label for="theme-select" class="visually-hidden">Theme</label>
-          <select id="theme-select">
-            <option value="auto">Auto (by date)</option>
-            <option value="spring">Spring</option>
-            <option value="summer">Summer</option>
-            <option value="autumn">Autumn</option>
-            <option value="winter">Winter</option>
-          </select>
-        </div>
+      <nav class="footer-links">
+        <a href="/about.html">About</a>
+        <a href="/contact.html">Contact</a>
+        <a href="/privacy.html">Privacy Policy</a>
+      </nav>
+
+      <div class="theme-controls">
+        <label for="theme-select" class="visually-hidden">Theme</label>
+        <select id="theme-select" aria-label="Select seasonal theme">
+          <option value="auto">Auto (by date)</option>
+          <option value="spring">Spring</option>
+          <option value="summer">Summer</option>
+          <option value="autumn">Autumn</option>
+          <option value="winter">Winter</option>
+        </select>
       </div>
     </div>
-  </footer>
+  </div>
+</footer>
+
 <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
 
   <script src="../script.js"></script>
