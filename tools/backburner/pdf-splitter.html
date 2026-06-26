@@ -3,22 +3,11 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>PDF Page Picker</title>
+<title>PDF Splitter</title>
+<link rel="icon" type="image/png" href="../site_icon.png" />
+  <link rel="shortcut icon" type="image/png" href="../site_icon.png" />
+  <link rel="apple-touch-icon" href="../site_icon.png" />
 <script>
-  // Inject favicon links dynamically to avoid any markup mangling
-  (function addFavicons() {
-    const links = [
-      { rel: 'icon',           type: 'image/x-icon', href: 'icon.ico' },
-      { rel: 'icon',           type: 'image/png',    href: 'icon.png' },
-      { rel: 'shortcut icon',  type: 'image/x-icon', href: 'icon.ico' },
-      { rel: 'apple-touch-icon',                     href: 'icon.png' }
-    ];
-    links.forEach(opts => {
-      const l = document.createElement('link');
-      Object.keys(opts).forEach(k => l[k === 'rel' ? 'rel' : k] = opts[k]);
-      document.head.appendChild(l);
-    });
-  })();
 
   function loadScript(url) {
     return new Promise((resolve, reject) => {
@@ -727,7 +716,7 @@
 </head>
 <body>
   <header>
-    <h1>PDF Page Picker</h1>
+    <h1>PDF Splitter</h1>
     <label for="fileInput" class="btn">Open PDF</label>
     <input type="file" id="fileInput" accept="application/pdf" />
     <button class="btn" id="clearBtn" disabled>Clear All</button>
