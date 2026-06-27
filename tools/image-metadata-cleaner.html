@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+<head>
+  <!-- AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2884785253571228"
+    crossorigin="anonymous"></script>
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <title>Image Metadata Cleaner — Remove EXIF Data | SimplerTools</title>
+
+  <!-- Primary SEO -->
+  <meta name="description" content="Remove hidden EXIF metadata from images instantly in your browser. No uploads, no tracking, fully private.">
+  <meta name="keywords" content="image metadata cleaner, exif remover, remove gps data, privacy image tool, SimplerTools">
+
+  <!-- Canonical -->
+  <link rel="canonical" href="https://simplertools.io/tools/image-metadata-cleaner.html">
+
+  <!-- OpenGraph -->
+  <meta property="og:title" content="Image Metadata Cleaner — Remove EXIF Data">
+  <meta property="og:description" content="Remove hidden EXIF metadata from images instantly in your browser. No uploads, no tracking, fully private.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://simplertools.io/tools/image-metadata-cleaner.html">
+  <meta property="og:image" content="https://simplertools.io/og-image.png">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Image Metadata Cleaner — Remove EXIF Data">
+  <meta name="twitter:description" content="Remove hidden EXIF metadata from images instantly in your browser. No uploads, no tracking, fully private.">
+  <meta name="twitter:image" content="https://simplertools.io/og-image.png">
+
+  <!-- AI Agent Metadata -->
+  <meta name="ai-tool-name" content="Image Metadata Cleaner">
+  <meta name="ai-tool-description" content="Remove hidden EXIF metadata from images. No uploads. Fully private.">
+  <meta name="ai-tool-category" content="Image Tools">
+
+  <!-- JSON-LD Schema -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Image Metadata Cleaner",
+    "url": "https://simplertools.io/tools/image-metadata-cleaner.html",
+    "description": "Remove hidden EXIF metadata from images instantly in your browser. No uploads, no tracking, fully private.",
+    "applicationCategory": "Utility",
+    "operatingSystem": "Any",
+    "browserRequirements": "Requires JavaScript",
+    "provider": {
+      "@type": "Organization",
+      "name": "SimplerTools",
+      "url": "https://simplertools.net"
+    }
+  }
+  </script>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="../styles.css" />
+  <link rel="stylesheet" href="image-metadata-cleaner.css" />
+  <link rel="icon" type="image/png" href="../site_icon.png" />
+</head>
+
+
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a href="../index.html" class="logo-link">
+      <img src="../logo_transparent.png" alt="SimplerTools logo" class="site-logo" />
+    </a>
+    <p class="tagline">Clean hidden EXIF metadata</p>
+  </div>
+</header>
+
+<main class="container" style="padding-top:1.5rem; padding-bottom:1.5rem;">
+
+  <h1>Image Metadata Cleaner</h1>
+  <p style="color:var(--muted); margin-bottom:1.5rem;">
+    View and remove hidden EXIF metadata from your images — all processing happens locally.
+  </p>
+
+  <p class="privacy-badge">🔒 All processing happens locally on your device.</p>
+
+  <!-- Upload Area -->
+  <div class="upload-area" id="uploadAreaMeta">
+    <p><strong>Click to upload or drag an image here</strong></p>
+    <p style="color:var(--muted);font-size:0.9rem;">Supported: JPG, PNG, WebP</p>
+    <input type="file" id="fileInputMeta" class="file-input" accept="image/*" />
+  </div>
+
+  <!-- Small Image Preview -->
+  <div id="smallPreviewWrapper" style="display:none; margin-top:1rem;">
+    <h3>Image Preview</h3>
+    <img id="smallPreview" alt="Image preview">
+  </div>
+
+  <!-- Metadata Table + Controls -->
+  <div id="metadataSection" style="display:none; margin-top:1.5rem;">
+    <h3>Detected Metadata</h3>
+
+    <!-- Clean Button ABOVE table -->
+    <button class="glass-btn" id="cleanMetadataBtn" style="margin-bottom:1rem;">
+      Clean Selected Metadata
+    </button>
+
+    <table id="metadataTable">
+      <thead>
+        <tr>
+          <th>Tag</th>
+          <th>Value</th>
+          <th style="text-align:center;">
+            <div>Remove</div>
+            <button type="button" id="selectAllMeta" class="glass-btn glass-btn-small">
+              Select All
+            </button>
+          </th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- Preview -->
+  <div id="previewSection" style="display:none; margin-top:1.5rem;">
+    <h3>Cleaned Image Preview</h3>
+    <img id="cleanPreview" alt="Cleaned preview">
+    <button class="glass-btn" id="downloadCleanBtn">Download Clean Image</button>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container footer-content">
+    <p>&copy; <span id="year"></span> SimplerTools</p>
+
+    <nav class="footer-links">
+      <a href="../about.html">About</a>
+      <a href="../contact.html">Contact</a>
+      <a href="../privacy.html">Privacy Policy</a>
+    </nav>
+
+    <div class="theme-controls">
+      <select id="theme-select">
+        <option value="auto">Auto (by date)</option>
+        <option value="spring">Spring</option>
+        <option value="summer">Summer</option>
+        <option value="autumn">Autumn</option>
+        <option value="winter">Winter</option>
+      </select>
+    </div>
+  </div>
+</footer>
+
+<script src="../script.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exifreader@4.12.0/dist/exif-reader.min.js"></script>
+<script src="image-metadata-cleaner.js"></script>
+
+</body>
+</html>
