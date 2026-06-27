@@ -90,42 +90,29 @@
 
   <!-- Small Image Preview -->
   <div id="smallPreviewWrapper" style="display:none; margin-top:1rem;">
-    <h3>Image Preview</h3>
-    <img id="smallPreview" alt="Image preview">
+    <img id="smallPreview" alt="Image preview" style="max-width:200px; border-radius:8px;">
   </div>
 
-  <!-- Metadata Table + Controls -->
-  <div id="metadataSection" style="display:none; margin-top:1.5rem;">
-    <h3>Detected Metadata</h3>
+  <!-- Metadata Table (READ ONLY) -->
+<div id="metadataSection" style="display:none; margin-top:1.5rem;">
 
-    <!-- Clean Button ABOVE table -->
-    <button class="glass-btn" id="cleanMetadataBtn" style="margin-bottom:1rem;">
-      Clean Selected Metadata
-    </button>
+  <!-- Clean Button ABOVE table -->
+  <button class="glass-btn" id="cleanMetadataBtn">
+    Clean Metadata
+  </button>
 
-    <table id="metadataTable">
-      <thead>
-        <tr>
-          <th>Tag</th>
-          <th>Value</th>
-          <th style="text-align:center;">
-            <div>Remove</div>
-            <button type="button" id="selectAllMeta" class="glass-btn glass-btn-small">
-              Select All
-            </button>
-          </th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
+  <table id="metadataTable">
+    <thead>
+      <tr>
+        <th>Tag</th>
+        <th>Value</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
-  <!-- Preview -->
-  <div id="previewSection" style="display:none; margin-top:1.5rem;">
-    <h3>Cleaned Image Preview</h3>
-    <img id="cleanPreview" alt="Cleaned preview">
-    <button class="glass-btn" id="downloadCleanBtn">Download Clean Image</button>
-  </div>
+</div>
+
 
 </main>
 

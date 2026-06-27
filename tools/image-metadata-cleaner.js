@@ -3,7 +3,6 @@ const fileInput = document.getElementById("fileInputMeta");
 const metadataSection = document.getElementById("metadataSection");
 const metadataTableBody = document.querySelector("#metadataTable tbody");
 const cleanBtn = document.getElementById("cleanMetadataBtn");
-const selectAllBtn = document.getElementById("selectAllMeta");
 
 const smallPreviewWrapper = document.getElementById("smallPreviewWrapper");
 const smallPreview = document.getElementById("smallPreview");
@@ -68,7 +67,7 @@ function handleFile(file) {
   reader.readAsArrayBuffer(file);
 }
 
-// Populate table
+// Populate table (READ‑ONLY)
 function populateMetadata(tags) {
   metadataTableBody.innerHTML = "";
 
@@ -76,7 +75,7 @@ function populateMetadata(tags) {
   if (entries.length === 0) {
     const row = document.createElement("tr");
     const cell = document.createElement("td");
-    cell.colSpan = 3;
+    cell.colSpan = 2;
     cell.textContent = "No readable metadata found.";
     row.appendChild(cell);
     metadataTableBody.appendChild(row);
@@ -89,23 +88,11 @@ function populateMetadata(tags) {
     row.innerHTML = `
       <td>${tag}</td>
       <td>${data.description || data.value || "(binary)"}</td>
-      <td><input type="checkbox" class="meta-checkbox" data-tag="${tag}"></td>
     `;
 
     metadataTableBody.appendChild(row);
   });
 }
-
-// Select All button
-selectAllBtn.addEventListener("click", () => {
-  const checkboxes = document.querySelectorAll(".meta-checkbox");
-  if (!checkboxes.length) return;
-
-  const allChecked = Array.from(checkboxes).every(cb => cb.checked);
-  const newState = !allChecked;
-
-  checkboxes.forEach(cb => cb.checked = newState);
-});
 
 // Clean metadata → DIRECT DOWNLOAD (PNG = metadata-free)
 cleanBtn.addEventListener("click", () => {
@@ -167,7 +154,7 @@ function triggerDownload(blob) {
   cleanBtn.disabled = true;
 
   setTimeout(() => {
-    cleanBtn.textContent = "Clean Selected Metadata";
+    cleanBtn.textContent = "Clean Metadata";
     cleanBtn.disabled = false;
   }, 2000);
 }
