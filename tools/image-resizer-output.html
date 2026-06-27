@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+<head>
+  <!-- AdSense (Option A: very top of head) -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2884785253571228"
+    crossorigin="anonymous"></script>
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <title>Image Resizer Output — SimplerTools</title>
+  <meta name="description" content="Download your cropped and resized image. Fully private, processed in your browser.">
+  <meta name="keywords" content="image resizer output, resized image, cropped image, download image, browser tools">
+
+  <link rel="canonical" href="https://simplertools.net/tools/image-resizer-output">
+
+  <!-- OpenGraph -->
+  <meta property="og:title" content="Image Resizer Output — SimplerTools">
+  <meta property="og:description" content="Download your cropped and resized image. Fully private, processed in your browser.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://simplertools.net/tools/image-resizer-output">
+  <meta property="og:image" content="https://simplertools.net/og-image.png">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Image Resizer Output — SimplerTools">
+  <meta name="twitter:description" content="Download your cropped and resized image. Fully private, processed in your browser.">
+  <meta name="twitter:image" content="https://simplertools.net/og-image.png">
+
+  <!-- Schema.org -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Image Resizer Output",
+    "url": "https://simplertools.net/tools/image-resizer-output",
+    "description": "View and download your cropped and resized image. Fully private, processed in your browser.",
+    "applicationCategory": "Utility",
+    "operatingSystem": "All",
+    "publisher": {
+      "@type": "Organization",
+      "name": "SimplerTools"
+    }
+  }
+  </script>
+
+  <link rel="stylesheet" href="../styles.css" />
+  <link rel="icon" type="image/png" href="../site_icon.png" />
+</head>
+
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a href="../index.html" class="logo-link">
+      <img src="../logo_transparent.png" alt="SimplerTools logo" class="site-logo" />
+    </a>
+    <p class="tagline">Your edited image is ready</p>
+  </div>
+</header>
+
+<main class="container" style="padding-top:1.5rem; padding-bottom:2rem;">
+
+  <h1>Image Ready</h1>
+  <p style="color:var(--muted); margin-bottom:1rem;">
+    Your edited image has been processed.  
+    <strong style="color:var(--accent);">⚠️ It will disappear if you reload this page.</strong>
+  </p>
+
+  <!-- Final Image -->
+  <div style="text-align:center; margin-top:1.5rem;">
+    <img id="finalImage" src="" alt="Final Output" style="max-width:100%; height:auto; border-radius:0;">
+  </div>
+
+  <!-- Buttons -->
+  <div style="margin-top:2rem; display:flex; gap:1rem; flex-wrap:wrap;">
+    <button class="glass-btn" id="downloadBtn">Download Image</button>
+    <a href="image-resizer.html" class="glass-btn" style="text-decoration:none;">Back to Editor</a>
+    <a href="../index.html" class="glass-btn" style="text-decoration:none;">Try Another Tool</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container footer-content">
+    <p>&copy; <span id="year"></span> SimplerTools</p>
+
+    <nav class="footer-links">
+      <a href="../about.html">About</a>
+      <a href="../contact.html">Contact</a>
+      <a href="../privacy.html">Privacy Policy</a>
+    </nav>
+
+    <div class="theme-controls">
+      <select id="theme-select">
+        <option value="auto">Auto (by date)</option>
+        <option value="spring">Spring</option>
+        <option value="summer">Summer</option>
+        <option value="autumn">Autumn</option>
+        <option value="winter">Winter</option>
+      </select>
+    </div>
+  </div>
+</footer>
+
+<script>
+// Load final image from sessionStorage
+const imgData = sessionStorage.getItem("finalImage");
+const imgEl = document.getElementById("finalImage");
+
+if (!imgData) {
+  imgEl.alt = "No image found. Please return to the editor.";
+} else {
+  imgEl.src = imgData;
+}
+
+// Download button
+document.getElementById("downloadBtn").addEventListener("click", () => {
+  if (!imgData) return;
+  const a = document.createElement("a");
+  a.href = imgData;
+  a.download = "edited-image.png";
+  a.click();
+});
+
+// Footer year
+document.getElementById("year").textContent = new Date().getFullYear();
+</script>
+<script src="../script.js"></script>
+
+</body>
+</html>

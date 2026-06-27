@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+<head>
+  <!-- AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2884785253571228"
+    crossorigin="anonymous"></script>
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <title>Image Resizer — Free Online Image Size Tool | SimplerTools</title>
+
+  <!-- Primary SEO -->
+  <meta name="description" content="Resize images instantly in your browser. No uploads, no tracking, completely private. Supports JPG, PNG, and WebP.">
+  <meta name="keywords" content="image resizer, resize image, online image tool, jpg resizer, png resizer, webp resizer, SimplerTools">
+
+  <!-- Canonical -->
+  <link rel="canonical" href="https://simplertools.io/tools/image-resizer.html">
+
+  <!-- OpenGraph -->
+  <meta property="og:title" content="Image Resizer — Free Online Image Size Tool">
+  <meta property="og:description" content="Resize images instantly in your browser. No uploads, no tracking, completely private.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://simplertools.io/tools/image-resizer.html">
+  <meta property="og:image" content="https://simplertools.io/og-image.png">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Image Resizer — Free Online Image Size Tool">
+  <meta name="twitter:description" content="Resize images instantly in your browser. No uploads, no tracking, completely private.">
+  <meta name="twitter:image" content="https://simplertools.io/og-image.png">
+
+  <!-- AI Agent Metadata -->
+  <meta name="ai-tool-name" content="Image Resizer">
+  <meta name="ai-tool-description" content="Resize images instantly in your browser. No uploads. Fully private.">
+  <meta name="ai-tool-category" content="Image Tools">
+
+  <!-- JSON-LD Schema -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Image Resizer",
+    "url": "https://simplertools.io/tools/image-resizer.html",
+    "description": "Resize images instantly in your browser. No uploads, no tracking, completely private.",
+    "applicationCategory": "Utility",
+    "operatingSystem": "Any",
+    "browserRequirements": "Requires JavaScript",
+    "provider": {
+      "@type": "Organization",
+      "name": "SimplerTools",
+      "url": "https://simplertools.net"
+    }
+  }
+  </script>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="../styles.css" />
+  <link rel="stylesheet" href="image-resizer.css" />
+  <link rel="icon" type="image/png" href="../site_icon.png" />
+</head>
+
+
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a href="../index.html" class="logo-link">
+      <img src="../logo_transparent.png" alt="SimplerTools logo" class="site-logo" />
+    </a>
+    <p class="tagline">Resize images instantly</p>
+  </div>
+</header>
+
+<main class="container" style="padding-top:1.5rem; padding-bottom:1.5rem;">
+
+  <h1>Image Resizer</h1>
+  <p style="color:var(--muted); margin-bottom:1.5rem;">
+    Upload an image, choose a size, and download the resized version.
+  </p>
+
+  <!-- Upload Area -->
+  <div class="upload-area" id="uploadAreaResize">
+    <p><strong>Click to upload or drag an image here</strong></p>
+    <p style="color:var(--muted);font-size:0.9rem;">Supported: JPG, PNG, WebP</p>
+    <input type="file" id="fileInputResize" class="file-input" accept="image/*" />
+  </div>
+
+  <!-- Preview + Resize Controls -->
+  <div id="resizeControls" style="display:none; margin-top:1.5rem;">
+
+    <div class="warning-box">
+  ⚠️ <strong>Tip:</strong> For best results, crop your image to the correct aspect ratio before resizing.  
+  This tool resizes only — it does not crop or adjust proportions.
+</div>
+
+
+    <!-- Preview -->
+    <div id="previewWrapper">
+      <img id="previewImage" src="" alt="Preview">
+    </div>
+
+    <!-- Resize Options -->
+    <div style="margin-top:1.5rem;">
+      <h3>Resize Options</h3>
+
+      <!-- Common Sizes -->
+      <h4>Common Sizes</h4>
+      <div class="glass-group" id="sizeGroup">
+        <button data-size="none" class="glass-option active">Original</button>
+        <button data-size="1920x1080" class="glass-option">1920×1080</button>
+        <button data-size="1280x720" class="glass-option">1280×720</button>
+        <button data-size="1080x1080" class="glass-option">1080×1080</button>
+        <button data-size="800x800" class="glass-option">800×800</button>
+        <button data-size="640x480" class="glass-option">640×480</button>
+      </div>
+
+      <!-- Custom Dimensions -->
+      <h4>Custom Dimensions</h4>
+      <div class="glass-input-row">
+        <div class="glass-input">
+          <label>Width</label>
+          <input id="customWidth" type="number" placeholder="px">
+        </div>
+
+        <div class="glass-input">
+          <label>Height</label>
+          <input id="customHeight" type="number" placeholder="px">
+        </div>
+      </div>
+
+      <!-- Apply Button -->
+      <button class="glass-btn" id="applyChangesBtn" disabled>Resize Image</button>
+    </div>
+
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container footer-content">
+    <p>&copy; <span id="year"></span> SimplerTools</p>
+
+    <nav class="footer-links">
+      <a href="../about.html">About</a>
+      <a href="../contact.html">Contact</a>
+      <a href="../privacy.html">Privacy Policy</a>
+    </nav>
+
+    <div class="theme-controls">
+      <select id="theme-select">
+        <option value="auto">Auto (by date)</option>
+        <option value="spring">Spring</option>
+        <option value="summer">Summer</option>
+        <option value="autumn">Autumn</option>
+        <option value="winter">Winter</option>
+      </select>
+    </div>
+  </div>
+</footer>
+
+<script src="../script.js"></script>
+<script src="image-resizer.js"></script>
+
+</body>
+</html>
