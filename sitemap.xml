@@ -17,4 +17,20 @@
     <priority>0.9</priority>
   </url>
 
+    <!-- Image Resizer Tool -->
+  <url>
+    <loc>https://simplertools.net/tools/image-resizer.html</loc>
+    <lastmod>2026-06-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+      <!-- Image Resizer Output Page -->
+  <url>
+    <loc>https://simplertools.net/tools/image-resizer-output.html</loc>
+    <lastmod>2026-06-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
 </urlset>
