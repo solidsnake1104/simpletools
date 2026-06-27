@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en" data-theme="default">
+<head>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2884785253571228"
+     crossorigin="anonymous"></script>
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <!-- Primary SEO -->
+  <title>Audio & MP3 Trimmer — Trim Audio Clips Instantly • SimplerTools</title>
+  <meta name="description" content="Trim MP3 audio clips with precision — no uploads required. 100% browser‑based, fast, private, and supports MP3, WAV, and OGG output formats.">
+  <meta name="keywords" content="audio & mp3 trimmer, trim audio, cut mp3, audio tool, simplertools, browser tools, no upload mp3 trimmer">
+
+  <!-- Canonical -->
+  <link rel="canonical" href="https://simplertools.net/tools/mp3-trimmer.html">
+
+  <!-- OpenGraph -->
+  <meta property="og:title" content="Audio & MP3 Trimmer — Trim Audio Clips Instantly • SimplerTools">
+  <meta property="og:description" content="Fast, private, browser‑based MP3 trimming. No uploads. No tracking.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://simplertools.net/tools/mp3-trimmer.html">
+  <meta property="og:image" content="https://simplertools.net/og-mp3-trimmer.png">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Audio & MP3 Trimmer — Trim Audio Clips Instantly • SimplerTools">
+  <meta name="twitter:description" content="Trim MP3 audio clips with precision — no uploads required.">
+  <meta name="twitter:image" content="https://simplertools.net/og-mp3-trimmer.png">
+
+  <!-- AI Crawler Metadata -->
+  <meta name="ai-tool" content="Audio & MP3 Trimmer">
+  <meta name="ai-category" content="Audio Utility">
+  <meta name="ai-description" content="A fast, browser‑based MP3 trimming tool that runs entirely on-device with no uploads.">
+  <meta name="ai-content" content="mp3, trim, audio, utility, browser-based">
+
+  <!-- Schema.org JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Audio & MP3 Trimmer",
+    "url": "https://simplertools.net/tools/mp3-trimmer.html",
+    "description": "Trim MP3 audio clips instantly in your browser with SimplerTools Audio & MP3 Trimmer. No uploads, no tracking, fully private.",
+    "applicationCategory": "Utility",
+    "operatingSystem": "All",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "SimplerTools",
+      "url": "https://simplertools.net"
+    }
+  }
+  </script>
+
+  <link rel="stylesheet" href="../styles.css" />
+  <link rel="icon" type="image/png" href="../site_icon.png" />
+  <link rel="shortcut icon" type="image/png" href="../site_icon.png" />
+  <link rel="apple-touch-icon" href="../site_icon.png" />
+
+  <!-- WaveSurfer v7 (waveform display + playback only) -->
+  <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
+  <!-- No FFmpeg needed — trimming uses Web Audio API + WAV encoder -->
+  <!-- No regions plugin — trim selection handled by custom overlay -->
+
+</head>
+
+<body>
+  <header class="site-header">
+    <div class="container">
+      <a href="../index.html" class="logo-link">
+        <img src="../logo_transparent.png" alt="SimplerTools logo" class="site-logo" />
+      </a>
+
+      <p class="tagline">Trim MP3 audio clips with precision — no uploads</p>
+    </div>
+  </header>
+
+<main class="tool-page container">
+<h1 class="tool-title">Audio & MP3 Trimmer</h1>
+
+<section class="tool-section">
+  <h2>Select an MP3 File</h2>
+
+  <div class="upload-area" id="uploadAreaAudio">
+    <p><strong>Click to upload or drag and drop</strong></p>
+    <p style="color:var(--muted);font-size:0.9rem;">Supports MP3, WAV, OGG</p>
+    <input type="file" id="audioInput" class="file-input" accept=".mp3,.wav,.ogg" />
+  </div>
+
+  <div id="waveform" style="margin-top:2rem;min-height:120px;background:rgba(255,255,255,0.03);border-radius:8px;"></div>
+
+  <!-- Playback controls (hidden until file loaded) -->
+  <div id="playbackControls" style="display:none;gap:0.75rem;flex-wrap:wrap;">
+    <button class="glass-btn" id="playPauseBtn" style="margin-top:0;">▶ Play</button>
+    <button class="glass-btn" id="playSelectionBtn" style="margin-top:0;">▶ Play Selection</button>
+  </div>
+
+  <div class="trim-controls" style="margin-top:1.5rem;">
+    <label>Start (s): <input type="number" id="startTime" min="0" step="0.01" value="0"></label>
+    <label>End (s): <input type="number" id="endTime" min="0" step="0.01" value="0"></label>
+
+    <label style="margin-left:1rem;">
+      Output Format:
+      <select id="outputFormat">
+        <option value="wav">WAV (best quality)</option>
+        <option value="mp3-approx">MP3 (via WAV rename)</option>
+      </select>
+    </label>
+  </div>
+
+
+  <button class="glass-btn" id="trimBtn" disabled>⬇ Download Trimmed Audio</button>
+
+  <p style="color:var(--muted);font-size:0.85rem;margin-top:0.75rem;">
+    Trimming runs entirely in your browser — no uploads, no servers.
+    WAV output is lossless and works in all players.
+  </p>
+</section>
+
+<section class="tool-section" style="margin-top:3rem;padding-top:2rem;border-top:1px solid rgba(255,255,255,0.06);">
+  <h3>About This Tool</h3>
+  <p>Trim audio clips directly in your browser — no files are uploaded to any server.</p>
+</section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-content">
+      <p>&copy; <span id="year"></span> SimplerTools • Small apps, big impact.</p>
+
+      <nav class="footer-links">
+        <a href="../about.html">About</a>
+        <a href="../contact.html">Contact</a>
+        <a href="../privacy.html">Privacy Policy</a>
+      </nav>
+
+      <div class="theme-controls">
+        <label for="theme-select" class="visually-hidden">Theme</label>
+        <select id="theme-select" aria-label="Select seasonal theme">
+          <option value="auto">Auto (by date)</option>
+          <option value="spring">Spring</option>
+          <option value="summer">Summer</option>
+          <option value="autumn">Autumn</option>
+          <option value="winter">Winter</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="../script.js"></script>
+</body>
+</html>

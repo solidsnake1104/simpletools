@@ -436,3 +436,136 @@ html[data-theme="summer"] .upload-area {
     flex-direction: column;
   }
 }
+
+/* ── MP3 Trimmer playback controls ── */
+#playbackControls {
+  display: none;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+  align-items: center;
+}
+
+#playbackControls .glass-btn {
+  margin-top: 0;
+  padding: 0.6rem 1.25rem;
+  font-size: 0.95rem;
+}
+
+.trim-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  margin-top: 1.5rem;
+}
+
+.trim-controls label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.95rem;
+}
+
+.trim-controls input[type="number"] {
+  width: 90px;
+  padding: 0.4rem 0.5rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.08);
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.trim-controls input[type="number"]:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.trim-controls select {
+  padding: 0.4rem 0.5rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.08);
+  color: var(--text);
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+/* ── Trim region overlay ── */
+/* #waveform must be position:relative so the overlay can sit on top */
+#waveform {
+  position: relative;
+}
+
+#trimOverlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none; /* overlay itself passes clicks through to WaveSurfer */
+  z-index: 10;
+}
+
+/* The highlighted selection band */
+#trimSelection {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: rgba(122, 170, 255, 0.18);
+  border-top: 2px solid rgba(122, 170, 255, 0.7);
+  border-bottom: 2px solid rgba(122, 170, 255, 0.7);
+  pointer-events: auto; /* draggable body */
+  cursor: grab;
+  box-sizing: border-box;
+}
+
+#trimSelection:active {
+  cursor: grabbing;
+}
+
+/* Left and right drag handles */
+.trim-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 14px;
+  background: var(--accent);
+  opacity: 0.9;
+  cursor: col-resize;
+  border-radius: 3px;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.15s, width 0.1s;
+}
+
+.trim-handle:hover {
+  opacity: 1;
+  width: 16px;
+}
+
+/* Grip lines on handles */
+.trim-handle::after {
+  content: "⋮";
+  color: rgba(0,0,0,0.5);
+  font-size: 14px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.trim-handle-left {
+  left: -7px;
+}
+
+.trim-handle-right {
+  right: -7px;
+}
+
+/* WaveSurfer v7 ::part selectors — kept as progressive enhancement */
+#waveform ::part(region-handle-left),
+#waveform ::part(region-handle-right) {
+  width: 6px !important;
+  background: var(--accent) !important;
+  opacity: 0.9;
+  cursor: col-resize;
+}

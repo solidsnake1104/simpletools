@@ -9,6 +9,14 @@
     <priority>1.0</priority>
   </url>
 
+<!-- Audio & MP3 Trimmer -->
+  <url>
+    <loc>https://simplertools.net/tools/mp3-trimmer.html</loc>
+    <lastmod>2026-06-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
   <!-- PDF Joiner Tool -->
   <url>
     <loc>https://simplertools.net/tools/pdf-joiner.html</loc>
