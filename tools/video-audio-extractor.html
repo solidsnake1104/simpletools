@@ -1,7 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="default">
-<head>
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2884785253571228"
+<html lang="="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2884785253571228"<html lang="en" data-theme="default">
      crossorigin="anonymous"></script>
 
   <meta charset="utf-8" />
@@ -10,7 +8,7 @@
   <!-- Primary SEO -->
   <title>Video Audio Extractor — Extract Audio from Video • SimplerTools</title>
   <meta name="description" content="Extract audio from any video file instantly in your browser. No uploads, no servers. Supports MP4, MOV, WebM, AVI and more. Download as AAC/M4A, MP3, or WAV.">
-  <meta name="keywords" content="video audio extractor, extract audio from video, mp4 to mp3, video to wav, browser tool, simplertools, no upload">
+  <meta name="keywords" content="video audio extractor, extract audio from video, mp4 to mp3, video to wav, video to m4a, browser tool, simplertools, no upload">
 
   <!-- Canonical -->
   <link rel="canonical" href="https://simplertools.net/tools/video-audio-extractor.html">
@@ -73,9 +71,7 @@
     }
 
     @media (max-width: 700px) {
-      .vae-grid {
-        grid-template-columns: 1fr;
-      }
+      .vae-grid { grid-template-columns: 1fr; }
     }
 
     /* Video preview panel */
@@ -183,6 +179,13 @@
       cursor: pointer;
     }
 
+    .vae-note {
+      margin: 0.65rem 0 0;
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
     /* Right panel — results */
     .vae-result-panel {
       background: var(--card-bg);
@@ -198,13 +201,6 @@
       margin: 0 0 0.25rem 0;
       font-size: 1rem;
       color: var(--accent);
-    }
-
-    .vae-note {
-      margin: 0.5rem 0 0;
-      font-size: 0.85rem;
-      color: var(--muted);
-      line-height: 1.5;
     }
   </style>
 </head>
@@ -257,7 +253,7 @@
             </div>
 
             <p class="vae-note">
-              The tool first tries a fast browser-native extraction. If the browser cannot decode the audio,
+              The tool tries fast browser-native extraction first. If the browser cannot decode the audio,
               it automatically falls back to FFmpeg.wasm.
             </p>
 
@@ -332,6 +328,7 @@
     </div>
   </footer>
 
-  <script src="../script.js?v=ffmpeg-fallback-2"></script>
+  <script src="../script.js?v=ffmpeg-fallback-3"></script>
 </body>
 </html>
+<head>
