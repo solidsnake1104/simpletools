@@ -3,43 +3,64 @@
 // -----------------------------------------------------------
 (function () {
   const setTheme = (t) => document.documentElement.setAttribute("data-theme", t);
+
   const detectSeason = () => {
     const m = new Date().getMonth() + 1;
+
     if (m >= 3 && m < 5) return "spring";
     if (m >= 6 && m < 8) return "summer";
     if (m >= 9 && m <= 11) return "autumn";
+
     return "winter";
   };
 
   const select = document.getElementById("theme-select");
   const year = document.getElementById("year");
-  if (year) year.textContent = new Date().getFullYear();
+
+  if (year) {
+    year.textContent = new Date().getFullYear();
+  }
 
   const saved = localStorage.getItem("simplertools-theme");
+
   if (saved) {
-    if (saved === "auto") setTheme(detectSeason());
-    else setTheme(saved);
-    if (select) select.value = saved;
+    if (saved === "auto") {
+      setTheme(detectSeason());
+    } else {
+      setTheme(saved);
+    }
+
+    if (select) {
+      select.value = saved;
+    }
   } else {
-    if (select) select.value = "auto";
+    if (select) {
+      select.value = "auto";
+    }
+
     setTheme(detectSeason());
   }
 
   if (select) {
     select.addEventListener("change", (e) => {
       const v = e.target.value;
+
       localStorage.setItem("simplertools-theme", v);
-      if (v === "auto") setTheme(detectSeason());
-      else setTheme(v);
+
+      if (v === "auto") {
+        setTheme(detectSeason());
+      } else {
+        setTheme(v);
+      }
     });
   }
 })();
+
 
 // -----------------------------------------------------------
 // DOMContentLoaded — Initialize Tools
 // -----------------------------------------------------------
 document.addEventListener("DOMContentLoaded", () => {
-
   // ===========================================================
   // PDF JOINER
   // ===========================================================
@@ -59,6 +80,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function showToast(message) {
     const toast = document.createElement("div");
+
     toast.textContent = message;
     toast.style.position = "fixed";
     toast.style.bottom = "20px";
@@ -74,7 +96,10 @@ document.addEventListener("DOMContentLoaded", () => {
     toast.style.transition = "opacity .3s ease";
 
     document.body.appendChild(toast);
-    requestAnimationFrame(() => (toast.style.opacity = "1"));
+
+    requestAnimationFrame(() => {
+      toast.style.opacity = "1";
+    });
 
     setTimeout(() => {
       toast.style.opacity = "0";
@@ -90,14 +115,15 @@ document.addEventListener("DOMContentLoaded", () => {
       const bytes = await file.arrayBuffer();
       const pdf = await PDFDocument.load(bytes);
       const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+
       copiedPages.forEach((p) => mergedPdf.addPage(p));
     }
 
     const mergedBytes = await mergedPdf.save();
     const blob = new Blob([mergedBytes], { type: "application/pdf" });
     const url = URL.createObjectURL(blob);
-
     const a = document.createElement("a");
+
     a.href = url;
     a.download = "merged.pdf";
     a.click();
@@ -110,9 +136,16 @@ document.addEventListener("DOMContentLoaded", () => {
     processJoinBtn.addEventListener("click", async () => {
       processJoinBtn.disabled = true;
       processJoinBtn.textContent = "Merging...";
-      await mergePDFs();
-      processJoinBtn.textContent = "Join Documents";
-      updateJoinButton();
+
+      try {
+        await mergePDFs();
+      } catch (err) {
+        console.error("PDF merge error:", err);
+        alert("Could not merge PDFs. Please check the files and try again.");
+      } finally {
+        processJoinBtn.textContent = "Join Documents";
+        updateJoinButton();
+      }
     });
   }
 
@@ -146,8 +179,12 @@ document.addEventListener("DOMContentLoaded", () => {
       const exists = filesJoin.some(
         (f) => f.name === file.name && f.size === file.size
       );
-      if (!exists) filesJoin.push(file);
+
+      if (!exists) {
+        filesJoin.push(file);
+      }
     });
+
     renderJoinList();
     updateJoinButton();
   }
@@ -160,7 +197,7 @@ document.addEventListener("DOMContentLoaded", () => {
         (f, i) => `
       <li class="file-item" draggable="true" data-index="${i}">
         <span class="drag-handle">☰</span>
-        <span class="file-name">${f.name}</span>
+        <span class="file-name">${escapeHtmlGlobal(f.name)}</span>
         <button class="file-remove" onclick="removeFileJoin(${i})">Remove</button>
       </li>
     `
@@ -172,6 +209,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function enableDragReorder() {
+    if (!fileListJoin) return;
+
     const items = fileListJoin.querySelectorAll(".file-item");
 
     items.forEach((item) => {
@@ -187,11 +226,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
       item.addEventListener("drop", (e) => {
         e.preventDefault();
-        const dropIndex = Number(e.target.closest(".file-item").dataset.index);
 
+        const target = e.target.closest(".file-item");
+        if (!target) return;
+
+        const dropIndex = Number(target.dataset.index);
         const moved = filesJoin.splice(dragIndex, 1)[0];
-        filesJoin.splice(dropIndex, 0, moved);
 
+        filesJoin.splice(dropIndex, 0, moved);
         renderJoinList();
       });
     });
@@ -203,9 +245,9 @@ document.addEventListener("DOMContentLoaded", () => {
     updateJoinButton();
   };
 
+
   // ===========================================================
-  // MP3 TRIMMER — WaveSurfer v7 (no regions plugin) +
-  //               custom overlay handles + Web Audio trim
+  // MP3 TRIMMER — WaveSurfer v7 + custom overlay handles
   // ===========================================================
   const uploadAreaAudio  = document.getElementById("uploadAreaAudio");
   const audioInput       = document.getElementById("audioInput");
@@ -222,12 +264,17 @@ document.addEventListener("DOMContentLoaded", () => {
   let audioBuffer = null;
   let duration    = 0;
 
-  // ── Custom trim overlay (lives in regular DOM, above waveform) ──
-  // Structure injected once; shown/hidden as needed.
-  let overlayEl = null, selEl = null, handleL = null, handleR = null;
+  let overlayEl = null;
+  let selEl = null;
+  let handleL = null;
+  let handleR = null;
 
   function buildOverlay() {
-    if (overlayEl) overlayEl.remove();
+    if (!waveformEl) return;
+
+    if (overlayEl) {
+      overlayEl.remove();
+    }
 
     overlayEl = document.createElement("div");
     overlayEl.id = "trimOverlay";
@@ -245,45 +292,51 @@ document.addEventListener("DOMContentLoaded", () => {
 
     selEl.appendChild(handleL);
     selEl.appendChild(handleR);
+
     overlayEl.appendChild(selEl);
     waveformEl.appendChild(overlayEl);
 
     initOverlayDrag();
   }
 
-  // Convert time → pixel offset within the overlay
   function timeToPercent(t) {
+    if (!duration) return 0;
     return (t / duration) * 100;
-  }
-  function percentToTime(pct) {
-    return (pct / 100) * duration;
   }
 
   function renderOverlay() {
-    if (!selEl || !duration) return;
+    if (!selEl || !duration || !startTimeEl || !endTimeEl) return;
+
     const s = parseFloat(startTimeEl.value) || 0;
-    const e = parseFloat(endTimeEl.value)   || duration;
-    const leftPct  = timeToPercent(Math.max(0, s));
+    const e = parseFloat(endTimeEl.value) || duration;
+
+    const leftPct = timeToPercent(Math.max(0, s));
     const rightPct = timeToPercent(Math.min(duration, e));
-    selEl.style.left  = leftPct + "%";
-    selEl.style.width = (rightPct - leftPct) + "%";
+
+    selEl.style.left = leftPct + "%";
+    selEl.style.width = Math.max(0, rightPct - leftPct) + "%";
   }
 
   function initOverlayDrag() {
-    // Drag a handle or the selection body
-    let dragging = null; // "left" | "right" | "body"
+    let dragging = null;
     let dragStartX = 0;
     let dragStartS = 0;
     let dragStartE = 0;
     let overlayWidth = 0;
 
-    function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+    function clamp(v, lo, hi) {
+      return Math.max(lo, Math.min(hi, v));
+    }
 
     function onMove(clientX) {
+      if (!startTimeEl || !endTimeEl || !duration || !overlayWidth) return;
+
       const dx = clientX - dragStartX;
       const dt = (dx / overlayWidth) * duration;
+
       let s = parseFloat(startTimeEl.value);
       let e = parseFloat(endTimeEl.value);
+
       const MIN_SEL = 0.1;
 
       if (dragging === "left") {
@@ -296,86 +349,123 @@ document.addEventListener("DOMContentLoaded", () => {
         const span = dragStartE - dragStartS;
         s = clamp(dragStartS + dt, 0, duration - span);
         e = s + span;
+
         startTimeEl.value = s.toFixed(2);
-        endTimeEl.value   = e.toFixed(2);
+        endTimeEl.value = e.toFixed(2);
       }
+
       renderOverlay();
     }
 
     function startDrag(type, e) {
+      if (!overlayEl || !startTimeEl || !endTimeEl) return;
+
       e.preventDefault();
       e.stopPropagation();
-      dragging     = type;
-      dragStartX   = e.touches ? e.touches[0].clientX : e.clientX;
-      dragStartS   = parseFloat(startTimeEl.value) || 0;
-      dragStartE   = parseFloat(endTimeEl.value)   || duration;
+
+      dragging = type;
+      dragStartX = e.touches ? e.touches[0].clientX : e.clientX;
+      dragStartS = parseFloat(startTimeEl.value) || 0;
+      dragStartE = parseFloat(endTimeEl.value) || duration;
       overlayWidth = overlayEl.getBoundingClientRect().width;
 
-      const moveEvt   = e.touches ? "touchmove"   : "mousemove";
-      const upEvt     = e.touches ? "touchend"    : "mouseup";
+      const moveEvt = e.touches ? "touchmove" : "mousemove";
+      const upEvt = e.touches ? "touchend" : "mouseup";
 
       function onUp() {
         dragging = null;
         document.removeEventListener(moveEvt, onMoveWrap);
-        document.removeEventListener(upEvt,   onUp);
+        document.removeEventListener(upEvt, onUp);
       }
+
       function onMoveWrap(ev) {
         onMove(ev.touches ? ev.touches[0].clientX : ev.clientX);
       }
 
       document.addEventListener(moveEvt, onMoveWrap);
-      document.addEventListener(upEvt,   onUp);
+      document.addEventListener(upEvt, onUp);
     }
 
-    handleL.addEventListener("mousedown",  (e) => startDrag("left",  e));
-    handleR.addEventListener("mousedown",  (e) => startDrag("right", e));
-    selEl.addEventListener(  "mousedown",  (e) => {
-      // only drag body if not clicking a handle
-      if (e.target === selEl) startDrag("body", e);
+    if (!handleL || !handleR || !selEl) return;
+
+    handleL.addEventListener("mousedown", (e) => startDrag("left", e));
+    handleR.addEventListener("mousedown", (e) => startDrag("right", e));
+
+    selEl.addEventListener("mousedown", (e) => {
+      if (e.target === selEl) {
+        startDrag("body", e);
+      }
     });
-    handleL.addEventListener("touchstart", (e) => startDrag("left",  e), { passive: false });
-    handleR.addEventListener("touchstart", (e) => startDrag("right", e), { passive: false });
-    selEl.addEventListener(  "touchstart", (e) => {
-      if (e.target === selEl) startDrag("body", e);
-    }, { passive: false });
+
+    handleL.addEventListener(
+      "touchstart",
+      (e) => startDrag("left", e),
+      { passive: false }
+    );
+
+    handleR.addEventListener(
+      "touchstart",
+      (e) => startDrag("right", e),
+      { passive: false }
+    );
+
+    selEl.addEventListener(
+      "touchstart",
+      (e) => {
+        if (e.target === selEl) {
+          startDrag("body", e);
+        }
+      },
+      { passive: false }
+    );
   }
 
-  // ── Upload area ──────────────────────────────────────────────
   if (uploadAreaAudio && audioInput) {
     uploadAreaAudio.addEventListener("click", () => audioInput.click());
+
     uploadAreaAudio.addEventListener("dragover", (e) => {
       e.preventDefault();
       uploadAreaAudio.classList.add("dragover");
     });
-    uploadAreaAudio.addEventListener("dragleave", () =>
-      uploadAreaAudio.classList.remove("dragover")
-    );
+
+    uploadAreaAudio.addEventListener("dragleave", () => {
+      uploadAreaAudio.classList.remove("dragover");
+    });
+
     uploadAreaAudio.addEventListener("drop", (e) => {
       e.preventDefault();
       uploadAreaAudio.classList.remove("dragover");
+
       const file = e.dataTransfer.files[0];
-      if (file) handleAudioFile(file);
+
+      if (file) {
+        handleAudioFile(file);
+      }
     });
   }
 
   if (audioInput) {
     audioInput.addEventListener("change", (e) => {
-      if (e.target.files[0]) handleAudioFile(e.target.files[0]);
+      if (e.target.files[0]) {
+        handleAudioFile(e.target.files[0]);
+      }
     });
   }
 
-  // ── Core file handler ────────────────────────────────────────
   async function handleAudioFile(file) {
-    audioBlob   = file;
+    audioBlob = file;
     audioBuffer = null;
-    duration    = 0;
+    duration = 0;
 
-    // Decode for trimming
     try {
       const arrayBuf = await file.arrayBuffer();
       const actx = new (window.AudioContext || window.webkitAudioContext)();
+
       audioBuffer = await actx.decodeAudioData(arrayBuf.slice(0));
-      actx.close();
+
+      if (actx.close) {
+        actx.close();
+      }
     } catch (err) {
       console.warn("Web Audio decode failed:", err);
     }
@@ -385,12 +475,15 @@ document.addEventListener("DOMContentLoaded", () => {
       wavesurfer = null;
     }
 
-    // No plugins — we handle selection ourselves
+    if (!window.WaveSurfer || !waveformEl) {
+      return;
+    }
+
     wavesurfer = WaveSurfer.create({
-      container:     "#waveform",
-      waveColor:     "#7aaaff",
+      container: "#waveform",
+      waveColor: "#7aaaff",
       progressColor: "#4a6cff",
-      height:        120,
+      height: 120
     });
 
     wavesurfer.loadBlob(file);
@@ -399,110 +492,147 @@ document.addEventListener("DOMContentLoaded", () => {
       duration = wavesurfer.getDuration();
 
       if (startTimeEl) startTimeEl.value = "0.00";
-      if (endTimeEl)   endTimeEl.value   = duration.toFixed(2);
-      if (trimBtn)     trimBtn.disabled  = false;
-
+      if (endTimeEl) endTimeEl.value = duration.toFixed(2);
+      if (trimBtn) trimBtn.disabled = false;
       if (playbackControls) playbackControls.style.display = "flex";
 
-      // Build the custom overlay after WaveSurfer has rendered
       buildOverlay();
       renderOverlay();
     });
 
-    wavesurfer.on("play",   () => { if (playPauseBtn) playPauseBtn.textContent = "⏸ Pause"; });
-    wavesurfer.on("pause",  () => { if (playPauseBtn) playPauseBtn.textContent = "▶ Play"; });
-    wavesurfer.on("finish", () => { if (playPauseBtn) playPauseBtn.textContent = "▶ Play"; });
+    wavesurfer.on("play", () => {
+      if (playPauseBtn) playPauseBtn.textContent = "⏸ Pause";
+    });
+
+    wavesurfer.on("pause", () => {
+      if (playPauseBtn) playPauseBtn.textContent = "▶ Play";
+    });
+
+    wavesurfer.on("finish", () => {
+      if (playPauseBtn) playPauseBtn.textContent = "▶ Play";
+    });
   }
 
-  // ── Inputs → redraw overlay ──────────────────────────────────
   [startTimeEl, endTimeEl].forEach((input) => {
     if (!input) return;
     input.addEventListener("input", renderOverlay);
   });
 
-  // ── Play / Pause ─────────────────────────────────────────────
   if (playPauseBtn) {
     playPauseBtn.addEventListener("click", () => {
-      if (wavesurfer) wavesurfer.playPause();
+      if (wavesurfer) {
+        wavesurfer.playPause();
+      }
     });
   }
 
-  // ── Play Selection ───────────────────────────────────────────
   if (playSelectionBtn) {
     playSelectionBtn.addEventListener("click", () => {
       if (!wavesurfer) return;
+
       const s = parseFloat(startTimeEl ? startTimeEl.value : 0);
-      const e = parseFloat(endTimeEl   ? endTimeEl.value   : 0);
-      if (!isNaN(s) && !isNaN(e) && s < e) wavesurfer.play(s, e);
+      const e = parseFloat(endTimeEl ? endTimeEl.value : 0);
+
+      if (!isNaN(s) && !isNaN(e) && s < e) {
+        wavesurfer.play(s, e);
+      }
     });
   }
 
-  // ── WAV encoder helper ───────────────────────────────────────
-  function encodeWAV(audioBuffer) {
-    const numChannels = audioBuffer.numberOfChannels;
-    const sampleRate  = audioBuffer.sampleRate;
-    const numSamples  = audioBuffer.length;
-    const bytesPerSample = 2; // 16-bit PCM
-    const dataSize    = numSamples * numChannels * bytesPerSample;
-    const buffer      = new ArrayBuffer(44 + dataSize);
-    const view        = new DataView(buffer);
 
-    // RIFF header
-    const writeStr = (off, str) => { for (let i = 0; i < str.length; i++) view.setUint8(off + i, str.charCodeAt(i)); };
-    writeStr(0,  "RIFF");
-    view.setUint32(4,  36 + dataSize, true);
-    writeStr(8,  "WAVE");
+  // ===========================================================
+  // SHARED WAV ENCODER
+  // ===========================================================
+  function encodeWAV(buffer) {
+    const numChannels = buffer.numberOfChannels;
+    const sampleRate = buffer.sampleRate;
+    const numSamples = buffer.length;
+    const bytesPerSample = 2;
+    const dataSize = numSamples * numChannels * bytesPerSample;
+    const arrayBuffer = new ArrayBuffer(44 + dataSize);
+    const view = new DataView(arrayBuffer);
+
+    const writeStr = (off, str) => {
+      for (let i = 0; i < str.length; i++) {
+        view.setUint8(off + i, str.charCodeAt(i));
+      }
+    };
+
+    writeStr(0, "RIFF");
+    view.setUint32(4, 36 + dataSize, true);
+
+    writeStr(8, "WAVE");
+
     writeStr(12, "fmt ");
-    view.setUint32(16, 16, true);            // chunk size
-    view.setUint16(20, 1,  true);            // PCM
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
     view.setUint16(22, numChannels, true);
-    view.setUint32(24, sampleRate,  true);
+    view.setUint32(24, sampleRate, true);
     view.setUint32(28, sampleRate * numChannels * bytesPerSample, true);
     view.setUint16(32, numChannels * bytesPerSample, true);
-    view.setUint16(34, 16, true);            // bits per sample
+    view.setUint16(34, 16, true);
+
     writeStr(36, "data");
     view.setUint32(40, dataSize, true);
 
-    // Interleave channels and convert float32 → int16
     let offset = 44;
+
     for (let i = 0; i < numSamples; i++) {
       for (let ch = 0; ch < numChannels; ch++) {
-        const sample = Math.max(-1, Math.min(1, audioBuffer.getChannelData(ch)[i]));
-        view.setInt16(offset, sample < 0 ? sample * 32768 : sample * 32767, true);
+        const sample = Math.max(-1, Math.min(1, buffer.getChannelData(ch)[i]));
+        view.setInt16(
+          offset,
+          sample < 0 ? sample * 32768 : sample * 32767,
+          true
+        );
         offset += 2;
       }
     }
-    return new Blob([buffer], { type: "audio/wav" });
+
+    return new Blob([arrayBuffer], { type: "audio/wav" });
   }
 
-  // ── Trim & Download ──────────────────────────────────────────
+
+  // ===========================================================
+  // MP3 TRIMMER — Trim & Download
+  // ===========================================================
   if (trimBtn) {
     trimBtn.addEventListener("click", async () => {
       const s = parseFloat(startTimeEl ? startTimeEl.value : 0);
-      const e = parseFloat(endTimeEl   ? endTimeEl.value   : 0);
+      const e = parseFloat(endTimeEl ? endTimeEl.value : 0);
 
       if (isNaN(s) || isNaN(e) || s >= e) {
         alert("Start time must be less than end time.");
         return;
       }
+
       if (!audioBuffer) {
         alert("Audio not decoded yet — please wait a moment and try again.");
         return;
       }
 
-      trimBtn.disabled    = true;
+      trimBtn.disabled = true;
       trimBtn.textContent = "Encoding…";
 
       try {
-        const sampleRate  = audioBuffer.sampleRate;
+        const sampleRate = audioBuffer.sampleRate;
         const startSample = Math.floor(s * sampleRate);
-        const endSample   = Math.min(Math.ceil(e * sampleRate), audioBuffer.length);
-        const numSamples  = endSample - startSample;
+        const endSample = Math.min(Math.ceil(e * sampleRate), audioBuffer.length);
+        const numSamples = endSample - startSample;
         const numChannels = audioBuffer.numberOfChannels;
 
-        // Create a new AudioBuffer with just the selected slice
-        const offlineCtx  = new OfflineAudioContext(numChannels, numSamples, sampleRate);
-        const trimmedBuf  = offlineCtx.createBuffer(numChannels, numSamples, sampleRate);
+        const offlineCtx = new OfflineAudioContext(
+          numChannels,
+          numSamples,
+          sampleRate
+        );
+
+        const trimmedBuf = offlineCtx.createBuffer(
+          numChannels,
+          numSamples,
+          sampleRate
+        );
+
         for (let ch = 0; ch < numChannels; ch++) {
           trimmedBuf.copyToChannel(
             audioBuffer.getChannelData(ch).slice(startSample, endSample),
@@ -510,21 +640,658 @@ document.addEventListener("DOMContentLoaded", () => {
           );
         }
 
-        const wavBlob    = encodeWAV(trimmedBuf);
-        const url        = URL.createObjectURL(wavBlob);
-        const a          = document.createElement("a");
-        a.href           = url;
-        a.download       = "trimmed.wav";
-        a.click();
-        setTimeout(() => URL.revokeObjectURL(url), 10000);
+        const wavBlob = encodeWAV(trimmedBuf);
+        const url = URL.createObjectURL(wavBlob);
+        const a = document.createElement("a");
 
+        a.href = url;
+        a.download = "trimmed.wav";
+        a.click();
+
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
         showToast("Trimmed audio downloaded!");
       } catch (err) {
         console.error("Trim error:", err);
         alert("Trim failed — see browser console for details.");
       } finally {
-        trimBtn.disabled    = false;
+        trimBtn.disabled = false;
         trimBtn.textContent = "⬇ Download Trimmed Audio";
+      }
+    });
+  }
+
+
+  // ===========================================================
+  // VIDEO AUDIO EXTRACTOR — Native first, FFmpeg.wasm fallback
+  // ===========================================================
+  const uploadAreaVideo  = document.getElementById("uploadAreaVideo");
+  const videoInput       = document.getElementById("videoInput");
+  const videoPreviewWrap = document.getElementById("videoPreviewWrap");
+  const videoPreview     = document.getElementById("videoPreview");
+  const videoMeta        = document.getElementById("videoMeta");
+  const extractControls  = document.getElementById("extractControls");
+  const extractBtn       = document.getElementById("extractBtn");
+  const extractStatus    = document.getElementById("extractStatus");
+  const progressBar      = document.getElementById("progressBar");
+  const statusMsg        = document.getElementById("statusMsg");
+  const audioPreviewWrap = document.getElementById("audioPreviewWrap");
+  const audioPreview     = document.getElementById("audioPreview");
+  const downloadBtn      = document.getElementById("downloadBtn");
+  const resetBtn         = document.getElementById("resetBtn");
+  const outputFmt        = document.getElementById("outputFmt");
+
+  if (!uploadAreaVideo) return;
+
+  let vaeFile = null;
+  let vaeBlob = null;
+  let vaeExt = "m4a";
+  let vaeObjectUrl = null;
+  let vaeDecoded = null;
+
+  let vaeFFmpeg = null;
+  let vaeFFmpegReady = false;
+  let vaeFFmpegLoadingPromise = null;
+
+  const VAE_FFMPEG_SCRIPT =
+    "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/umd/ffmpeg.js";
+
+  const VAE_FFMPEG_CORE_BASE =
+    "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd";
+
+  uploadAreaVideo.addEventListener("click", () => {
+    if (videoInput) {
+      videoInput.click();
+    }
+  });
+
+  uploadAreaVideo.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    uploadAreaVideo.classList.add("dragover");
+  });
+
+  uploadAreaVideo.addEventListener("dragleave", () => {
+    uploadAreaVideo.classList.remove("dragover");
+  });
+
+  uploadAreaVideo.addEventListener("drop", (e) => {
+    e.preventDefault();
+    uploadAreaVideo.classList.remove("dragover");
+
+    const file = e.dataTransfer.files[0];
+
+    if (file) {
+      loadVideoFile(file);
+    }
+  });
+
+  if (videoInput) {
+    videoInput.addEventListener("change", (e) => {
+      if (e.target.files[0]) {
+        loadVideoFile(e.target.files[0]);
+      }
+    });
+  }
+
+  function loadVideoFile(file) {
+    vaeFile = file;
+    vaeBlob = null;
+    vaeDecoded = null;
+
+    if (vaeObjectUrl) {
+      URL.revokeObjectURL(vaeObjectUrl);
+      vaeObjectUrl = null;
+    }
+
+    vaeObjectUrl = URL.createObjectURL(file);
+
+    if (videoPreview) {
+      videoPreview.src = vaeObjectUrl;
+      videoPreview.load();
+
+      videoPreview.onloadedmetadata = () => {
+        const dur = Number.isFinite(videoPreview.duration)
+          ? videoPreview.duration
+          : 0;
+
+        const mins = Math.floor(dur / 60);
+        const secs = (dur % 60).toFixed(1);
+        const mb = (file.size / 1024 / 1024).toFixed(1);
+
+        if (videoMeta) {
+          videoMeta.innerHTML =
+            `<span>📄 ${escapeHtmlGlobal(file.name)}</span>` +
+            `<span>⏱ ${mins}m ${secs}s</span>` +
+            `<span>💾 ${mb} MB</span>`;
+        }
+      };
+    }
+
+    if (videoPreviewWrap) videoPreviewWrap.style.display = "flex";
+    if (extractControls) extractControls.style.display = "block";
+    if (extractStatus) extractStatus.style.display = "none";
+    if (audioPreviewWrap) audioPreviewWrap.style.display = "none";
+    if (extractBtn) extractBtn.disabled = false;
+
+    setProgress(0, "");
+  }
+
+  function escapeHtmlGlobal(value) {
+    return String(value).replace(/[&<>'"]/g, (ch) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      "'": "&#39;",
+      '"': "&quot;"
+    }[ch]));
+  }
+
+  function setProgress(pct, msg) {
+    if (progressBar) {
+      progressBar.style.width = pct + "%";
+    }
+
+    if (statusMsg) {
+      statusMsg.textContent = msg;
+    }
+  }
+
+  function loadScriptOnce(src, check) {
+    return new Promise((resolve, reject) => {
+      if (check && check()) {
+        resolve();
+        return;
+      }
+
+      const existing = Array.from(document.scripts).find((script) => {
+        return script.src === src;
+      });
+
+      if (existing) {
+        existing.addEventListener("load", resolve, { once: true });
+        existing.addEventListener(
+          "error",
+          () => reject(new Error("Failed to load " + src)),
+          { once: true }
+        );
+        return;
+      }
+
+      const script = document.createElement("script");
+
+      script.src = src;
+      script.crossOrigin = "anonymous";
+      script.onload = resolve;
+      script.onerror = () => reject(new Error("Failed to load " + src));
+
+      document.head.appendChild(script);
+    });
+  }
+
+  async function vaeToBlobURL(url, mimeType) {
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch FFmpeg core file: " + url);
+    }
+
+    const blob = await response.blob();
+
+    return URL.createObjectURL(
+      new Blob([blob], {
+        type: mimeType
+      })
+    );
+  }
+
+  function withTimeout(promise, ms, label) {
+    return Promise.race([
+      promise,
+      new Promise((_, reject) => {
+        setTimeout(() => {
+          reject(new Error(label + " timed out."));
+        }, ms);
+      })
+    ]);
+  }
+
+  async function decodeVideoAudioNative(file) {
+    const arrayBuf = await file.arrayBuffer();
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+
+    if (!AudioCtx) {
+      throw new Error("This browser does not support the Web Audio API.");
+    }
+
+    const actx = new AudioCtx();
+
+    try {
+      return await actx.decodeAudioData(arrayBuf.slice(0));
+    } finally {
+      if (actx.close) {
+        actx.close();
+      }
+    }
+  }
+
+  function vaeEncodeMP3(buffer) {
+    const numChannels = Math.min(2, buffer.numberOfChannels);
+    const sampleRate = buffer.sampleRate;
+    const mp3enc = new lamejs.Mp3Encoder(numChannels, sampleRate, 128);
+    const blockSize = 1152;
+    const mp3Data = [];
+
+    function toInt16(floatArr) {
+      const out = new Int16Array(floatArr.length);
+
+      for (let i = 0; i < floatArr.length; i++) {
+        const s = Math.max(-1, Math.min(1, floatArr[i]));
+        out[i] = s < 0 ? s * 32768 : s * 32767;
+      }
+
+      return out;
+    }
+
+    const left = toInt16(buffer.getChannelData(0));
+    const right = numChannels > 1
+      ? toInt16(buffer.getChannelData(1))
+      : left;
+
+    for (let i = 0; i < left.length; i += blockSize) {
+      const enc = numChannels > 1
+        ? mp3enc.encodeBuffer(
+            left.subarray(i, i + blockSize),
+            right.subarray(i, i + blockSize)
+          )
+        : mp3enc.encodeBuffer(
+            left.subarray(i, i + blockSize)
+          );
+
+      if (enc.length > 0) {
+        mp3Data.push(new Uint8Array(enc));
+      }
+
+      if (i % (blockSize * 80) === 0) {
+        const progress = 80 + Math.min(15, Math.round((i / left.length) * 15));
+        setProgress(progress, "Encoding MP3…");
+      }
+    }
+
+    const flushed = mp3enc.flush();
+
+    if (flushed.length > 0) {
+      mp3Data.push(new Uint8Array(flushed));
+    }
+
+    return new Blob(mp3Data, {
+      type: "audio/mpeg"
+    });
+  }
+
+  async function extractNative(file, fmt) {
+    if (!vaeDecoded) {
+      setProgress(25, "Trying browser audio decoder…");
+      vaeDecoded = await decodeVideoAudioNative(file);
+    }
+
+    if (fmt === "mp3") {
+      setProgress(70, "Loading MP3 encoder…");
+
+      await loadScriptOnce(
+        "https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js",
+        () => !!window.lamejs
+      );
+
+      setProgress(80, "Encoding MP3…");
+
+      return {
+        blob: vaeEncodeMP3(vaeDecoded),
+        ext: "mp3",
+        mime: "audio/mpeg"
+      };
+    }
+
+    if (fmt === "aac") {
+      throw new Error("Browser-native AAC export unavailable; using FFmpeg fallback.");
+    }
+
+    setProgress(75, "Encoding WAV…");
+
+    return {
+      blob: encodeWAV(vaeDecoded),
+      ext: "wav",
+      mime: "audio/wav"
+    };
+  }
+
+  async function ensureVaeFFmpeg() {
+    if (vaeFFmpegReady) {
+      return vaeFFmpeg;
+    }
+
+    if (vaeFFmpegLoadingPromise) {
+      return vaeFFmpegLoadingPromise;
+    }
+
+    vaeFFmpegLoadingPromise = (async () => {
+      setProgress(10, "Loading FFmpeg.wasm…");
+
+      await loadScriptOnce(
+        VAE_FFMPEG_SCRIPT,
+        () => !!window.FFmpeg
+      );
+
+      if (!window.FFmpeg || !window.FFmpeg.FFmpeg) {
+        throw new Error("FFmpeg.wasm loaded, but window.FFmpeg.FFmpeg was not found.");
+      }
+
+      const { FFmpeg } = window.FFmpeg;
+      vaeFFmpeg = new FFmpeg();
+
+      vaeFFmpeg.on("progress", ({ progress }) => {
+        if (typeof progress === "number" && Number.isFinite(progress)) {
+          const pct = 35 + Math.min(55, Math.round(progress * 55));
+          setProgress(pct, "FFmpeg processing…");
+        }
+      });
+
+      vaeFFmpeg.on("log", ({ message }) => {
+        if (/error|invalid|unsupported|failed/i.test(message)) {
+          console.warn("FFmpeg:", message);
+        }
+      });
+
+      const coreURL = await vaeToBlobURL(
+        `${VAE_FFMPEG_CORE_BASE}/ffmpeg-core.js`,
+        "text/javascript"
+      );
+
+      const wasmURL = await vaeToBlobURL(
+        `${VAE_FFMPEG_CORE_BASE}/ffmpeg-core.wasm`,
+        "application/wasm"
+      );
+
+      await withTimeout(
+        vaeFFmpeg.load({
+          coreURL,
+          wasmURL
+        }),
+        90000,
+        "FFmpeg.wasm load"
+      );
+
+      vaeFFmpegReady = true;
+      return vaeFFmpeg;
+    })();
+
+    try {
+      return await vaeFFmpegLoadingPromise;
+    } finally {
+      vaeFFmpegLoadingPromise = null;
+    }
+  }
+
+  function vaeInputName(fileName) {
+    const match = String(fileName).match(/\.[a-z0-9]+$/i);
+    const ext = match ? match[0].toLowerCase() : ".mp4";
+
+    return "input" + ext.replace(/[^.a-z0-9]/g, "");
+  }
+
+  function vaeOutputInfo(fmt) {
+    if (fmt === "mp3") {
+      return {
+        name: "output.mp3",
+        ext: "mp3",
+        mime: "audio/mpeg"
+      };
+    }
+
+    if (fmt === "wav") {
+      return {
+        name: "output.wav",
+        ext: "wav",
+        mime: "audio/wav"
+      };
+    }
+
+    return {
+      name: "output.m4a",
+      ext: "m4a",
+      mime: "audio/mp4"
+    };
+  }
+
+  async function vaeDeleteIfExists(name) {
+    try {
+      await vaeFFmpeg.deleteFile(name);
+    } catch (_) {
+      // Ignore missing file.
+    }
+  }
+
+  async function extractWithFFmpeg(file, fmt) {
+    const ffmpeg = await ensureVaeFFmpeg();
+    const inputName = vaeInputName(file.name);
+    const output = vaeOutputInfo(fmt);
+
+    await vaeDeleteIfExists(inputName);
+    await vaeDeleteIfExists(output.name);
+
+    setProgress(20, "Copying file into FFmpeg…");
+
+    const fileData = new Uint8Array(await file.arrayBuffer());
+    await ffmpeg.writeFile(inputName, fileData);
+
+    if (fmt === "aac") {
+      setProgress(35, "Extracting audio to M4A…");
+
+      try {
+        await ffmpeg.exec([
+          "-y",
+          "-i", inputName,
+          "-vn",
+          "-map", "0:a:0",
+          "-c:a", "copy",
+          "-movflags", "+faststart",
+          output.name
+        ]);
+      } catch (copyErr) {
+        console.warn("AAC stream copy failed; transcoding instead.", copyErr);
+
+        await vaeDeleteIfExists(output.name);
+
+        setProgress(45, "Converting audio to AAC…");
+
+        await ffmpeg.exec([
+          "-y",
+          "-i", inputName,
+          "-vn",
+          "-map", "0:a:0",
+          "-c:a", "aac",
+          "-b:a", "192k",
+          "-movflags", "+faststart",
+          output.name
+        ]);
+      }
+    } else if (fmt === "mp3") {
+      setProgress(35, "Converting audio to MP3…");
+
+      await ffmpeg.exec([
+        "-y",
+        "-i", inputName,
+        "-vn",
+        "-map", "0:a:0",
+        "-c:a", "libmp3lame",
+        "-b:a", "192k",
+        output.name
+      ]);
+    } else {
+      setProgress(35, "Converting audio to WAV…");
+
+      await ffmpeg.exec([
+        "-y",
+        "-i", inputName,
+        "-vn",
+        "-map", "0:a:0",
+        "-c:a", "pcm_s16le",
+        output.name
+      ]);
+    }
+
+    setProgress(92, "Reading output…");
+
+    const data = await ffmpeg.readFile(output.name);
+
+    await vaeDeleteIfExists(inputName);
+    await vaeDeleteIfExists(output.name);
+
+    return {
+      blob: new Blob([data.buffer], {
+        type: output.mime
+      }),
+      ext: output.ext,
+      mime: output.mime
+    };
+  }
+
+  if (extractBtn) {
+    extractBtn.addEventListener("click", async () => {
+      if (!vaeFile) return;
+
+      const fmt = outputFmt ? outputFmt.value : "aac";
+
+      extractBtn.disabled = true;
+
+      if (extractStatus) {
+        extractStatus.style.display = "block";
+      }
+
+      if (audioPreviewWrap) {
+        audioPreviewWrap.style.display = "none";
+      }
+
+      setProgress(5, "Preparing…");
+
+      try {
+        let result;
+
+        try {
+          result = await extractNative(vaeFile, fmt);
+        } catch (nativeErr) {
+          console.warn("Native extraction failed; falling back to FFmpeg.wasm.", nativeErr);
+
+          setProgress(8, "Switching to FFmpeg.wasm…");
+
+          result = await extractWithFFmpeg(vaeFile, fmt);
+        }
+
+        vaeBlob = result.blob;
+        vaeExt = result.ext;
+
+        const previewUrl = URL.createObjectURL(vaeBlob);
+
+        if (audioPreview) {
+          audioPreview.src = previewUrl;
+          audioPreview.load();
+        }
+
+        if (downloadBtn) {
+          downloadBtn.textContent = `⬇ Download ${vaeExt.toUpperCase()}`;
+        }
+
+        if (audioPreviewWrap) {
+          audioPreviewWrap.style.display = "flex";
+        }
+
+        setProgress(100, "Done!");
+        showToast("Audio extracted!");
+      } catch (err) {
+        console.error("Extraction error:", err);
+
+        setProgress(0, "");
+
+        if (extractStatus) {
+          extractStatus.style.display = "none";
+        }
+
+        alert(
+          "Could not extract audio.\n\n" +
+          "If you are opening the page directly with file://, try serving it from http://localhost instead.\n\n" +
+          (err && err.message ? err.message : err)
+        );
+      } finally {
+        extractBtn.disabled = false;
+      }
+    });
+  }
+
+  if (downloadBtn) {
+    downloadBtn.addEventListener("click", () => {
+      if (!vaeBlob) return;
+
+      const baseName = vaeFile
+        ? vaeFile.name.replace(/\.[^.]+$/, "")
+        : "audio";
+
+      const url = URL.createObjectURL(vaeBlob);
+      const a = document.createElement("a");
+
+      a.href = url;
+      a.download = `${baseName}-audio.${vaeExt}`;
+      a.click();
+
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+
+      showToast("Download started!");
+    });
+  }
+
+  if (resetBtn) {
+    resetBtn.addEventListener("click", () => {
+      vaeFile = null;
+      vaeBlob = null;
+      vaeDecoded = null;
+
+      if (videoPreview) {
+        videoPreview.pause();
+        videoPreview.src = "";
+      }
+
+      if (vaeObjectUrl) {
+        URL.revokeObjectURL(vaeObjectUrl);
+        vaeObjectUrl = null;
+      }
+
+      if (videoInput) {
+        videoInput.value = "";
+      }
+
+      if (audioPreview) {
+        audioPreview.src = "";
+      }
+
+      if (videoPreviewWrap) {
+        videoPreviewWrap.style.display = "none";
+      }
+
+      if (extractControls) {
+        extractControls.style.display = "none";
+      }
+
+      if (extractStatus) {
+        extractStatus.style.display = "none";
+      }
+
+      if (audioPreviewWrap) {
+        audioPreviewWrap.style.display = "none";
+      }
+
+      if (progressBar) {
+        progressBar.style.width = "0%";
+      }
+
+      if (statusMsg) {
+        statusMsg.textContent = "";
       }
     });
   }
