@@ -49,13 +49,14 @@
     <priority>0.9</priority>
   </url>
 
-  <!-- Video Audio Extractor -->
+  <!-- Video Audio Extractor 
   <url>
     <loc>https://simplertools.net/tools/video-audio-extractor.html</loc>
     <lastmod>2026-06-28</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
+-->
 
    <!-- About -->
   <url>
