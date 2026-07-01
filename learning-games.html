@@ -35,13 +35,31 @@ body{
   overscroll-behavior:none;user-select:none;
   -webkit-user-select:none;
 }
-#app{position:fixed;inset:0;overflow:hidden;}
+#app{
+  position:fixed;inset:0;overflow:hidden;
+  container-type:size;container-name:stage;
+}
 button{font-family:inherit;border:none;cursor:pointer;background:none;color:inherit;}
 .screen{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 .fade-in{animation:fadeIn .35s ease both;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 h1,h2,h3{font-family:var(--font-display);margin:0;}
 .visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}
+
+/* On roomy desktop/tablet windows, present the game as a centered
+   "device" card instead of stretching edge-to-edge. Phones (short
+   viewport height, e.g. landscape) keep the full-bleed native feel. */
+@media (min-width:760px) and (min-height:640px){
+  body{
+    display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(circle at 30% 20%,#FFF6E0,#F4E3BE 60%,#E8D3A0 100%);
+  }
+  #app{
+    position:relative;inset:auto;
+    width:min(94vw,460px);height:min(92vh,900px);
+    border-radius:36px;box-shadow:0 40px 90px rgba(31,41,51,.35);
+  }
+}
 
 /* =========================================================
    HOME (CHILD) — theme picker
@@ -52,7 +70,7 @@ h1,h2,h3{font-family:var(--font-display);margin:0;}
   background:radial-gradient(circle at 20% 10%,#FFF6E0,#FDE9C8 40%,#FBE0AE 100%);
 }
 .home-title{
-  font-size:clamp(28px,7vw,46px);color:var(--coral);text-align:center;
+  font-size:clamp(24px,7cqmin,46px);color:var(--coral);text-align:center;
   text-shadow:0 3px 0 #fff, 0 6px 14px rgba(255,107,91,.25);letter-spacing:.5px;
 }
 .home-chest{width:120px;height:auto;filter:drop-shadow(0 12px 18px rgba(0,0,0,.18));animation:bob 3.2s ease-in-out infinite;}
@@ -86,7 +104,7 @@ h1,h2,h3{font-family:var(--font-display);margin:0;}
 .theme-dino{background:linear-gradient(160deg,#FFB259,#FF7A3D);}
 .theme-church{background:linear-gradient(160deg,#B8862E,#7B3F61);}
 .lock-corner{
-  position:fixed;top:14px;right:14px;width:52px;height:52px;border-radius:50%;
+  position:absolute;top:14px;right:14px;width:52px;height:52px;border-radius:50%;
   background:rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;
   font-size:22px;box-shadow:var(--shadow);z-index:50;overflow:hidden;
 }
@@ -124,7 +142,7 @@ h1,h2,h3{font-family:var(--font-display);margin:0;}
 .word-tile{
   position:absolute;transform:translate(-50%,-50%) scale(1);
   padding:10px 16px;border-radius:18px;font-family:var(--font-display);
-  font-size:clamp(16px,4.4vw,22px);letter-spacing:.5px;
+  font-size:clamp(15px,4.4cqmin,22px);letter-spacing:.5px;
   cursor:pointer;transition:transform .18s ease, opacity .18s ease, filter .18s ease;
   display:flex;align-items:center;justify-content:center;min-width:64px;min-height:48px;text-align:center;
   border:3px solid rgba(255,255,255,.5);
@@ -201,7 +219,7 @@ h1,h2,h3{font-family:var(--font-display);margin:0;}
 }
 .choice-card{
   padding:22px 16px;border-radius:22px;font-family:var(--font-display);
-  font-size:clamp(22px,7vw,30px);color:#fff;text-align:center;
+  font-size:clamp(20px,7cqmin,30px);color:#fff;text-align:center;
   box-shadow:var(--shadow);border:4px solid rgba(255,255,255,.5);
   transition:transform .15s ease, opacity .15s ease;
 }
@@ -292,6 +310,13 @@ h1,h2,h3{font-family:var(--font-display);margin:0;}
   text-align:center;color:#9A8F77;font-weight:600;padding:60px 20px;display:flex;flex-direction:column;
   align-items:center;gap:12px;
 }
+.voice-card{background:#F5F2E8;}
+.voice-select{
+  margin-top:10px;-webkit-appearance:none;appearance:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2327303A'><path d='M5.5 7.5l4.5 5 4.5-5z'/></svg>");
+  background-repeat:no-repeat;background-position:right 14px center;background-size:16px;padding-right:40px;
+}
+.voice-loading{font-size:12px;color:#9A8F77;font-weight:700;margin-top:8px;}
 
 /* =========================================================
    SET EDITOR
@@ -327,12 +352,78 @@ h1,h2,h3{font-family:var(--font-display);margin:0;}
 .word-count.limit{color:#C0392B;}
 .error-msg{font-size:13px;color:#C0392B;font-weight:700;}
 .editor-footer{
-  position:fixed;bottom:0;left:0;right:0;background:#fff;padding:14px 20px;
+  position:absolute;bottom:0;left:0;right:0;background:#fff;padding:14px 20px;
   display:flex;gap:10px;box-shadow:0 -8px 24px rgba(0,0,0,.08);
 }
 .editor-footer button{flex:1;padding:14px;border-radius:14px;font-family:var(--font-display);font-size:16px;}
 .editor-footer .cancel{background:#F1EFE8;color:var(--ink);}
 .editor-footer .save{background:var(--coral);color:#fff;}
+
+/* =========================================================
+   COMPACT LAYOUT — short viewports (phone landscape, or any
+   squat window). Measures the #app box itself via container
+   queries, so it works whether #app is full-bleed mobile or
+   the centered desktop frame.
+========================================================= */
+@container stage (max-height: 480px){
+  /* Home screen: go horizontal, everything sized down */
+  .home-wrap{
+    flex-direction:row;flex-wrap:wrap;align-content:center;
+    gap:10px 22px;padding:14px 16px;
+  }
+  .home-chest{width:64px;}
+  .home-title{font-size:clamp(18px,5cqmin,26px);line-height:1.05;}
+  .mode-toggle{padding:4px;}
+  .mode-btn{font-size:12px;padding:7px 10px;}
+  .theme-grid{
+    grid-template-columns:repeat(5,minmax(64px,1fr));
+    gap:8px;max-width:none;flex-basis:100%;
+  }
+  .theme-card{min-height:76px;padding:8px 6px 6px;font-size:12px;gap:4px;border-width:3px;}
+  .theme-card .icon{font-size:24px;}
+  .lock-corner{width:38px;height:38px;font-size:16px;top:8px;right:8px;}
+
+  /* Treasure hunt topbar */
+  .scene-topbar{padding:8px 10px;}
+  .nav-btn{width:40px;height:40px;font-size:18px;}
+  .meter-jar{height:14px;}
+  .meter-label{font-size:12px;}
+  .meter-wrap{padding:4px 10px;}
+
+  /* Listen & Choose: speaker beside choices instead of stacked */
+  .listen-panel{
+    flex-direction:row;padding:56px 16px 14px;gap:18px;
+  }
+  .speaker-btn{width:70px;height:70px;border-width:3px;flex-shrink:0;}
+  .speaker-icon{font-size:30px;}
+  .choice-grid{gap:8px;max-width:none;flex:1;}
+  .choice-card{padding:12px 10px;border-width:3px;border-radius:16px;}
+  .round-dots-wrap{padding:6px 12px;}
+  .round-dot{width:10px;height:10px;}
+
+  /* Celebration / empty-state cards: cap height, allow inner scroll */
+  .celebrate-card,.need-more-card{
+    max-height:88cqh;overflow-y:auto;padding:16px 20px;border-radius:22px;
+  }
+  .celebrate-card .big-icon,.need-more-card .big-icon{font-size:36px;margin-bottom:2px;}
+  .celebrate-title{font-size:20px;margin-bottom:2px;}
+  .celebrate-sub{font-size:13px;margin-bottom:10px;}
+  .celebrate-actions{gap:6px;}
+  .btn-primary,.btn-secondary{padding:10px;font-size:14px;border-radius:14px;}
+
+  /* Parent gate */
+  .gate-wrap{gap:10px;padding:14px;}
+  .gate-circle{width:76px;height:76px;font-size:26px;}
+  .gate-hint{font-size:13px;}
+
+  /* Parent dashboard / editor: tighten vertical rhythm */
+  .pd-topbar{padding:10px 16px 8px;}
+  .pd-topbar h1{font-size:18px;}
+  .pd-content{padding:10px 16px;gap:10px;}
+  .set-card{padding:12px;}
+  .editor-content{padding:10px 16px 90px;gap:12px;}
+  .editor-footer{padding:10px 16px;}
+}
 
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce){
@@ -350,7 +441,7 @@ h1,h2,h3{font-family:var(--font-display);margin:0;}
 /* =========================================================
    DATA LAYER
 ========================================================= */
-const STORE_KEYS = { sets:'swth_sets', activeId:'swth_active_set' };
+const STORE_KEYS = { sets:'swth_sets', activeId:'swth_active_set', voiceURI:'swth_voice_uri' };
 
 function uid(){ return 'id_' + Math.random().toString(36).slice(2,10); }
 
@@ -971,47 +1062,57 @@ function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<
 /* =========================================================
    CHILD: LISTEN & CHOOSE (text-to-speech word matching)
 ========================================================= */
-let cachedVoice = null;
 
-/* Ranked list of known high-quality, natural-sounding system voices
-   across Chrome/Android, Safari/iOS/macOS, and Edge/Windows.
-   We prefer local (on-device) voices so speech keeps working offline. */
-const PREFERRED_VOICE_NAMES = [
-  'Google US English','Ava','Samantha','Google UK English Female',
-  'Allison','Zoe','Karen','Moira','Tessa',
-  'Microsoft Aria Online (Natural)','Microsoft Jenny Online (Natural)',
-  'Microsoft Zira','Microsoft David'
-];
+/* By default we use the browser/OS's own default voice (whatever
+   the person hears from any other speaking website). A parent can
+   optionally pick a specific installed voice from Parent Settings;
+   that choice is remembered in localStorage. */
+let availableVoices = [];
 
-function pickBestVoice(voices){
-  if(!voices || !voices.length) return null;
-  const english = voices.filter(v=>/^en(-|_|$)/i.test(v.lang));
-  const pool = english.length ? english : voices;
-
-  for(const name of PREFERRED_VOICE_NAMES){
-    const match = pool.find(v=>v.name.indexOf(name) !== -1);
-    if(match) return match;
-  }
-  // Fall back to any local (offline-capable) US English voice
-  const localUS = pool.find(v=>v.localService && /en-US/i.test(v.lang));
-  if(localUS) return localUS;
-  // Then any local voice at all
-  const local = pool.find(v=>v.localService);
-  if(local) return local;
-  return pool[0];
-}
-
-function refreshVoiceChoice(){
+function refreshVoiceList(){
   if(!('speechSynthesis' in window)) return;
   const voices = window.speechSynthesis.getVoices();
-  if(voices && voices.length){ cachedVoice = pickBestVoice(voices); }
+  if(voices && voices.length){
+    availableVoices = voices;
+    // If the voice list finishes loading while the parent is looking
+    // at the dashboard, refresh the picker so it isn't stuck empty.
+    if(state.view === 'dashboard') renderDashboard();
+  }
 }
 
 function initVoices(){
   if(!('speechSynthesis' in window)) return;
-  refreshVoiceChoice();
-  // Voice list often loads asynchronously (esp. Chrome) - refresh when ready
-  window.speechSynthesis.onvoiceschanged = refreshVoiceChoice;
+  refreshVoiceList();
+  window.speechSynthesis.onvoiceschanged = refreshVoiceList;
+}
+
+/* Known lower-quality/legacy voices to exclude, and known
+   natural-sounding voices to surface first, when narrowing the
+   parent's voice picker down to American English only. */
+const US_VOICE_LOW_QUALITY_HINTS = ['compact','espeak','microsoft david','microsoft mark','microsoft zira'];
+const US_VOICE_QUALITY_HINTS = [
+  'google us english','samantha','ava','allison','zoe','nicky','evan','susan','tom','aaron',
+  'natural','enhanced','premium','neural'
+];
+
+function getUsEnglishVoices(){
+  const enUS = availableVoices.filter(v => /^en[-_]us$/i.test(v.lang || ''));
+  const highQuality = enUS.filter(v =>
+    !US_VOICE_LOW_QUALITY_HINTS.some(h => v.name.toLowerCase().includes(h))
+  );
+  const pool = highQuality.length ? highQuality : enUS; // never show an empty list if filtering removes everything
+  return pool.slice().sort((a,b)=>{
+    const aTop = US_VOICE_QUALITY_HINTS.some(h => a.name.toLowerCase().includes(h)) ? 0 : 1;
+    const bTop = US_VOICE_QUALITY_HINTS.some(h => b.name.toLowerCase().includes(h)) ? 0 : 1;
+    if(aTop !== bTop) return aTop - bTop;
+    return a.name.localeCompare(b.name);
+  });
+}
+
+function loadVoicePref(){ return localStorage.getItem(STORE_KEYS.voiceURI) || ''; }
+function saveVoicePref(uri){
+  if(uri){ localStorage.setItem(STORE_KEYS.voiceURI, uri); }
+  else { localStorage.removeItem(STORE_KEYS.voiceURI); }
 }
 
 function stopSpeech(){
@@ -1021,18 +1122,21 @@ function stopSpeech(){
 function speakWord(word){
   if(!('speechSynthesis' in window)) return;
   window.speechSynthesis.cancel();
-  if(!cachedVoice) refreshVoiceChoice();
-
   const utter = new SpeechSynthesisUtterance(word);
-  if(cachedVoice){
-    utter.voice = cachedVoice;
-    utter.lang = cachedVoice.lang;
-  } else {
-    utter.lang = 'en-US';
+  const prefUri = loadVoicePref();
+  if(prefUri){
+    const match = availableVoices.find(v=>v.voiceURI === prefUri);
+    if(match){ utter.voice = match; utter.lang = match.lang; }
   }
+  // otherwise: leave utter.voice unset so the browser uses its own default
   utter.rate = 0.85;
   utter.pitch = 1.05;
   window.speechSynthesis.speak(utter);
+}
+
+function onVoiceSelectChange(uri){
+  saveVoicePref(uri);
+  speakWord('sight word');
 }
 
 function buildListenRounds(words, count){
@@ -1248,6 +1352,38 @@ function renderGate(){
 function renderDashboard(){
   const sets = loadSets();
   const activeId = loadActiveId();
+  const currentVoiceUri = loadVoicePref();
+
+  const usVoices = getUsEnglishVoices();
+  const voiceOptions = usVoices
+    .map(v=>`<option value="${escapeHtml(v.voiceURI)}" ${v.voiceURI===currentVoiceUri?'selected':''}>${escapeHtml(v.name)}</option>`)
+    .join('');
+
+  let voiceStatusMsg = '';
+  if(availableVoices.length === 0){
+    voiceStatusMsg = 'Loading available voices…';
+  } else if(usVoices.length === 0){
+    voiceStatusMsg = 'No American English voices were found on this device.';
+  }
+
+  const voiceCard = `
+    <div class="set-card voice-card">
+      <div class="set-card-head">
+        <div>
+          <div class="set-card-title">🔊 Pronunciation Voice</div>
+          <div class="set-card-meta">American English · Used in Listen &amp; Choose</div>
+        </div>
+      </div>
+      <select class="text-input voice-select" id="voiceSelect" onchange="onVoiceSelectChange(this.value)" ${availableVoices.length===0?'disabled':''}>
+        <option value="">Browser Default</option>
+        ${voiceOptions}
+      </select>
+      ${voiceStatusMsg ? `<div class="voice-loading">${voiceStatusMsg}</div>` : ''}
+      <div class="set-card-actions">
+        <button class="mini-btn" onclick="speakWord('sight word')">▶️ Test Voice</button>
+      </div>
+    </div>
+  `;
 
   const cards = sets.length === 0 ? `
     <div class="empty-state">
@@ -1290,6 +1426,7 @@ function renderDashboard(){
           <button class="icon-btn" onclick="goView('home')" aria-label="Exit to child view">✕</button>
         </div>
         <div class="pd-content">
+          ${voiceCard}
           <button class="new-set-btn" onclick="openEditor(null)">＋ New Set</button>
           ${cards}
         </div>
