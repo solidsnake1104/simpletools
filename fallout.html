@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="en" data-hue="green">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SimplerTools - RobCo TermLink</title>
+  <meta name="description" content="SimplerTools: fast, free, no-upload browser utilities, styled as a Fallout Pip-Boy terminal." />
+  <!-- All CSS + JS are inlined below; external styles.css / script.js / ad scripts removed. -->
+  <style>
+    :root{ --amber:#33ff66; --glow:rgba(51,255,102,0.6); --dim:rgba(51,255,102,0.4); --bg:#0a140c; }
+    html[data-hue="amber"]{ --amber:#ffb642; --glow:rgba(255,182,66,0.6); --dim:rgba(255,182,66,0.4); --bg:#140f04; }
+    html[data-hue="blue"] { --amber:#48c9ff; --glow:rgba(72,201,255,0.6); --dim:rgba(72,201,255,0.4); --bg:#04101a; }
+    html[data-hue="white"]{ --amber:#d7ffe0; --glow:rgba(215,255,224,0.6); --dim:rgba(215,255,224,0.45); --bg:#0a120d; }
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    body{ min-height:100vh; background:var(--bg); color:var(--amber); padding:24px;
+      font-family:'Courier New',monospace; letter-spacing:1px; text-shadow:0 0 6px var(--glow); overflow-x:hidden;
+      animation:crtOn 1.6s ease-out 1, textFlicker 3s steps(2) infinite; }
+    /* ===== animated CRT: drifting scanlines ===== */
+    body::before{ content:''; position:fixed; inset:0; pointer-events:none; z-index:50;
+      background:repeating-linear-gradient(0deg, rgba(0,0,0,0.28) 0 2px, transparent 2px 4px);
+      background-size:100% 4px; animation:scanDrift 0.5s linear infinite; }
+    @keyframes scanDrift{ 0%{ background-position:0 0; } 100%{ background-position:0 4px; } }
+    /* ===== animated CRT: flickering vignette ===== */
+    body::after{ content:''; position:fixed; inset:0; pointer-events:none; z-index:51;
+      background:radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.85) 100%);
+      animation:flicker 0.12s steps(2) infinite; }
+    @keyframes flicker{ 0%{opacity:0.82} 20%{opacity:1} 35%{opacity:0.88} 50%{opacity:0.98}
+      65%{opacity:0.85} 80%{opacity:1} 100%{opacity:0.9} }
+    /* subtle brightness jitter on the whole screen */
+    @keyframes textFlicker{ 0%{opacity:1} 3%{opacity:0.86} 6%{opacity:1} 7%{opacity:0.92}
+      9%{opacity:1} 60%{opacity:1} 62%{opacity:0.9} 64%{opacity:1} 100%{opacity:1} }
+    /* power-on sweep when the page loads */
+    @keyframes crtOn{ 0%{ filter:brightness(3) contrast(0.4); transform:scaleY(0.004); }
+      35%{ transform:scaleY(0.02); } 60%{ filter:brightness(1.4); transform:scaleY(1); } 100%{ filter:none; } }
+    @media (prefers-reduced-motion: reduce){
+      body, body::before, body::after{ animation:none !important; }
+    }
+    .frame{ max-width:960px; margin:0 auto; border:3px solid var(--amber); padding:18px 22px;
+      box-shadow:0 0 18px var(--glow), inset 0 0 30px rgba(0,0,0,0.6); }
+    #boot, #exit{ white-space:pre-wrap; line-height:1.5; min-height:200px; }
+    #exit{ display:none; }
+    /* ===== password lock screen ===== */
+    #login{ display:none; min-height:220px; line-height:1.6; }
+    #login.active{ display:block; }
+    #login .halt{ font-size:22px; letter-spacing:3px; margin-bottom:10px; }
+    #login .warn{ color:var(--dim); font-size:14px; margin:4px 0; }
+    .pw-row{ display:flex; align-items:center; margin-top:18px; font-size:20px; }
+    .pw-row .prompt{ margin-right:8px; }
+    #pw-input{ background:transparent; border:none; outline:none; color:var(--amber);
+      font-family:inherit; font-size:20px; letter-spacing:8px; text-shadow:inherit; width:260px; caret-color:transparent; }
+    #pw-cursor{ font-size:20px; animation:blink 1s steps(1) infinite; }
+    @keyframes blink{ 0%,50%{opacity:1} 51%,100%{opacity:0} }
+    #pw-msg{ margin-top:14px; font-size:15px; min-height:20px; }
+    #term{ display:none; }
+    .statusbar{ display:flex; justify-content:space-between; border-bottom:2px solid var(--amber);
+      padding-bottom:8px; font-size:13px; }
+    .brand{ text-align:center; margin:14px 0 6px; }
+    .brand h1{ font-size:30px; letter-spacing:6px; }
+    .brand p{ font-size:13px; color:var(--dim); margin-top:4px; }
+    .tabs{ display:flex; border-top:2px solid var(--amber); border-bottom:2px solid var(--amber); margin:14px 0; }
+    .tab{ flex:1; text-align:center; padding:8px; cursor:pointer; letter-spacing:3px; }
+    .tab.active{ background:var(--amber); color:var(--bg); text-shadow:none; }
+    .tab.sel{ outline:2px solid var(--amber); outline-offset:-2px; background:rgba(120,180,50,0.25); }
+    .list{ }
+    .item{ display:block; text-decoration:none; color:inherit; padding:10px 14px; border:1px solid transparent; cursor:pointer; }
+    .item .name{ font-size:18px; }
+    .item .name::before{ content:'> '; opacity:0; }
+    .item .desc{ font-size:12px; color:var(--dim); margin-top:2px; }
+    .item:hover, .item.sel{ background:var(--amber); color:var(--bg); text-shadow:none; }
+    .item:hover .desc, .item.sel .desc{ color:var(--bg); }
+    .item:hover .name::before, .item.sel .name::before{ opacity:1; }
+    .panel{ display:none; } .panel.active{ display:block; }
+    .panel p{ margin:6px 0; }
+    footer{ border-top:2px solid var(--amber); margin-top:16px; padding-top:10px; font-size:12px;
+      display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
+    footer a{ color:inherit; text-decoration:none; margin-right:14px; padding:2px 4px; }
+    footer a:hover, footer a.sel{ background:var(--amber); color:var(--bg); text-shadow:none; }
+    select{ background:var(--bg); color:var(--amber); border:1px solid var(--amber);
+      font-family:inherit; padding:4px; text-shadow:inherit; }
+    .visually-hidden{ position:absolute; left:-9999px; }
+    /* sound toggle button */
+    #sound-toggle{ background:var(--bg); color:var(--amber); border:1px solid var(--amber);
+      font-family:inherit; padding:4px 10px; cursor:pointer; text-shadow:inherit; letter-spacing:2px; }
+  </style>
+</head>
+<body>
+  <!-- looping background music (low volume). File must be named bigiron.mp3 next to this page. -->
+  <audio id="bg-music" src="bigiron.mp3" loop preload="auto"></audio>
+
+  <div class="frame">
+    <div id="boot"></div>
+
+    <!-- ===== EXIT / LEAVING TERMINAL SEQUENCE ===== -->
+    <div id="exit"></div>
+
+    <!-- ===== PASSWORD LOCK SCREEN ===== -->
+    <div id="login">
+      <div class="halt">!! HALT !!</div>
+      <div class="warn">THIS IS A RESTRICTED ENCLAVE TERMINAL.</div>
+      <div class="warn">UNAUTHORIZED ACCESS IS A CAPITAL OFFENSE UNDER ENCLAVE DIRECTIVE 7-C.</div>
+      <div class="warn">IDENTIFY YOURSELF. ENTER ACCESS PASSWORD TO PROCEED.</div>
+      <div class="pw-row">
+        <span class="prompt">PASSWORD&gt;</span>
+        <input id="pw-input" type="text" maxlength="16" autocomplete="off" spellcheck="false" aria-label="Access password" />
+        <span id="pw-cursor">█</span>
+      </div>
+      <div id="pw-msg"></div>
+    </div>
+
+    <div id="term">
+      <div class="statusbar">
+        <span>ROBCO INDUSTRIES (TM) TERMLINK</span>
+        <span id="clock">--:--:--</span>
+      </div>
+
+      <div class="brand">
+        <h1>SIMPLERTOOLS</h1>
+        <p>PIP-OS v7.1.0.8 - USE ARROW KEYS + ENTER, OR CLICK, TO NAVIGATE</p>
+      </div>
+
+      <nav class="tabs">
+        <div class="tab active" data-panel="tools">TOOLS</div>
+        <div class="tab" data-panel="data">DATA</div>
+        <div class="tab" data-panel="status">STATUS</div>
+      </nav>
+
+      <section class="panel active" id="tools">
+        <div class="list" id="tool-list">
+          <a class="item" href="tools/mp3-trimmer.html"><div class="name">Audio &amp; MP3 Trimmer</div><div class="desc">Trim MP3 audio files in browser.</div></a>
+          <a class="item" href="tools/image-metadata-cleaner.html"><div class="name">Image Metadata Cleaner</div><div class="desc">Clean and remove image metadata.</div></a>
+          <a class="item" href="tools/image-resizer.html"><div class="name">Image Resizer</div><div class="desc">Crop &amp; resize images instantly.</div></a>
+          <a class="item" href="tools/pdf-joiner.html"><div class="name">PDF Joiner</div><div class="desc">Combine PDFs.</div></a>
+          <a class="item" href="tools/video-audio-extractor.html"><div class="name">Video Audio Extractor</div><div class="desc">(DESKTOP BROWSER ONLY) Extract audio from video files.</div></a>
+        </div>
+      </section>
+
+      <section class="panel" id="data">
+        <p>> ALL UTILITIES RUN LOCALLY IN YOUR BROWSER.</p>
+        <p>> NO UPLOADS. NO TRACKING. MAXIMUM PRIVACY.</p>
+        <p>> STATUS: 5 TOOL MODULES ONLINE.</p>
+      </section>
+
+      <section class="panel" id="status">
+        <p>> VAULT DWELLER: ENCLAVE PERSONNEL</p>
+        <p>> CONNECTION: SECURE / LOCALHOST</p>
+        <p>> POWER: NUCLEAR CELL 100%</p>
+      </section>
+
+      <footer>
+        <div>
+          <a href="about.html">ABOUT</a>
+          <a href="contact.html">CONTACT</a>
+          <a href="privacy.html">PRIVACY</a>
+        </div>
+        <div>
+          <button id="sound-toggle" title="Toggle terminal sounds">SOUND: ON</button>
+          <label for="theme-select" class="visually-hidden">Phosphor color</label>
+          <select id="theme-select">
+            <option value="green">GREEN</option>
+            <option value="amber">AMBER</option>
+            <option value="blue">BLUE</option>
+            <option value="white">WHITE</option>
+          </select>
+        </div>
+        <div>&copy; <span id="year"></span> SIMPLERTOOLS</div>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    // ================= PIP-BOY AUDIO (Web Audio - no files needed) =================
+    var AC = null, soundOn = true;
+    function audio(){
+      if(!AC){ try{ AC = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){ return null; } }
+      if(AC.state === 'suspended'){ AC.resume(); }
+      return AC;
+    }
+
+    // ---- LOOPING BACKGROUND MUSIC (bigiron.mp3, low volume) ----
+    var bgMusic = document.getElementById('bg-music');
+    bgMusic.volume = 0.22;  // low but hearable
+    function startMusic(){ if(soundOn){ var p = bgMusic.play(); if(p && p.catch) p.catch(function(){}); } }
+
+    // ---- CONTINUOUS BACKGROUND HUM / BUZZ ----
+    var hum = null;
+    function startHum(){
+      var ctx = audio(); if(!ctx || hum) return;
+      var master = ctx.createGain(); master.gain.value = soundOn ? 1 : 0; master.connect(ctx.destination);
+      var lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 380; lp.connect(master);
+      var o1 = ctx.createOscillator(); o1.type = 'sine';    o1.frequency.value = 60;
+      var o2 = ctx.createOscillator(); o2.type = 'triangle'; o2.frequency.value = 120;
+      var g1 = ctx.createGain(); g1.gain.value = 0.05; o1.connect(g1); g1.connect(lp);
+      var g2 = ctx.createGain(); g2.gain.value = 0.022; o2.connect(g2); g2.connect(lp);
+      var buf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+      var data = buf.getChannelData(0);
+      for(var i = 0; i < data.length; i++){ data[i] = Math.random() * 2 - 1; }
+      var noise = ctx.createBufferSource(); noise.buffer = buf; noise.loop = true;
+      var hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 6500;
+      var ng = ctx.createGain(); ng.gain.value = 0.006;
+      noise.connect(hp); hp.connect(ng); ng.connect(master);
+      o1.start(); o2.start(); noise.start();
+      hum = { master: master };
+    }
+
+    // ---- NAVIGATION CLICKS (mechanical tick) ----
+    function click(hi){
+      if(!soundOn) return;
+      var ctx = audio(); if(!ctx) return;
+      var t = ctx.currentTime;
+      var n = Math.floor(ctx.sampleRate * 0.05);
+      var nb = ctx.createBuffer(1, n, ctx.sampleRate);
+      var d = nb.getChannelData(0);
+      for(var i = 0; i < n; i++){ d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3); }
+      var ns = ctx.createBufferSource(); ns.buffer = nb;
+      var bp = ctx.createBiquadFilter(); bp.type = 'bandpass';
+      bp.frequency.value = hi ? 2600 : 1500; bp.Q.value = 0.7;
+      var ng = ctx.createGain(); ng.gain.value = hi ? 0.16 : 0.20;
+      ns.connect(bp); bp.connect(ng); ng.connect(ctx.destination);
+      ns.start(t);
+      var osc = ctx.createOscillator(); osc.type = 'square';
+      osc.frequency.value = hi ? 900 : 430;
+      var og = ctx.createGain();
+      og.gain.setValueAtTime(0.0001, t);
+      og.gain.exponentialRampToValueAtTime(hi ? 0.05 : 0.08, t + 0.003);
+      og.gain.exponentialRampToValueAtTime(0.0001, t + (hi ? 0.035 : 0.06));
+      osc.connect(og); og.connect(ctx.destination);
+      osc.start(t); osc.stop(t + 0.08);
+    }
+    var hoverBlip  = function(){ click(true);  };
+    var selectBlip = function(){ click(false); };
+
+    // ---- HEAVY MECHANICAL KEYBOARD CLACK (for password typing) ----
+    function keyClack(){
+      if(!soundOn) return;
+      var ctx = audio(); if(!ctx) return;
+      var t = ctx.currentTime;
+      var n = Math.floor(ctx.sampleRate * 0.045);
+      var nb = ctx.createBuffer(1, n, ctx.sampleRate);
+      var d = nb.getChannelData(0);
+      for(var i = 0; i < n; i++){ d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 5); }
+      var ns = ctx.createBufferSource(); ns.buffer = nb;
+      var bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1900; bp.Q.value = 0.5;
+      var ng = ctx.createGain(); ng.gain.value = 0.33;
+      ns.connect(bp); bp.connect(ng); ng.connect(ctx.destination); ns.start(t);
+      var osc = ctx.createOscillator(); osc.type = 'sine';
+      osc.frequency.setValueAtTime(170, t);
+      osc.frequency.exponentialRampToValueAtTime(65, t + 0.05);
+      var og = ctx.createGain();
+      og.gain.setValueAtTime(0.0001, t);
+      og.gain.exponentialRampToValueAtTime(0.30, t + 0.004);
+      og.gain.exponentialRampToValueAtTime(0.0001, t + 0.10);
+      osc.connect(og); og.connect(ctx.destination);
+      osc.start(t); osc.stop(t + 0.12);
+    }
+
+    // unlock audio + start hum + start music on the first user gesture (autoplay policy)
+    ['pointerdown','keydown'].forEach(function(ev){
+      window.addEventListener(ev, function once(){ audio(); startHum(); startMusic(); window.removeEventListener(ev, once); });
+    });
+    var soundBtn = document.getElementById('sound-toggle');
+    soundBtn.addEventListener('click', function(){
+      soundOn = !soundOn;
+      soundBtn.textContent = 'SOUND: ' + (soundOn ? 'ON' : 'OFF');
+      if(hum){ hum.master.gain.value = soundOn ? 1 : 0; }
+      if(soundOn){ startHum(); startMusic(); selectBlip(); } else { bgMusic.pause(); }
+    });
+
+    // ---- boot sequence (typewriter) ----
+    var bootLines = [
+      'ROBCO INDUSTRIES (TM) TERMLINK PROTOCOL',
+      'INITIALIZING PIP-OS v7.1.0.8 ...',
+      'CHECKING MEMORY ................ 64K OK',
+      'LOADING TOOL MODULES ........... OK',
+      'MOUNTING /tools ................ OK',
+      'ESTABLISHING SECURE LINK ....... OK',
+      'SECURITY LAYER ................. ENGAGED',
+    ];
+    var boot = document.getElementById('boot');
+    var login = document.getElementById('login');
+    var term = document.getElementById('term');
+    var exitEl = document.getElementById('exit');
+    var out = '', li = 0, ci = 0;
+    function type(){
+      if(li >= bootLines.length){
+        boot.textContent = out;
+        setTimeout(showLogin, 500);
+        return;
+      }
+      var line = bootLines[li];
+      if(ci < line.length){
+        out += line.charAt(ci); ci++;
+        boot.textContent = out + '_';
+        setTimeout(type, 16);
+      } else {
+        out += '\n'; li++; ci = 0;
+        boot.textContent = out + '_';
+        setTimeout(type, 110);
+      }
+    }
+    type();
+
+    // ================= PASSWORD LOCK (masked with *) =================
+    var PASSWORD = 'JUSTIN';
+    var pwInput = document.getElementById('pw-input');
+    var pwMsg   = document.getElementById('pw-msg');
+    var pwReal  = '';
+    function showLogin(){
+      boot.style.display = 'none';
+      login.classList.add('active');
+      pwInput.focus();
+    }
+    pwInput.addEventListener('keydown', function(e){
+      if(e.key === 'Enter'){ submitPw(); e.preventDefault(); return; }
+      if(e.key === 'Backspace'){ pwReal = pwReal.slice(0, -1); keyClack(); }
+      else if(e.key.length === 1 && pwReal.length < 16){ pwReal += e.key; keyClack(); }
+      else { return; }
+      e.preventDefault();
+      pwInput.value = new Array(pwReal.length + 1).join('*');
+    });
+    login.addEventListener('click', function(){ if(login.classList.contains('active')) pwInput.focus(); });
+    function submitPw(){
+      if(pwReal.trim().toUpperCase() === PASSWORD){
+        pwMsg.textContent = 'ACCESS GRANTED. WELCOME, OPERATIVE.';
+        selectBlip();
+        setTimeout(function(){
+          login.classList.remove('active');
+          term.style.display = 'block';
+          buildNav();
+        }, 700);
+      } else {
+        pwMsg.textContent = 'ACCESS DENIED - INCORRECT PASSWORD. ATTEMPT LOGGED.';
+        pwReal = ''; pwInput.value = '';
+        click(false);
+      }
+    }
+
+    // ================= EXIT SEQUENCE (leaving the terminal) =================
+    var exiting = false;
+    function exitSequence(name, href){
+      if(exiting) return; exiting = true;
+      term.style.display = 'none';
+      login.classList.remove('active');
+      exitEl.style.display = 'block';
+      var lines = [
+        'LINK SELECTED: ' + name,
+        'LOADING ' + name.toUpperCase() + ' ...',
+        'SAVING SESSION STATE ........... OK',
+        'FLUSHING TERMINAL CACHE ........ OK',
+        'CLOSING SECURE LINK ............ OK',
+        'EXITING TERMINAL',
+      ];
+      var eo = '', el = 0, ec = 0;
+      (function etype(){
+        if(el >= lines.length){
+          exitEl.textContent = eo;
+          setTimeout(function(){ window.location.href = href; }, 800);
+          return;
+        }
+        var line = lines[el];
+        if(ec < line.length){
+          eo += line.charAt(ec); ec++;
+          exitEl.textContent = eo + '_';
+          setTimeout(etype, 16);
+        } else {
+          eo += '\n'; el++; ec = 0;
+          exitEl.textContent = eo + '_';
+          setTimeout(etype, 120);
+        }
+      })();
+    }
+
+    // ================= UNIFIED KEYBOARD NAVIGATION =================
+    // Arrow keys move a highlight across EVERY selectable element (tabs,
+    // tool links, footer links); Enter activates the highlighted one.
+    var navList = [], navIdx = -1;
+    function buildNav(){
+      navList = [];
+      document.querySelectorAll('#term .tab').forEach(function(t){ navList.push(t); });
+      var panel = document.querySelector('#term .panel.active');
+      if(panel){ panel.querySelectorAll('a.item').forEach(function(a){ navList.push(a); }); }
+      document.querySelectorAll('#term footer a').forEach(function(a){ navList.push(a); });
+      if(navIdx >= navList.length) navIdx = -1;
+    }
+    function navHighlight(){
+      navList.forEach(function(el,i){ el.classList.toggle('sel', i === navIdx); });
+      if(navIdx >= 0 && navList[navIdx] && navList[navIdx].scrollIntoView){ navList[navIdx].scrollIntoView({ block:'nearest' }); }
+    }
+    function navMove(step){
+      if(!navList.length) buildNav();
+      if(!navList.length) return;
+      navIdx = (navIdx + step + navList.length) % navList.length;
+      navHighlight(); hoverBlip();
+    }
+    function navActivate(){
+      var el = navList[navIdx]; if(!el) return;
+      if(el.classList.contains('tab')){
+        el.click();  // switch panel
+        buildNav(); navIdx = navList.indexOf(el); navHighlight();
+      } else if(el.tagName === 'A'){
+        selectBlip();
+        var nmeEl = el.querySelector('.name');
+        exitSequence(nmeEl ? nmeEl.textContent : el.textContent, el.getAttribute('href'));
+      }
+    }
+    document.addEventListener('keydown', function(e){
+      if(term.style.display !== 'block') return;  // locked until password accepted
+      if(e.key === 'ArrowDown' || e.key === 'ArrowRight'){ navMove(1); e.preventDefault(); }
+      else if(e.key === 'ArrowUp' || e.key === 'ArrowLeft'){ navMove(-1); e.preventDefault(); }
+      else if(e.key === 'Enter' && navIdx >= 0){ navActivate(); e.preventDefault(); }
+    });
+
+    // ---- live clock ----
+    function p2(n){ return (n < 10 ? '0' : '') + n; }
+    function tick(){
+      var dt = new Date();
+      document.getElementById('clock').textContent = p2(dt.getHours())+':'+p2(dt.getMinutes())+':'+p2(dt.getSeconds());
+    }
+    setInterval(tick, 1000); tick();
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // ---- random flicker bursts ----
+    function flickerBurst(){
+      document.body.style.opacity = (0.6 + Math.random()*0.35).toFixed(2);
+      setTimeout(function(){ document.body.style.opacity = '1'; }, 40 + Math.random()*60);
+      setTimeout(flickerBurst, 2500 + Math.random()*4000);
+    }
+    setTimeout(flickerBurst, 3000);
+
+    // ---- tab switching (mouse, with sound) ----
+    document.querySelectorAll('.tab').forEach(function(tab){
+      tab.addEventListener('mouseenter', hoverBlip);
+      tab.addEventListener('click', function(){
+        selectBlip();
+        document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+        document.querySelectorAll('.panel').forEach(function(pn){ pn.classList.remove('active'); });
+        tab.classList.add('active');
+        document.getElementById(tab.getAttribute('data-panel')).classList.add('active');
+        buildNav();
+      });
+    });
+
+    // ---- phosphor color selector ----
+    var sel = document.getElementById('theme-select');
+    sel.addEventListener('change', function(){ document.documentElement.setAttribute('data-hue', sel.value); selectBlip(); });
+
+    // ---- tool list: hover sound + exit sequence on select ----
+    document.querySelectorAll('#tool-list .item').forEach(function(it){
+      it.addEventListener('mouseenter', hoverBlip);
+      it.addEventListener('click', function(e){
+        e.preventDefault();
+        selectBlip();
+        exitSequence(it.querySelector('.name').textContent, it.getAttribute('href'));
+      });
+    });
+
+    // ---- footer links: hover sound + exit sequence on select ----
+    document.querySelectorAll('#term footer a').forEach(function(a){
+      a.addEventListener('mouseenter', hoverBlip);
+      a.addEventListener('click', function(e){
+        e.preventDefault();
+        selectBlip();
+        exitSequence(a.textContent, a.getAttribute('href'));
+      });
+    });
+  </script>
+</body>
+</html>
+
