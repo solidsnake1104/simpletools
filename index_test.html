@@ -37,7 +37,8 @@
     }
     .frame{ max-width:960px; margin:0 auto; border:3px solid var(--amber); padding:18px 22px;
       box-shadow:0 0 18px var(--glow), inset 0 0 30px rgba(0,0,0,0.6); }
-    #boot{ white-space:pre-wrap; line-height:1.5; min-height:200px; }
+    #boot, #exit{ white-space:pre-wrap; line-height:1.5; min-height:200px; }
+    #exit{ display:none; }
     /* ===== password lock screen ===== */
     #login{ display:none; min-height:220px; line-height:1.6; }
     #login.active{ display:block; }
@@ -59,6 +60,7 @@
     .tabs{ display:flex; border-top:2px solid var(--amber); border-bottom:2px solid var(--amber); margin:14px 0; }
     .tab{ flex:1; text-align:center; padding:8px; cursor:pointer; letter-spacing:3px; }
     .tab.active{ background:var(--amber); color:var(--bg); text-shadow:none; }
+    .tab.sel{ outline:2px solid var(--amber); outline-offset:-2px; background:rgba(120,180,50,0.25); }
     .list{ }
     .item{ display:block; text-decoration:none; color:inherit; padding:10px 14px; border:1px solid transparent; cursor:pointer; }
     .item .name{ font-size:18px; }
@@ -71,8 +73,8 @@
     .panel p{ margin:6px 0; }
     footer{ border-top:2px solid var(--amber); margin-top:16px; padding-top:10px; font-size:12px;
       display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
-    footer a{ color:inherit; text-decoration:none; margin-right:14px; }
-    footer a:hover{ background:var(--amber); color:var(--bg); text-shadow:none; }
+    footer a{ color:inherit; text-decoration:none; margin-right:14px; padding:2px 4px; }
+    footer a:hover, footer a.sel{ background:var(--amber); color:var(--bg); text-shadow:none; }
     select{ background:var(--bg); color:var(--amber); border:1px solid var(--amber);
       font-family:inherit; padding:4px; text-shadow:inherit; }
     .visually-hidden{ position:absolute; left:-9999px; }
@@ -82,8 +84,14 @@
   </style>
 </head>
 <body>
+  <!-- looping background music (low volume). File must be named bigiron.mp3 next to this page. -->
+  <audio id="bg-music" src="bigiron.mp3" loop preload="auto"></audio>
+
   <div class="frame">
     <div id="boot"></div>
+
+    <!-- ===== EXIT / LEAVING TERMINAL SEQUENCE ===== -->
+    <div id="exit"></div>
 
     <!-- ===== PASSWORD LOCK SCREEN ===== -->
     <div id="login">
@@ -93,7 +101,7 @@
       <div class="warn">IDENTIFY YOURSELF. ENTER ACCESS PASSWORD TO PROCEED.</div>
       <div class="pw-row">
         <span class="prompt">PASSWORD&gt;</span>
-        <input id="pw-input" type="password" maxlength="16" autocomplete="off" spellcheck="false" aria-label="Access password" />
+        <input id="pw-input" type="text" maxlength="16" autocomplete="off" spellcheck="false" aria-label="Access password" />
         <span id="pw-cursor">█</span>
       </div>
       <div id="pw-msg"></div>
@@ -107,7 +115,7 @@
 
       <div class="brand">
         <h1>SIMPLERTOOLS</h1>
-        <p>PIP-OS v7.1.0.8 - SELECT A TOOL TO GET STARTED</p>
+        <p>PIP-OS v7.1.0.8 - USE ARROW KEYS + ENTER, OR CLICK, TO NAVIGATE</p>
       </div>
 
       <nav class="tabs">
@@ -162,11 +170,16 @@
   <script>
     // ================= PIP-BOY AUDIO (Web Audio - no files needed) =================
     var AC = null, soundOn = true;
-    function audio(){ // create/resume the audio context lazily (browser autoplay rules)
+    function audio(){
       if(!AC){ try{ AC = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){ return null; } }
       if(AC.state === 'suspended'){ AC.resume(); }
       return AC;
     }
+
+    // ---- LOOPING BACKGROUND MUSIC (bigiron.mp3, low volume) ----
+    var bgMusic = document.getElementById('bg-music');
+    bgMusic.volume = 0.22;  // low but hearable
+    function startMusic(){ if(soundOn){ var p = bgMusic.play(); if(p && p.catch) p.catch(function(){}); } }
 
     // ---- CONTINUOUS BACKGROUND HUM / BUZZ ----
     var hum = null;
@@ -221,7 +234,6 @@
       if(!soundOn) return;
       var ctx = audio(); if(!ctx) return;
       var t = ctx.currentTime;
-      // sharp plastic "clack" - short noise burst, quick attack, hard decay
       var n = Math.floor(ctx.sampleRate * 0.045);
       var nb = ctx.createBuffer(1, n, ctx.sampleRate);
       var d = nb.getChannelData(0);
@@ -230,7 +242,6 @@
       var bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1900; bp.Q.value = 0.5;
       var ng = ctx.createGain(); ng.gain.value = 0.33;
       ns.connect(bp); bp.connect(ng); ng.connect(ctx.destination); ns.start(t);
-      // deep "thock" body - low sine that drops in pitch fast (bottoming-out key)
       var osc = ctx.createOscillator(); osc.type = 'sine';
       osc.frequency.setValueAtTime(170, t);
       osc.frequency.exponentialRampToValueAtTime(65, t + 0.05);
@@ -242,16 +253,16 @@
       osc.start(t); osc.stop(t + 0.12);
     }
 
-    // unlock audio + start the hum on the very first user gesture (autoplay policy)
+    // unlock audio + start hum + start music on the first user gesture (autoplay policy)
     ['pointerdown','keydown'].forEach(function(ev){
-      window.addEventListener(ev, function once(){ audio(); startHum(); window.removeEventListener(ev, once); });
+      window.addEventListener(ev, function once(){ audio(); startHum(); startMusic(); window.removeEventListener(ev, once); });
     });
     var soundBtn = document.getElementById('sound-toggle');
     soundBtn.addEventListener('click', function(){
       soundOn = !soundOn;
       soundBtn.textContent = 'SOUND: ' + (soundOn ? 'ON' : 'OFF');
       if(hum){ hum.master.gain.value = soundOn ? 1 : 0; }
-      if(soundOn){ startHum(); selectBlip(); }
+      if(soundOn){ startHum(); startMusic(); selectBlip(); } else { bgMusic.pause(); }
     });
 
     // ---- boot sequence (typewriter) ----
@@ -267,6 +278,7 @@
     var boot = document.getElementById('boot');
     var login = document.getElementById('login');
     var term = document.getElementById('term');
+    var exitEl = document.getElementById('exit');
     var out = '', li = 0, ci = 0;
     function type(){
       if(li >= bootLines.length){
@@ -287,37 +299,115 @@
     }
     type();
 
-    // ================= PASSWORD LOCK =================
+    // ================= PASSWORD LOCK (masked with *) =================
     var PASSWORD = 'BASED';
     var pwInput = document.getElementById('pw-input');
     var pwMsg   = document.getElementById('pw-msg');
+    var pwReal  = '';
     function showLogin(){
       boot.style.display = 'none';
       login.classList.add('active');
       pwInput.focus();
     }
-    // heavy mechanical clack on every character typed
     pwInput.addEventListener('keydown', function(e){
-      if(e.key === 'Enter'){ submitPw(); return; }
-      keyClack();  // clack for letters, backspace, spacebar, everything
+      if(e.key === 'Enter'){ submitPw(); e.preventDefault(); return; }
+      if(e.key === 'Backspace'){ pwReal = pwReal.slice(0, -1); keyClack(); }
+      else if(e.key.length === 1 && pwReal.length < 16){ pwReal += e.key; keyClack(); }
+      else { return; }
+      e.preventDefault();
+      pwInput.value = new Array(pwReal.length + 1).join('*');
     });
-    // keep focus on the field while locked
     login.addEventListener('click', function(){ if(login.classList.contains('active')) pwInput.focus(); });
     function submitPw(){
-      var val = (pwInput.value || '').trim().toUpperCase();
-      if(val === PASSWORD){
+      if(pwReal.trim().toUpperCase() === PASSWORD){
         pwMsg.textContent = 'ACCESS GRANTED. WELCOME, OPERATIVE.';
         selectBlip();
         setTimeout(function(){
           login.classList.remove('active');
           term.style.display = 'block';
+          buildNav();
         }, 700);
       } else {
         pwMsg.textContent = 'ACCESS DENIED - INCORRECT PASSWORD. ATTEMPT LOGGED.';
-        pwInput.value = '';
+        pwReal = ''; pwInput.value = '';
         click(false);
       }
     }
+
+    // ================= EXIT SEQUENCE (leaving the terminal) =================
+    var exiting = false;
+    function exitSequence(name, href){
+      if(exiting) return; exiting = true;
+      term.style.display = 'none';
+      login.classList.remove('active');
+      exitEl.style.display = 'block';
+      var lines = [
+        'LINK SELECTED: ' + name,
+        'LOADING ' + name.toUpperCase() + ' ...',
+        'SAVING SESSION STATE ........... OK',
+        'FLUSHING TERMINAL CACHE ........ OK',
+        'CLOSING SECURE LINK ............ OK',
+        'EXITING TERMINAL',
+      ];
+      var eo = '', el = 0, ec = 0;
+      (function etype(){
+        if(el >= lines.length){
+          exitEl.textContent = eo;
+          setTimeout(function(){ window.location.href = href; }, 800);
+          return;
+        }
+        var line = lines[el];
+        if(ec < line.length){
+          eo += line.charAt(ec); ec++;
+          exitEl.textContent = eo + '_';
+          setTimeout(etype, 16);
+        } else {
+          eo += '\n'; el++; ec = 0;
+          exitEl.textContent = eo + '_';
+          setTimeout(etype, 120);
+        }
+      })();
+    }
+
+    // ================= UNIFIED KEYBOARD NAVIGATION =================
+    // Arrow keys move a highlight across EVERY selectable element (tabs,
+    // tool links, footer links); Enter activates the highlighted one.
+    var navList = [], navIdx = -1;
+    function buildNav(){
+      navList = [];
+      document.querySelectorAll('#term .tab').forEach(function(t){ navList.push(t); });
+      var panel = document.querySelector('#term .panel.active');
+      if(panel){ panel.querySelectorAll('a.item').forEach(function(a){ navList.push(a); }); }
+      document.querySelectorAll('#term footer a').forEach(function(a){ navList.push(a); });
+      if(navIdx >= navList.length) navIdx = -1;
+    }
+    function navHighlight(){
+      navList.forEach(function(el,i){ el.classList.toggle('sel', i === navIdx); });
+      if(navIdx >= 0 && navList[navIdx] && navList[navIdx].scrollIntoView){ navList[navIdx].scrollIntoView({ block:'nearest' }); }
+    }
+    function navMove(step){
+      if(!navList.length) buildNav();
+      if(!navList.length) return;
+      navIdx = (navIdx + step + navList.length) % navList.length;
+      navHighlight(); hoverBlip();
+    }
+    function navActivate(){
+      var el = navList[navIdx]; if(!el) return;
+      if(el.classList.contains('tab')){
+        el.click();  // switch panel
+        buildNav(); navIdx = navList.indexOf(el); navHighlight();
+      } else if(el.tagName === 'A'){
+        selectBlip();
+        var nmeEl = el.querySelector('.name');
+        exitSequence(nmeEl ? nmeEl.textContent : el.textContent, el.getAttribute('href'));
+      }
+    }
+    document.addEventListener('keydown', function(e){
+      if(term.style.display !== 'block') return;  // locked until password accepted
+      if(e.key === 'ArrowDown' || e.key === 'ArrowRight'){ navMove(1); e.preventDefault(); }
+      else if(e.key === 'ArrowUp' || e.key === 'ArrowLeft'){ navMove(-1); e.preventDefault(); }
+      else if(e.key === 'Enter' && navIdx >= 0){ navActivate(); e.preventDefault(); }
+    });
 
     // ---- live clock ----
     function p2(n){ return (n < 10 ? '0' : '') + n; }
@@ -328,7 +418,7 @@
     setInterval(tick, 1000); tick();
     document.getElementById('year').textContent = new Date().getFullYear();
 
-    // ---- random flicker bursts (extra CRT instability) ----
+    // ---- random flicker bursts ----
     function flickerBurst(){
       document.body.style.opacity = (0.6 + Math.random()*0.35).toFixed(2);
       setTimeout(function(){ document.body.style.opacity = '1'; }, 40 + Math.random()*60);
@@ -336,7 +426,7 @@
     }
     setTimeout(flickerBurst, 3000);
 
-    // ---- tab switching (with sound) ----
+    // ---- tab switching (mouse, with sound) ----
     document.querySelectorAll('.tab').forEach(function(tab){
       tab.addEventListener('mouseenter', hoverBlip);
       tab.addEventListener('click', function(){
@@ -345,6 +435,7 @@
         document.querySelectorAll('.panel').forEach(function(pn){ pn.classList.remove('active'); });
         tab.classList.add('active');
         document.getElementById(tab.getAttribute('data-panel')).classList.add('active');
+        buildNav();
       });
     });
 
@@ -352,21 +443,24 @@
     var sel = document.getElementById('theme-select');
     sel.addEventListener('change', function(){ document.documentElement.setAttribute('data-hue', sel.value); selectBlip(); });
 
-    // ---- tool list: hover sound + click sound ----
-    var items = Array.prototype.slice.call(document.querySelectorAll('#tool-list .item'));
-    items.forEach(function(it){
+    // ---- tool list: hover sound + exit sequence on select ----
+    document.querySelectorAll('#tool-list .item').forEach(function(it){
       it.addEventListener('mouseenter', hoverBlip);
-      it.addEventListener('click', selectBlip);
+      it.addEventListener('click', function(e){
+        e.preventDefault();
+        selectBlip();
+        exitSequence(it.querySelector('.name').textContent, it.getAttribute('href'));
+      });
     });
 
-    // ---- keyboard navigation for the tool list (only once unlocked) ----
-    var idx = 0;
-    function highlight(){ items.forEach(function(it,i){ it.classList.toggle('sel', i === idx); }); }
-    document.addEventListener('keydown', function(e){
-      if(term.style.display !== 'block') return;  // locked until password accepted
-      if(e.key === 'ArrowDown'){ idx = (idx + 1) % items.length; highlight(); hoverBlip(); e.preventDefault(); }
-      else if(e.key === 'ArrowUp'){ idx = (idx - 1 + items.length) % items.length; highlight(); hoverBlip(); e.preventDefault(); }
-      else if(e.key === 'Enter' && items[idx]){ selectBlip(); window.location.href = items[idx].getAttribute('href'); }
+    // ---- footer links: hover sound + exit sequence on select ----
+    document.querySelectorAll('#term footer a').forEach(function(a){
+      a.addEventListener('mouseenter', hoverBlip);
+      a.addEventListener('click', function(e){
+        e.preventDefault();
+        selectBlip();
+        exitSequence(a.textContent, a.getAttribute('href'));
+      });
     });
   </script>
 </body>
