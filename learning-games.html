@@ -477,14 +477,17 @@ const STORE_KEYS = { sets:'swth_sets', activeId:'swth_active_set', voiceURI:'swt
 function uid(){ return 'id_' + Math.random().toString(36).slice(2,10); }
 
 /* Fallback words used only if sightwords.txt can't be fetched
-   (e.g. opened as a local file:// page without a server). */
+   (e.g. opened as a local file:// page without a server, or the
+   file 404s). Kept intentionally different-looking from the real
+   list so it's obvious in the UI which one loaded. */
 const FALLBACK_STARTER_WORDS = ['the','and','you','is','to','a','in','it','of','was'];
+const FILE_LOADED_SET_NAME = 'Default Sight Words List';
+const FALLBACK_SET_NAME = 'Starter Words (offline fallback)';
 
-function buildDefaultSets(starterWords){
-  const words = (starterWords && starterWords.length) ? starterWords : FALLBACK_STARTER_WORDS;
+function buildDefaultSets(starterWords, starterSetName){
   return [
-    { id:'starter', name:'Starter Words', theme:'pirate',
-      words, createdAt: Date.now(), updatedAt: Date.now() },
+    { id:'starter', name: starterSetName, theme:'pirate',
+      words: starterWords, createdAt: Date.now(), updatedAt: Date.now() },
     { id:'farm1', name:'Farm Theme', theme:'farm',
       words:['cow','pig','barn','hay','sun','run','big','red'],
       createdAt: Date.now(), updatedAt: Date.now() },
@@ -495,16 +498,20 @@ function buildDefaultSets(starterWords){
 }
 
 /* Reads sightwords.txt (comma-separated words, sitting alongside
-   index.html) to seed the first-run "Starter Words" set. */
+   index.html) to seed the "Default Sight Words List" set. Logs to
+   the console either way so it's easy to confirm from devtools. */
 async function fetchStarterWordsFromFile(){
   try{
     const res = await fetch('sightwords.txt', { cache:'no-cache' });
-    if(!res.ok) throw new Error('sightwords.txt not found');
+    if(!res.ok) throw new Error('HTTP ' + res.status);
     const text = await res.text();
     const words = text.split(',').map(w=>normalizeWord(w)).filter(Boolean);
-    // de-dupe while preserving order
-    return Array.from(new Set(words));
+    const unique = Array.from(new Set(words)); // de-dupe, preserve order
+    if(!unique.length) throw new Error('file loaded but contained no valid words');
+    console.info('[Sight Word Treasure Hunt] Loaded', unique.length, 'words from sightwords.txt');
+    return unique;
   }catch(e){
+    console.warn('[Sight Word Treasure Hunt] Could not load sightwords.txt (' + e.message + '). Using built-in fallback words instead.');
     return null;
   }
 }
@@ -512,9 +519,9 @@ async function fetchStarterWordsFromFile(){
 function loadSets(){
   try{
     const raw = localStorage.getItem(STORE_KEYS.sets);
-    if(!raw){ const d = buildDefaultSets(); saveSets(d); return d; }
+    if(!raw){ const d = buildDefaultSets(FALLBACK_STARTER_WORDS, FALLBACK_SET_NAME); saveSets(d); return d; }
     return JSON.parse(raw);
-  }catch(e){ return buildDefaultSets(); }
+  }catch(e){ return buildDefaultSets(FALLBACK_STARTER_WORDS, FALLBACK_SET_NAME); }
 }
 function saveSets(sets){ localStorage.setItem(STORE_KEYS.sets, JSON.stringify(sets)); }
 
@@ -1443,12 +1450,14 @@ function renderDashboard(){
     const preview = s.words.slice(0,6).map(w=>`<span class="chip">${escapeHtml(w)}</span>`).join('');
     const more = s.words.length > 6 ? `<span class="chip-more">+${s.words.length-6} more</span>` : '';
     const theme = THEMES[s.theme] || THEMES.pirate;
+    const fromFileNote = s.id === 'starter' && s.name === FILE_LOADED_SET_NAME
+      ? ' · 📄 loaded from sightwords.txt' : '';
     return `
       <div class="set-card ${isActive?'active':''}">
         <div class="set-card-head">
           <div>
             <div class="set-card-title">${theme.icon} ${escapeHtml(s.name)}</div>
-            <div class="set-card-meta">${s.words.length} word${s.words.length===1?'':'s'} · ${theme.label}</div>
+            <div class="set-card-meta">${s.words.length} word${s.words.length===1?'':'s'} · ${theme.label}${fromFileNote}</div>
           </div>
           ${isActive ? '<span class="active-badge">ACTIVE</span>' : ''}
         </div>
@@ -1657,8 +1666,30 @@ function saveEditor(){
 ========================================================= */
 async function initApp(){
   if(!localStorage.getItem(STORE_KEYS.sets)){
-    const starterWords = await fetchStarterWordsFromFile();
-    saveSets(buildDefaultSets(starterWords));
+    // Brand new install: seed from sightwords.txt if we can reach it,
+    // otherwise fall back to the small built-in list.
+    const fileWords = await fetchStarterWordsFromFile();
+    const usingFile = !!fileWords;
+    saveSets(buildDefaultSets(
+      usingFile ? fileWords : FALLBACK_STARTER_WORDS,
+      usingFile ? FILE_LOADED_SET_NAME : FALLBACK_SET_NAME
+    ));
+  } else {
+    // Sets already exist from a previous run. If the starter set is
+    // still on the offline fallback list (sightwords.txt wasn't
+    // reachable last time), try again now and upgrade it in place -
+    // this never touches sets a parent has renamed or edited.
+    const sets = loadSets();
+    const starter = sets.find(s => s.id === 'starter');
+    if(starter && (starter.name === FALLBACK_SET_NAME || starter.name === 'Starter Words')){
+      const fileWords = await fetchStarterWordsFromFile();
+      if(fileWords){
+        starter.name = FILE_LOADED_SET_NAME;
+        starter.words = fileWords;
+        starter.updatedAt = Date.now();
+        saveSets(sets);
+      }
+    }
   }
   if(!localStorage.getItem(STORE_KEYS.activeId)){
     const sets = loadSets();
