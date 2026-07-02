@@ -13,14 +13,28 @@
     html[data-hue="white"]{ --amber:#d7ffe0; --glow:rgba(215,255,224,0.6); --dim:rgba(215,255,224,0.45); --bg:#0a120d; }
     *{ box-sizing:border-box; margin:0; padding:0; }
     body{ min-height:100vh; background:var(--bg); color:var(--amber); padding:24px;
-      font-family:'Courier New',monospace; letter-spacing:1px; text-shadow:0 0 6px var(--glow); overflow-x:hidden; }
-    /* CRT scanlines + vignette + flicker */
+      font-family:'Courier New',monospace; letter-spacing:1px; text-shadow:0 0 6px var(--glow); overflow-x:hidden;
+      animation:crtOn 1.6s ease-out 1, textFlicker 3s steps(2) infinite; }
+    /* ===== animated CRT: drifting scanlines ===== */
     body::before{ content:''; position:fixed; inset:0; pointer-events:none; z-index:50;
-      background:repeating-linear-gradient(0deg, rgba(0,0,0,0.25) 0 2px, transparent 2px 4px); }
+      background:repeating-linear-gradient(0deg, rgba(0,0,0,0.28) 0 2px, transparent 2px 4px);
+      background-size:100% 4px; animation:scanDrift 0.5s linear infinite; }
+    @keyframes scanDrift{ 0%{ background-position:0 0; } 100%{ background-position:0 4px; } }
+    /* ===== animated CRT: flickering vignette ===== */
     body::after{ content:''; position:fixed; inset:0; pointer-events:none; z-index:51;
       background:radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.85) 100%);
-      animation:flicker 0.15s infinite; }
-    @keyframes flicker{ 0%{opacity:0.92} 50%{opacity:1} 100%{opacity:0.94} }
+      animation:flicker 0.12s steps(2) infinite; }
+    @keyframes flicker{ 0%{opacity:0.82} 20%{opacity:1} 35%{opacity:0.88} 50%{opacity:0.98}
+      65%{opacity:0.85} 80%{opacity:1} 100%{opacity:0.9} }
+    /* subtle brightness jitter on the whole screen */
+    @keyframes textFlicker{ 0%{opacity:1} 3%{opacity:0.86} 6%{opacity:1} 7%{opacity:0.92}
+      9%{opacity:1} 60%{opacity:1} 62%{opacity:0.9} 64%{opacity:1} 100%{opacity:1} }
+    /* power-on sweep when the page loads */
+    @keyframes crtOn{ 0%{ filter:brightness(3) contrast(0.4); transform:scaleY(0.004); }
+      35%{ transform:scaleY(0.02); } 60%{ filter:brightness(1.4); transform:scaleY(1); } 100%{ filter:none; } }
+    @media (prefers-reduced-motion: reduce){
+      body, body::before, body::after{ animation:none !important; }
+    }
     .frame{ max-width:960px; margin:0 auto; border:3px solid var(--amber); padding:18px 22px;
       box-shadow:0 0 18px var(--glow), inset 0 0 30px rgba(0,0,0,0.6); }
     #boot{ white-space:pre-wrap; line-height:1.5; min-height:200px; }
@@ -158,6 +172,14 @@
     setInterval(tick, 1000); tick();
     document.getElementById('year').textContent = new Date().getFullYear();
 
+    // ---- random flicker bursts (extra CRT instability) ----
+    function flickerBurst(){
+      document.body.style.opacity = (0.6 + Math.random()*0.35).toFixed(2);
+      setTimeout(function(){ document.body.style.opacity = '1'; }, 40 + Math.random()*60);
+      setTimeout(flickerBurst, 2500 + Math.random()*4000);
+    }
+    setTimeout(flickerBurst, 3000);
+
     // ---- tab switching ----
     document.querySelectorAll('.tab').forEach(function(tab){
       tab.addEventListener('click', function(){
@@ -185,3 +207,4 @@
   </script>
 </body>
 </html>
+
