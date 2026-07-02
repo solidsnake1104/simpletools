@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tap the Present!</title>
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Comic Sans MS', 'Trebuchet MS', sans-serif;
+      background: linear-gradient(135deg, #ffd1dc, #a1c4fd, #c2e9fb);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #stage { position: relative; width: 100vw; height: 100vh; }
+    #present {
+      position: absolute;
+      font-size: 90px;
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.15s ease;
+    }
+    #hint {
+      position: absolute;
+      top: 20px;
+      width: 100%;
+      text-align: center;
+      font-size: 24px;
+      color: #d6336c;
+      text-shadow: 0 2px 4px rgba(255,255,255,0.7);
+    }
+    #message {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      font-size: 80px;
+      font-weight: bold;
+      color: #e6007a;
+      text-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      opacity: 0;
+      transition: transform 0.6s cubic-bezier(0.2,1.5,0.4,1), opacity 0.6s ease;
+      text-align: center;
+      pointer-events: none;
+    }
+    #message.show { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    .confetti { position: absolute; width: 12px; height: 12px; pointer-events: none; }
+    @keyframes fall { to { transform: translateY(110vh) rotate(720deg); opacity: 0; } }
+  </style>
+</head>
+<body>
+  <div id="stage">
+    <div id="hint">Tap the present 3 times! 🎁</div>
+    <div id="present">🎁</div>
+    <div id="message">I Love You!! 💖</div>
+  </div>
+  <script>
+    const stage = document.getElementById('stage');
+    const present = document.getElementById('present');
+    const hint = document.getElementById('hint');
+    const message = document.getElementById('message');
+    let taps = 0, x = 100, y = 100, dx = 3, dy = 2.4, bouncing = true;
+    function animate() {
+      if (bouncing) {
+        const maxX = stage.clientWidth - present.clientWidth;
+        const maxY = stage.clientHeight - present.clientHeight;
+        x += dx; y += dy;
+        if (x <= 0 || x >= maxX) dx = -dx;
+        if (y <= 0 || y >= maxY) dy = -dy;
+        present.style.left = x + 'px';
+        present.style.top = y + 'px';
+      }
+      requestAnimationFrame(animate);
+    }
+    animate();
+    present.addEventListener('click', () => {
+      taps++;
+      present.style.transform = 'scale(1.3) rotate(' + (taps * 15) + 'deg)';
+      setTimeout(() => present.style.transform = '', 150);
+      if (taps === 1) hint.textContent = 'Ooh, 2 more taps! 🎁';
+      if (taps === 2) hint.textContent = 'One more! Almost there! ✨';
+      if (taps >= 3) explode();
+    });
+    function explode() {
+      bouncing = false;
+      present.style.display = 'none';
+      hint.style.display = 'none';
+      message.classList.add('show');
+      launchConfetti();
+    }
+    function launchConfetti() {
+      const colors = ['#ff477e','#ffd60a','#4cc9f0','#b5179e','#52b788','#ff9e00'];
+      for (let i = 0; i < 120; i++) {
+        const c = document.createElement('div');
+        c.className = 'confetti';
+        c.style.left = Math.random() * 100 + 'vw';
+        c.style.top = '-20px';
+        c.style.background = colors[Math.floor(Math.random() * colors.length)];
+        c.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+        c.style.animation = 'fall ' + (2 + Math.random() * 3) + 's linear ' + Math.random() + 's forwards';
+        stage.appendChild(c);
+      }
+    }
+  </script>
+</body>
+</html>
