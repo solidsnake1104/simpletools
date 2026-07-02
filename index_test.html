@@ -38,6 +38,18 @@
     .frame{ max-width:960px; margin:0 auto; border:3px solid var(--amber); padding:18px 22px;
       box-shadow:0 0 18px var(--glow), inset 0 0 30px rgba(0,0,0,0.6); }
     #boot{ white-space:pre-wrap; line-height:1.5; min-height:200px; }
+    /* ===== password lock screen ===== */
+    #login{ display:none; min-height:220px; line-height:1.6; }
+    #login.active{ display:block; }
+    #login .halt{ font-size:22px; letter-spacing:3px; margin-bottom:10px; }
+    #login .warn{ color:var(--dim); font-size:14px; margin:4px 0; }
+    .pw-row{ display:flex; align-items:center; margin-top:18px; font-size:20px; }
+    .pw-row .prompt{ margin-right:8px; }
+    #pw-input{ background:transparent; border:none; outline:none; color:var(--amber);
+      font-family:inherit; font-size:20px; letter-spacing:8px; text-shadow:inherit; width:260px; caret-color:transparent; }
+    #pw-cursor{ font-size:20px; animation:blink 1s steps(1) infinite; }
+    @keyframes blink{ 0%,50%{opacity:1} 51%,100%{opacity:0} }
+    #pw-msg{ margin-top:14px; font-size:15px; min-height:20px; }
     #term{ display:none; }
     .statusbar{ display:flex; justify-content:space-between; border-bottom:2px solid var(--amber);
       padding-bottom:8px; font-size:13px; }
@@ -64,11 +76,28 @@
     select{ background:var(--bg); color:var(--amber); border:1px solid var(--amber);
       font-family:inherit; padding:4px; text-shadow:inherit; }
     .visually-hidden{ position:absolute; left:-9999px; }
+    /* sound toggle button */
+    #sound-toggle{ background:var(--bg); color:var(--amber); border:1px solid var(--amber);
+      font-family:inherit; padding:4px 10px; cursor:pointer; text-shadow:inherit; letter-spacing:2px; }
   </style>
 </head>
 <body>
   <div class="frame">
     <div id="boot"></div>
+
+    <!-- ===== PASSWORD LOCK SCREEN ===== -->
+    <div id="login">
+      <div class="halt">!! HALT !!</div>
+      <div class="warn">THIS IS A RESTRICTED ENCLAVE TERMINAL.</div>
+      <div class="warn">UNAUTHORIZED ACCESS IS A CAPITAL OFFENSE UNDER ENCLAVE DIRECTIVE 7-C.</div>
+      <div class="warn">IDENTIFY YOURSELF. ENTER ACCESS PASSWORD TO PROCEED.</div>
+      <div class="pw-row">
+        <span class="prompt">PASSWORD&gt;</span>
+        <input id="pw-input" type="password" maxlength="16" autocomplete="off" spellcheck="false" aria-label="Access password" />
+        <span id="pw-cursor">█</span>
+      </div>
+      <div id="pw-msg"></div>
+    </div>
 
     <div id="term">
       <div class="statusbar">
@@ -104,7 +133,7 @@
       </section>
 
       <section class="panel" id="status">
-        <p>> VAULT DWELLER: GUEST</p>
+        <p>> VAULT DWELLER: ENCLAVE PERSONNEL</p>
         <p>> CONNECTION: SECURE / LOCALHOST</p>
         <p>> POWER: NUCLEAR CELL 100%</p>
       </section>
@@ -116,6 +145,7 @@
           <a href="privacy.html">PRIVACY</a>
         </div>
         <div>
+          <button id="sound-toggle" title="Toggle terminal sounds">SOUND: ON</button>
           <label for="theme-select" class="visually-hidden">Phosphor color</label>
           <select id="theme-select">
             <option value="green">GREEN</option>
@@ -130,6 +160,100 @@
   </div>
 
   <script>
+    // ================= PIP-BOY AUDIO (Web Audio - no files needed) =================
+    var AC = null, soundOn = true;
+    function audio(){ // create/resume the audio context lazily (browser autoplay rules)
+      if(!AC){ try{ AC = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){ return null; } }
+      if(AC.state === 'suspended'){ AC.resume(); }
+      return AC;
+    }
+
+    // ---- CONTINUOUS BACKGROUND HUM / BUZZ ----
+    var hum = null;
+    function startHum(){
+      var ctx = audio(); if(!ctx || hum) return;
+      var master = ctx.createGain(); master.gain.value = soundOn ? 1 : 0; master.connect(ctx.destination);
+      var lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 380; lp.connect(master);
+      var o1 = ctx.createOscillator(); o1.type = 'sine';    o1.frequency.value = 60;
+      var o2 = ctx.createOscillator(); o2.type = 'triangle'; o2.frequency.value = 120;
+      var g1 = ctx.createGain(); g1.gain.value = 0.05; o1.connect(g1); g1.connect(lp);
+      var g2 = ctx.createGain(); g2.gain.value = 0.022; o2.connect(g2); g2.connect(lp);
+      var buf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+      var data = buf.getChannelData(0);
+      for(var i = 0; i < data.length; i++){ data[i] = Math.random() * 2 - 1; }
+      var noise = ctx.createBufferSource(); noise.buffer = buf; noise.loop = true;
+      var hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 6500;
+      var ng = ctx.createGain(); ng.gain.value = 0.006;
+      noise.connect(hp); hp.connect(ng); ng.connect(master);
+      o1.start(); o2.start(); noise.start();
+      hum = { master: master };
+    }
+
+    // ---- NAVIGATION CLICKS (mechanical tick) ----
+    function click(hi){
+      if(!soundOn) return;
+      var ctx = audio(); if(!ctx) return;
+      var t = ctx.currentTime;
+      var n = Math.floor(ctx.sampleRate * 0.05);
+      var nb = ctx.createBuffer(1, n, ctx.sampleRate);
+      var d = nb.getChannelData(0);
+      for(var i = 0; i < n; i++){ d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3); }
+      var ns = ctx.createBufferSource(); ns.buffer = nb;
+      var bp = ctx.createBiquadFilter(); bp.type = 'bandpass';
+      bp.frequency.value = hi ? 2600 : 1500; bp.Q.value = 0.7;
+      var ng = ctx.createGain(); ng.gain.value = hi ? 0.16 : 0.20;
+      ns.connect(bp); bp.connect(ng); ng.connect(ctx.destination);
+      ns.start(t);
+      var osc = ctx.createOscillator(); osc.type = 'square';
+      osc.frequency.value = hi ? 900 : 430;
+      var og = ctx.createGain();
+      og.gain.setValueAtTime(0.0001, t);
+      og.gain.exponentialRampToValueAtTime(hi ? 0.05 : 0.08, t + 0.003);
+      og.gain.exponentialRampToValueAtTime(0.0001, t + (hi ? 0.035 : 0.06));
+      osc.connect(og); og.connect(ctx.destination);
+      osc.start(t); osc.stop(t + 0.08);
+    }
+    var hoverBlip  = function(){ click(true);  };
+    var selectBlip = function(){ click(false); };
+
+    // ---- HEAVY MECHANICAL KEYBOARD CLACK (for password typing) ----
+    function keyClack(){
+      if(!soundOn) return;
+      var ctx = audio(); if(!ctx) return;
+      var t = ctx.currentTime;
+      // sharp plastic "clack" - short noise burst, quick attack, hard decay
+      var n = Math.floor(ctx.sampleRate * 0.045);
+      var nb = ctx.createBuffer(1, n, ctx.sampleRate);
+      var d = nb.getChannelData(0);
+      for(var i = 0; i < n; i++){ d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 5); }
+      var ns = ctx.createBufferSource(); ns.buffer = nb;
+      var bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1900; bp.Q.value = 0.5;
+      var ng = ctx.createGain(); ng.gain.value = 0.33;
+      ns.connect(bp); bp.connect(ng); ng.connect(ctx.destination); ns.start(t);
+      // deep "thock" body - low sine that drops in pitch fast (bottoming-out key)
+      var osc = ctx.createOscillator(); osc.type = 'sine';
+      osc.frequency.setValueAtTime(170, t);
+      osc.frequency.exponentialRampToValueAtTime(65, t + 0.05);
+      var og = ctx.createGain();
+      og.gain.setValueAtTime(0.0001, t);
+      og.gain.exponentialRampToValueAtTime(0.30, t + 0.004);
+      og.gain.exponentialRampToValueAtTime(0.0001, t + 0.10);
+      osc.connect(og); og.connect(ctx.destination);
+      osc.start(t); osc.stop(t + 0.12);
+    }
+
+    // unlock audio + start the hum on the very first user gesture (autoplay policy)
+    ['pointerdown','keydown'].forEach(function(ev){
+      window.addEventListener(ev, function once(){ audio(); startHum(); window.removeEventListener(ev, once); });
+    });
+    var soundBtn = document.getElementById('sound-toggle');
+    soundBtn.addEventListener('click', function(){
+      soundOn = !soundOn;
+      soundBtn.textContent = 'SOUND: ' + (soundOn ? 'ON' : 'OFF');
+      if(hum){ hum.master.gain.value = soundOn ? 1 : 0; }
+      if(soundOn){ startHum(); selectBlip(); }
+    });
+
     // ---- boot sequence (typewriter) ----
     var bootLines = [
       'ROBCO INDUSTRIES (TM) TERMLINK PROTOCOL',
@@ -138,16 +262,16 @@
       'LOADING TOOL MODULES ........... OK',
       'MOUNTING /tools ................ OK',
       'ESTABLISHING SECURE LINK ....... OK',
-      '',
-      'WELCOME TO SIMPLERTOOLS'
+      'SECURITY LAYER ................. ENGAGED',
     ];
     var boot = document.getElementById('boot');
+    var login = document.getElementById('login');
     var term = document.getElementById('term');
     var out = '', li = 0, ci = 0;
     function type(){
       if(li >= bootLines.length){
         boot.textContent = out;
-        setTimeout(function(){ boot.style.display = 'none'; term.style.display = 'block'; }, 600);
+        setTimeout(showLogin, 500);
         return;
       }
       var line = bootLines[li];
@@ -163,11 +287,43 @@
     }
     type();
 
+    // ================= PASSWORD LOCK =================
+    var PASSWORD = 'BASED';
+    var pwInput = document.getElementById('pw-input');
+    var pwMsg   = document.getElementById('pw-msg');
+    function showLogin(){
+      boot.style.display = 'none';
+      login.classList.add('active');
+      pwInput.focus();
+    }
+    // heavy mechanical clack on every character typed
+    pwInput.addEventListener('keydown', function(e){
+      if(e.key === 'Enter'){ submitPw(); return; }
+      keyClack();  // clack for letters, backspace, spacebar, everything
+    });
+    // keep focus on the field while locked
+    login.addEventListener('click', function(){ if(login.classList.contains('active')) pwInput.focus(); });
+    function submitPw(){
+      var val = (pwInput.value || '').trim().toUpperCase();
+      if(val === PASSWORD){
+        pwMsg.textContent = 'ACCESS GRANTED. WELCOME, OPERATIVE.';
+        selectBlip();
+        setTimeout(function(){
+          login.classList.remove('active');
+          term.style.display = 'block';
+        }, 700);
+      } else {
+        pwMsg.textContent = 'ACCESS DENIED - INCORRECT PASSWORD. ATTEMPT LOGGED.';
+        pwInput.value = '';
+        click(false);
+      }
+    }
+
     // ---- live clock ----
     function p2(n){ return (n < 10 ? '0' : '') + n; }
     function tick(){
-      var d = new Date();
-      document.getElementById('clock').textContent = p2(d.getHours())+':'+p2(d.getMinutes())+':'+p2(d.getSeconds());
+      var dt = new Date();
+      document.getElementById('clock').textContent = p2(dt.getHours())+':'+p2(dt.getMinutes())+':'+p2(dt.getSeconds());
     }
     setInterval(tick, 1000); tick();
     document.getElementById('year').textContent = new Date().getFullYear();
@@ -180,9 +336,11 @@
     }
     setTimeout(flickerBurst, 3000);
 
-    // ---- tab switching ----
+    // ---- tab switching (with sound) ----
     document.querySelectorAll('.tab').forEach(function(tab){
+      tab.addEventListener('mouseenter', hoverBlip);
       tab.addEventListener('click', function(){
+        selectBlip();
         document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
         document.querySelectorAll('.panel').forEach(function(pn){ pn.classList.remove('active'); });
         tab.classList.add('active');
@@ -190,19 +348,25 @@
       });
     });
 
-    // ---- phosphor color selector (overwrites old seasonal themes) ----
+    // ---- phosphor color selector ----
     var sel = document.getElementById('theme-select');
-    sel.addEventListener('change', function(){ document.documentElement.setAttribute('data-hue', sel.value); });
+    sel.addEventListener('change', function(){ document.documentElement.setAttribute('data-hue', sel.value); selectBlip(); });
 
-    // ---- keyboard navigation for the tool list (arrow keys + Enter) ----
+    // ---- tool list: hover sound + click sound ----
     var items = Array.prototype.slice.call(document.querySelectorAll('#tool-list .item'));
+    items.forEach(function(it){
+      it.addEventListener('mouseenter', hoverBlip);
+      it.addEventListener('click', selectBlip);
+    });
+
+    // ---- keyboard navigation for the tool list (only once unlocked) ----
     var idx = 0;
     function highlight(){ items.forEach(function(it,i){ it.classList.toggle('sel', i === idx); }); }
     document.addEventListener('keydown', function(e){
-      if(term.style.display === 'none') return;
-      if(e.key === 'ArrowDown'){ idx = (idx + 1) % items.length; highlight(); e.preventDefault(); }
-      else if(e.key === 'ArrowUp'){ idx = (idx - 1 + items.length) % items.length; highlight(); e.preventDefault(); }
-      else if(e.key === 'Enter' && items[idx]){ window.location.href = items[idx].getAttribute('href'); }
+      if(term.style.display !== 'block') return;  // locked until password accepted
+      if(e.key === 'ArrowDown'){ idx = (idx + 1) % items.length; highlight(); hoverBlip(); e.preventDefault(); }
+      else if(e.key === 'ArrowUp'){ idx = (idx - 1 + items.length) % items.length; highlight(); hoverBlip(); e.preventDefault(); }
+      else if(e.key === 'Enter' && items[idx]){ selectBlip(); window.location.href = items[idx].getAttribute('href'); }
     });
   </script>
 </body>
