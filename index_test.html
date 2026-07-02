@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en" data-hue="green">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SimplerTools - RobCo TermLink</title>
+  <meta name="description" content="SimplerTools: fast, free, no-upload browser utilities, styled as a Fallout Pip-Boy terminal." />
+  <!-- All CSS + JS are inlined below; external styles.css / script.js / ad scripts removed. -->
+  <style>
+    :root{ --amber:#33ff66; --glow:rgba(51,255,102,0.6); --dim:rgba(51,255,102,0.4); --bg:#0a140c; }
+    html[data-hue="amber"]{ --amber:#ffb642; --glow:rgba(255,182,66,0.6); --dim:rgba(255,182,66,0.4); --bg:#140f04; }
+    html[data-hue="blue"] { --amber:#48c9ff; --glow:rgba(72,201,255,0.6); --dim:rgba(72,201,255,0.4); --bg:#04101a; }
+    html[data-hue="white"]{ --amber:#d7ffe0; --glow:rgba(215,255,224,0.6); --dim:rgba(215,255,224,0.45); --bg:#0a120d; }
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    body{ min-height:100vh; background:var(--bg); color:var(--amber); padding:24px;
+      font-family:'Courier New',monospace; letter-spacing:1px; text-shadow:0 0 6px var(--glow); overflow-x:hidden; }
+    /* CRT scanlines + vignette + flicker */
+    body::before{ content:''; position:fixed; inset:0; pointer-events:none; z-index:50;
+      background:repeating-linear-gradient(0deg, rgba(0,0,0,0.25) 0 2px, transparent 2px 4px); }
+    body::after{ content:''; position:fixed; inset:0; pointer-events:none; z-index:51;
+      background:radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.85) 100%);
+      animation:flicker 0.15s infinite; }
+    @keyframes flicker{ 0%{opacity:0.92} 50%{opacity:1} 100%{opacity:0.94} }
+    .frame{ max-width:960px; margin:0 auto; border:3px solid var(--amber); padding:18px 22px;
+      box-shadow:0 0 18px var(--glow), inset 0 0 30px rgba(0,0,0,0.6); }
+    #boot{ white-space:pre-wrap; line-height:1.5; min-height:200px; }
+    #term{ display:none; }
+    .statusbar{ display:flex; justify-content:space-between; border-bottom:2px solid var(--amber);
+      padding-bottom:8px; font-size:13px; }
+    .brand{ text-align:center; margin:14px 0 6px; }
+    .brand h1{ font-size:30px; letter-spacing:6px; }
+    .brand p{ font-size:13px; color:var(--dim); margin-top:4px; }
+    .tabs{ display:flex; border-top:2px solid var(--amber); border-bottom:2px solid var(--amber); margin:14px 0; }
+    .tab{ flex:1; text-align:center; padding:8px; cursor:pointer; letter-spacing:3px; }
+    .tab.active{ background:var(--amber); color:var(--bg); text-shadow:none; }
+    .list{ }
+    .item{ display:block; text-decoration:none; color:inherit; padding:10px 14px; border:1px solid transparent; cursor:pointer; }
+    .item .name{ font-size:18px; }
+    .item .name::before{ content:'> '; opacity:0; }
+    .item .desc{ font-size:12px; color:var(--dim); margin-top:2px; }
+    .item:hover, .item.sel{ background:var(--amber); color:var(--bg); text-shadow:none; }
+    .item:hover .desc, .item.sel .desc{ color:var(--bg); }
+    .item:hover .name::before, .item.sel .name::before{ opacity:1; }
+    .panel{ display:none; } .panel.active{ display:block; }
+    .panel p{ margin:6px 0; }
+    footer{ border-top:2px solid var(--amber); margin-top:16px; padding-top:10px; font-size:12px;
+      display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
+    footer a{ color:inherit; text-decoration:none; margin-right:14px; }
+    footer a:hover{ background:var(--amber); color:var(--bg); text-shadow:none; }
+    select{ background:var(--bg); color:var(--amber); border:1px solid var(--amber);
+      font-family:inherit; padding:4px; text-shadow:inherit; }
+    .visually-hidden{ position:absolute; left:-9999px; }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <div id="boot"></div>
+
+    <div id="term">
+      <div class="statusbar">
+        <span>ROBCO INDUSTRIES (TM) TERMLINK</span>
+        <span id="clock">--:--:--</span>
+      </div>
+
+      <div class="brand">
+        <h1>SIMPLERTOOLS</h1>
+        <p>PIP-OS v7.1.0.8 - SELECT A TOOL TO GET STARTED</p>
+      </div>
+
+      <nav class="tabs">
+        <div class="tab active" data-panel="tools">TOOLS</div>
+        <div class="tab" data-panel="data">DATA</div>
+        <div class="tab" data-panel="status">STATUS</div>
+      </nav>
+
+      <section class="panel active" id="tools">
+        <div class="list" id="tool-list">
+          <a class="item" href="tools/mp3-trimmer.html"><div class="name">Audio &amp; MP3 Trimmer</div><div class="desc">Trim MP3 audio files in browser.</div></a>
+          <a class="item" href="tools/image-metadata-cleaner.html"><div class="name">Image Metadata Cleaner</div><div class="desc">Clean and remove image metadata.</div></a>
+          <a class="item" href="tools/image-resizer.html"><div class="name">Image Resizer</div><div class="desc">Crop &amp; resize images instantly.</div></a>
+          <a class="item" href="tools/pdf-joiner.html"><div class="name">PDF Joiner</div><div class="desc">Combine PDFs.</div></a>
+          <a class="item" href="tools/video-audio-extractor.html"><div class="name">Video Audio Extractor</div><div class="desc">(DESKTOP BROWSER ONLY) Extract audio from video files.</div></a>
+        </div>
+      </section>
+
+      <section class="panel" id="data">
+        <p>> ALL UTILITIES RUN LOCALLY IN YOUR BROWSER.</p>
+        <p>> NO UPLOADS. NO TRACKING. MAXIMUM PRIVACY.</p>
+        <p>> STATUS: 5 TOOL MODULES ONLINE.</p>
+      </section>
+
+      <section class="panel" id="status">
+        <p>> VAULT DWELLER: GUEST</p>
+        <p>> CONNECTION: SECURE / LOCALHOST</p>
+        <p>> POWER: NUCLEAR CELL 100%</p>
+      </section>
+
+      <footer>
+        <div>
+          <a href="about.html">ABOUT</a>
+          <a href="contact.html">CONTACT</a>
+          <a href="privacy.html">PRIVACY</a>
+        </div>
+        <div>
+          <label for="theme-select" class="visually-hidden">Phosphor color</label>
+          <select id="theme-select">
+            <option value="green">GREEN</option>
+            <option value="amber">AMBER</option>
+            <option value="blue">BLUE</option>
+            <option value="white">WHITE</option>
+          </select>
+        </div>
+        <div>&copy; <span id="year"></span> SIMPLERTOOLS</div>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    // ---- boot sequence (typewriter) ----
+    var bootLines = [
+      'ROBCO INDUSTRIES (TM) TERMLINK PROTOCOL',
+      'INITIALIZING PIP-OS v7.1.0.8 ...',
+      'CHECKING MEMORY ................ 64K OK',
+      'LOADING TOOL MODULES ........... OK',
+      'MOUNTING /tools ................ OK',
+      'ESTABLISHING SECURE LINK ....... OK',
+      '',
+      'WELCOME TO SIMPLERTOOLS'
+    ];
+    var boot = document.getElementById('boot');
+    var term = document.getElementById('term');
+    var out = '', li = 0, ci = 0;
+    function type(){
+      if(li >= bootLines.length){
+        boot.textContent = out;
+        setTimeout(function(){ boot.style.display = 'none'; term.style.display = 'block'; }, 600);
+        return;
+      }
+      var line = bootLines[li];
+      if(ci < line.length){
+        out += line.charAt(ci); ci++;
+        boot.textContent = out + '_';
+        setTimeout(type, 16);
+      } else {
+        out += '\n'; li++; ci = 0;
+        boot.textContent = out + '_';
+        setTimeout(type, 110);
+      }
+    }
+    type();
+
+    // ---- live clock ----
+    function p2(n){ return (n < 10 ? '0' : '') + n; }
+    function tick(){
+      var d = new Date();
+      document.getElementById('clock').textContent = p2(d.getHours())+':'+p2(d.getMinutes())+':'+p2(d.getSeconds());
+    }
+    setInterval(tick, 1000); tick();
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // ---- tab switching ----
+    document.querySelectorAll('.tab').forEach(function(tab){
+      tab.addEventListener('click', function(){
+        document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+        document.querySelectorAll('.panel').forEach(function(pn){ pn.classList.remove('active'); });
+        tab.classList.add('active');
+        document.getElementById(tab.getAttribute('data-panel')).classList.add('active');
+      });
+    });
+
+    // ---- phosphor color selector (overwrites old seasonal themes) ----
+    var sel = document.getElementById('theme-select');
+    sel.addEventListener('change', function(){ document.documentElement.setAttribute('data-hue', sel.value); });
+
+    // ---- keyboard navigation for the tool list (arrow keys + Enter) ----
+    var items = Array.prototype.slice.call(document.querySelectorAll('#tool-list .item'));
+    var idx = 0;
+    function highlight(){ items.forEach(function(it,i){ it.classList.toggle('sel', i === idx); }); }
+    document.addEventListener('keydown', function(e){
+      if(term.style.display === 'none') return;
+      if(e.key === 'ArrowDown'){ idx = (idx + 1) % items.length; highlight(); e.preventDefault(); }
+      else if(e.key === 'ArrowUp'){ idx = (idx - 1 + items.length) % items.length; highlight(); e.preventDefault(); }
+      else if(e.key === 'Enter' && items[idx]){ window.location.href = items[idx].getAttribute('href'); }
+    });
+  </script>
+</body>
+</html>
