@@ -39,27 +39,12 @@ body{
   position:fixed;inset:0;overflow:hidden;
   container-type:size;container-name:stage;
 }
-button{font-family:inherit;border:none;cursor:pointer;background:none;color:inherit;}
+button{font-family:inherit;border:none;cursor:pointer;background:none;color:inherit;touch-action:manipulation;}
 .screen{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 .fade-in{animation:fadeIn .35s ease both;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 h1,h2,h3{font-family:var(--font-display);margin:0;}
 .visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}
-
-/* On roomy desktop/tablet windows, present the game as a centered
-   "device" card instead of stretching edge-to-edge. Phones (short
-   viewport height, e.g. landscape) keep the full-bleed native feel. */
-@media (min-width:760px) and (min-height:640px){
-  body{
-    display:flex;align-items:center;justify-content:center;
-    background:radial-gradient(circle at 30% 20%,#FFF6E0,#F4E3BE 60%,#E8D3A0 100%);
-  }
-  #app{
-    position:relative;inset:auto;
-    width:min(94vw,460px);height:min(92vh,900px);
-    border-radius:36px;box-shadow:0 40px 90px rgba(31,41,51,.35);
-  }
-}
 
 /* =========================================================
    HOME (CHILD) — theme picker
@@ -104,7 +89,10 @@ h1,h2,h3{font-family:var(--font-display);margin:0;}
 .theme-dino{background:linear-gradient(160deg,#FFB259,#FF7A3D);}
 .theme-church{background:linear-gradient(160deg,#B8862E,#7B3F61);}
 .lock-corner{
-  position:absolute;top:14px;right:14px;width:52px;height:52px;border-radius:50%;
+  position:absolute;
+  top:max(26px, env(safe-area-inset-top));
+  right:max(24px, env(safe-area-inset-right));
+  width:52px;height:52px;border-radius:50%;
   background:rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;
   font-size:22px;box-shadow:var(--shadow);z-index:50;overflow:hidden;
 }
@@ -126,7 +114,11 @@ h1,h2,h3{font-family:var(--font-display);margin:0;}
 .scene-deco{position:absolute;pointer-events:none;}
 .scene-topbar{
   position:absolute;top:0;left:0;right:0;z-index:30;display:flex;align-items:center;
-  justify-content:space-between;padding:14px 16px;gap:10px;
+  justify-content:space-between;gap:10px;
+  padding-top:max(26px, env(safe-area-inset-top));
+  padding-right:max(24px, env(safe-area-inset-right));
+  padding-bottom:0;
+  padding-left:max(24px, env(safe-area-inset-left));
 }
 .nav-btn{
   width:54px;height:54px;border-radius:50%;background:rgba(255,255,255,.92);
@@ -227,10 +219,15 @@ h1,h2,h3{font-family:var(--font-display);margin:0;}
 .choice-card:disabled{opacity:.55;}
 .choice-card.correct-pick{
   background:#fff !important;color:var(--teal) !important;border-color:var(--teal);
-  animation:pop .5s cubic-bezier(.34,1.56,.64,1) both;
+  animation:popLocal .5s cubic-bezier(.34,1.56,.64,1) both;
 }
 .choice-card.wrong-pick{opacity:.55;}
 .choice-card.shake{animation:shakeCard .4s ease;}
+@keyframes popLocal{
+  0%{transform:scale(.6) rotate(-6deg);}
+  60%{transform:scale(1.15) rotate(3deg);}
+  100%{transform:scale(1) rotate(0);}
+}
 @keyframes shakeCard{
   0%,100%{transform:translateX(0);}
   20%{transform:translateX(-8px);}
@@ -366,10 +363,13 @@ h1,h2,h3{font-family:var(--font-display);margin:0;}
    the centered desktop frame.
 ========================================================= */
 @container stage (max-height: 480px){
-  /* Home screen: go horizontal, everything sized down */
+  /* Home screen: go horizontal, everything sized down, extra side breathing room */
   .home-wrap{
     flex-direction:row;flex-wrap:wrap;align-content:center;
-    gap:10px 22px;padding:14px 16px;
+    gap:10px 22px;
+    padding-top:14px;padding-bottom:14px;
+    padding-left:max(30px, env(safe-area-inset-left));
+    padding-right:max(30px, env(safe-area-inset-right));
   }
   .home-chest{width:64px;}
   .home-title{font-size:clamp(18px,5cqmin,26px);line-height:1.05;}
@@ -381,18 +381,29 @@ h1,h2,h3{font-family:var(--font-display);margin:0;}
   }
   .theme-card{min-height:76px;padding:8px 6px 6px;font-size:12px;gap:4px;border-width:3px;}
   .theme-card .icon{font-size:24px;}
-  .lock-corner{width:38px;height:38px;font-size:16px;top:8px;right:8px;}
+  .lock-corner{
+    width:38px;height:38px;font-size:16px;
+    top:max(14px, env(safe-area-inset-top));
+    right:max(20px, env(safe-area-inset-right));
+  }
 
   /* Treasure hunt topbar */
-  .scene-topbar{padding:8px 10px;}
+  .scene-topbar{
+    padding-top:14px;padding-bottom:0;
+    padding-left:max(20px, env(safe-area-inset-left));
+    padding-right:max(20px, env(safe-area-inset-right));
+  }
   .nav-btn{width:40px;height:40px;font-size:18px;}
   .meter-jar{height:14px;}
   .meter-label{font-size:12px;}
   .meter-wrap{padding:4px 10px;}
 
-  /* Listen & Choose: speaker beside choices instead of stacked */
+  /* Listen & Choose: speaker beside choices instead of stacked, extra side padding */
   .listen-panel{
-    flex-direction:row;padding:56px 16px 14px;gap:18px;
+    flex-direction:row;gap:18px;
+    padding-top:56px;padding-bottom:14px;
+    padding-left:max(30px, env(safe-area-inset-left));
+    padding-right:max(30px, env(safe-area-inset-right));
   }
   .speaker-btn{width:70px;height:70px;border-width:3px;flex-shrink:0;}
   .speaker-icon{font-size:30px;}
@@ -412,17 +423,37 @@ h1,h2,h3{font-family:var(--font-display);margin:0;}
   .btn-primary,.btn-secondary{padding:10px;font-size:14px;border-radius:14px;}
 
   /* Parent gate */
-  .gate-wrap{gap:10px;padding:14px;}
+  .gate-wrap{
+    gap:10px;padding-top:14px;padding-bottom:14px;
+    padding-left:max(28px, env(safe-area-inset-left));
+    padding-right:max(28px, env(safe-area-inset-right));
+  }
   .gate-circle{width:76px;height:76px;font-size:26px;}
   .gate-hint{font-size:13px;}
 
-  /* Parent dashboard / editor: tighten vertical rhythm */
-  .pd-topbar{padding:10px 16px 8px;}
+  /* Parent dashboard / editor: tighten vertical rhythm, extra side padding */
+  .pd-topbar{
+    padding-top:10px;padding-bottom:8px;
+    padding-left:max(24px, env(safe-area-inset-left));
+    padding-right:max(24px, env(safe-area-inset-right));
+  }
   .pd-topbar h1{font-size:18px;}
-  .pd-content{padding:10px 16px;gap:10px;}
+  .pd-content{
+    padding-top:10px;padding-bottom:10px;gap:10px;
+    padding-left:max(24px, env(safe-area-inset-left));
+    padding-right:max(24px, env(safe-area-inset-right));
+  }
   .set-card{padding:12px;}
-  .editor-content{padding:10px 16px 90px;gap:12px;}
-  .editor-footer{padding:10px 16px;}
+  .editor-content{
+    padding-top:10px;padding-bottom:90px;gap:12px;
+    padding-left:max(24px, env(safe-area-inset-left));
+    padding-right:max(24px, env(safe-area-inset-right));
+  }
+  .editor-footer{
+    padding-top:10px;padding-bottom:10px;
+    padding-left:max(24px, env(safe-area-inset-left));
+    padding-right:max(24px, env(safe-area-inset-right));
+  }
 }
 
 /* Reduced motion */
@@ -445,11 +476,15 @@ const STORE_KEYS = { sets:'swth_sets', activeId:'swth_active_set', voiceURI:'swt
 
 function uid(){ return 'id_' + Math.random().toString(36).slice(2,10); }
 
-function defaultSets(){
+/* Fallback words used only if sightwords.txt can't be fetched
+   (e.g. opened as a local file:// page without a server). */
+const FALLBACK_STARTER_WORDS = ['the','and','you','is','to','a','in','it','of','was'];
+
+function buildDefaultSets(starterWords){
+  const words = (starterWords && starterWords.length) ? starterWords : FALLBACK_STARTER_WORDS;
   return [
     { id:'starter', name:'Starter Words', theme:'pirate',
-      words:['the','and','you','is','to','a','in','it'],
-      createdAt: Date.now(), updatedAt: Date.now() },
+      words, createdAt: Date.now(), updatedAt: Date.now() },
     { id:'farm1', name:'Farm Theme', theme:'farm',
       words:['cow','pig','barn','hay','sun','run','big','red'],
       createdAt: Date.now(), updatedAt: Date.now() },
@@ -459,12 +494,27 @@ function defaultSets(){
   ];
 }
 
+/* Reads sightwords.txt (comma-separated words, sitting alongside
+   index.html) to seed the first-run "Starter Words" set. */
+async function fetchStarterWordsFromFile(){
+  try{
+    const res = await fetch('sightwords.txt', { cache:'no-cache' });
+    if(!res.ok) throw new Error('sightwords.txt not found');
+    const text = await res.text();
+    const words = text.split(',').map(w=>normalizeWord(w)).filter(Boolean);
+    // de-dupe while preserving order
+    return Array.from(new Set(words));
+  }catch(e){
+    return null;
+  }
+}
+
 function loadSets(){
   try{
     const raw = localStorage.getItem(STORE_KEYS.sets);
-    if(!raw){ const d = defaultSets(); saveSets(d); return d; }
+    if(!raw){ const d = buildDefaultSets(); saveSets(d); return d; }
     return JSON.parse(raw);
-  }catch(e){ return defaultSets(); }
+  }catch(e){ return buildDefaultSets(); }
 }
 function saveSets(sets){ localStorage.setItem(STORE_KEYS.sets, JSON.stringify(sets)); }
 
@@ -473,8 +523,7 @@ function loadActiveId(){
 }
 function saveActiveId(id){ localStorage.setItem(STORE_KEYS.activeId, id); }
 
-/* Validation rules: lowercase, trim, dedupe, no empty, max 20 */
-const MAX_WORDS = 20;
+/* Validation rules: lowercase, trim, dedupe, no empty. No word-count limit. */
 function normalizeWord(w){ return String(w||'').trim().toLowerCase().replace(/[^a-z']/g,''); }
 function validateWordList(words){
   const errors = [];
@@ -488,8 +537,7 @@ function validateWordList(words){
     clean.push(w);
   });
   if(clean.length === 0) errors.push('Add at least one word.');
-  if(clean.length > MAX_WORDS) errors.push(`Limit is ${MAX_WORDS} words (you have ${clean.length}).`);
-  return { clean: clean.slice(0,MAX_WORDS), errors };
+  return { clean, errors };
 }
 
 /* =========================================================
@@ -1318,7 +1366,7 @@ function renderGate(){
   app.innerHTML = `
     <div class="screen fade-in">
       <div class="gate-wrap">
-        <button class="nav-btn" style="position:absolute;top:14px;left:14px;background:rgba(255,255,255,.15);color:#fff;" onclick="goView('home')">✕</button>
+        <button class="nav-btn" style="position:absolute;top:max(26px, env(safe-area-inset-top));left:max(24px, env(safe-area-inset-left));background:rgba(255,255,255,.15);color:#fff;" onclick="goView('home')">✕</button>
         <div class="gate-circle" id="gateCircle">
           <span class="progress-ring" id="gateRing" style="--p:0"></span>
           🔐
@@ -1479,7 +1527,6 @@ function renderEditor(){
   const chips = d.words.map((w,i)=>`
     <span class="editor-chip">${escapeHtml(w)}<button onclick="removeEditorWord(${i})" aria-label="Remove ${escapeHtml(w)}">✕</button></span>
   `).join('');
-  const overLimit = d.words.length >= MAX_WORDS;
 
   app.innerHTML = `
     <div class="screen fade-in">
@@ -1500,14 +1547,14 @@ function renderEditor(){
           <div>
             <div class="field-label">Sight Words</div>
             <div class="word-input-row">
-              <input class="text-input" id="wordInput" placeholder="Type a word, then press Add" ${overLimit?'disabled':''}
+              <input class="text-input" id="wordInput" placeholder="Type a word, then press Add"
                 onkeydown="if(event.key==='Enter'){event.preventDefault();addEditorWord();}">
-              <button class="add-word-btn" onclick="addEditorWord()" ${overLimit?'disabled':''} aria-label="Add word">+</button>
+              <button class="add-word-btn" onclick="addEditorWord()" aria-label="Add word">+</button>
             </div>
             <div style="height:10px"></div>
             <div class="editor-chip-wrap">${chips}</div>
             <div style="height:6px"></div>
-            <div class="word-count ${overLimit?'limit':''}">${d.words.length} / ${MAX_WORDS} words</div>
+            <div class="word-count">${d.words.length} word${d.words.length===1?'':'s'}</div>
           </div>
           <div id="editorError"></div>
         </div>
@@ -1532,7 +1579,7 @@ function addEditorWord(){
   const pieces = raw.split(/[,\n]/).map(s=>s.trim()).filter(Boolean);
   pieces.forEach(p=>{
     const w = normalizeWord(p);
-    if(w && !state.editorDraft.words.includes(w) && state.editorDraft.words.length < MAX_WORDS){
+    if(w && !state.editorDraft.words.includes(w)){
       state.editorDraft.words.push(w);
     }
   });
@@ -1567,13 +1614,60 @@ function saveEditor(){
 }
 
 /* =========================================================
+   FORGIVING TAP DETECTION
+   Young children rarely lift their finger from the exact spot
+   they touched down on. A native browser "click" only fires when
+   the touch STARTS and ENDS on the same element, so a small drag
+   can silently fail to register. This listens for the gap: if a
+   touch/pointer lifts a short distance away from where it started
+   and doesn't land on another tappable element, we still fire the
+   original button's click.
+========================================================= */
+(function setupForgivingTaps(){
+  const TAP_TOLERANCE_PX = 28;
+  let downTarget = null, downX = 0, downY = 0;
+
+  function findTappable(el){
+    return (el && el.closest) ? el.closest('button:not(:disabled)') : null;
+  }
+
+  document.addEventListener('pointerdown', (e)=>{
+    downTarget = findTappable(e.target);
+    downX = e.clientX; downY = e.clientY;
+  }, true);
+
+  document.addEventListener('pointerup', (e)=>{
+    if(!downTarget) return;
+    const liftTarget = findTappable(e.target);
+    if(liftTarget === downTarget){ downTarget = null; return; } // native click already handles this
+    if(liftTarget){ downTarget = null; return; } // finger drifted onto a different button - don't guess
+    const dx = e.clientX - downX, dy = e.clientY - downY;
+    if(Math.sqrt(dx*dx + dy*dy) <= TAP_TOLERANCE_PX){
+      e.preventDefault();
+      downTarget.click();
+    }
+    downTarget = null;
+  }, true);
+
+  document.addEventListener('pointercancel', ()=>{ downTarget = null; }, true);
+})();
+
+/* =========================================================
    INIT + SERVICE WORKER (offline support)
 ========================================================= */
-if(!localStorage.getItem(STORE_KEYS.sets)){ saveSets(defaultSets()); }
-if(!localStorage.getItem(STORE_KEYS.activeId)){ saveActiveId(loadSets()[0].id); }
-
-initVoices();
-render();
+async function initApp(){
+  if(!localStorage.getItem(STORE_KEYS.sets)){
+    const starterWords = await fetchStarterWordsFromFile();
+    saveSets(buildDefaultSets(starterWords));
+  }
+  if(!localStorage.getItem(STORE_KEYS.activeId)){
+    const sets = loadSets();
+    if(sets[0]) saveActiveId(sets[0].id);
+  }
+  initVoices();
+  render();
+}
+initApp();
 
 if('serviceWorker' in navigator){
   const swCode = `
