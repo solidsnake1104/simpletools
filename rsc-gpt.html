@@ -1,0 +1,1761 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+<meta name="theme-color" content="#3a2a16" />
+<title>Lumbridge Adventure - Browser RPG</title>
+<style>
+  :root {
+    --bg: #17120b;
+    --panel: #2c2114;
+    --panel2: #3b2b17;
+    --trim: #8b6a36;
+    --trim2: #c9a55c;
+    --text: #ead7a2;
+    --muted: #bba774;
+    --green: #55c75a;
+    --red: #d9534f;
+    --blue: #5aa9ff;
+    --black: #080604;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  html,
+  body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: var(--black);
+    color: var(--text);
+    font-family: Georgia, "Times New Roman", serif;
+  }
+
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #app {
+    width: 100vw;
+    height: 100dvh;
+    max-width: 100vw;
+    max-height: 100dvh;
+    background: linear-gradient(#25190d, #110c07);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(164px, 26vw, 245px);
+    grid-template-rows: minmax(0, 1fr) clamp(108px, 23vh, 160px);
+    gap: 4px;
+    padding:
+      max(4px, env(safe-area-inset-top))
+      max(4px, env(safe-area-inset-right))
+      max(4px, env(safe-area-inset-bottom))
+      max(4px, env(safe-area-inset-left));
+  }
+
+  #gameWrap {
+    position: relative;
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+    min-height: 0;
+    border: 3px ridge var(--trim);
+    background: #000;
+    overflow: hidden;
+  }
+
+  canvas {
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+    display: block;
+    background: #111;
+  }
+
+  #topOverlay {
+    pointer-events: none;
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    font-size: clamp(11px, 1.6vw, 14px);
+    text-shadow: 1px 1px 0 #000;
+  }
+
+  .pill {
+    background: rgba(30, 20, 10, .78);
+    border: 1px solid var(--trim);
+    padding: 3px 7px;
+    border-radius: 999px;
+  }
+
+  #side {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    min-width: 0;
+    min-height: 0;
+    border: 3px ridge var(--trim);
+    background: var(--panel);
+    display: grid;
+    grid-template-rows: clamp(120px, 28vh, 190px) auto minmax(0, 1fr);
+    overflow: hidden;
+  }
+
+  #miniCanvas {
+    border-bottom: 2px groove var(--trim);
+    background: #111;
+  }
+
+  #tabs {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+    padding: 3px;
+    background: #1c1309;
+  }
+
+  .tab {
+    min-height: 30px;
+    border: 2px outset var(--trim);
+    background: #493315;
+    color: var(--text);
+    font-weight: bold;
+    font-size: clamp(10px, 1.7vw, 13px);
+  }
+
+  .tab.active {
+    background: #74511e;
+    color: #fff2bd;
+  }
+
+  #panel {
+    overflow: auto;
+    padding: 8px;
+    font-size: clamp(11px, 1.6vw, 14px);
+    line-height: 1.35;
+  }
+
+  .sectionTitle {
+    color: var(--trim2);
+    border-bottom: 1px solid var(--trim);
+    margin: 0 0 6px;
+    padding-bottom: 3px;
+    font-weight: bold;
+  }
+
+  .statLine,
+  .invLine,
+  .questLine {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 2px 0;
+  }
+
+  .bar {
+    height: 10px;
+    background: #120b06;
+    border: 1px solid #6a4c23;
+    margin: 3px 0 8px;
+  }
+
+  .bar > div {
+    height: 100%;
+    background: linear-gradient(90deg, #842, #e54);
+  }
+
+  #chat {
+    grid-column: 1;
+    grid-row: 2;
+    min-width: 0;
+    min-height: 0;
+    border: 3px ridge var(--trim);
+    background: #20150b;
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+    overflow: hidden;
+  }
+
+  #messages {
+    overflow: auto;
+    padding: 6px 8px;
+    font-size: clamp(11px, 1.7vw, 14px);
+    line-height: 1.25;
+  }
+
+  .msg {
+    margin-bottom: 3px;
+  }
+
+  .system { color: #d9c178; }
+  .npc { color: #8fd3ff; }
+  .combat { color: #ff928a; }
+  .quest { color: #ffe36e; }
+  .loot { color: #9cff9c; }
+
+  #actions {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 3px;
+    padding: 4px;
+    background: #140d07;
+  }
+
+  button {
+    cursor: pointer;
+    border: 2px outset var(--trim);
+    background: #4a341a;
+    color: var(--text);
+    font-family: Georgia, "Times New Roman", serif;
+    font-weight: bold;
+    font-size: clamp(11px, 1.7vw, 14px);
+    min-height: 34px;
+  }
+
+  button:active {
+    border-style: inset;
+    transform: translateY(1px);
+  }
+
+  #mobileControls {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    display: grid;
+    grid-template-columns: repeat(3, 42px);
+    grid-template-rows: repeat(3, 42px);
+    gap: 3px;
+    opacity: .88;
+  }
+
+  #mobileControls button {
+    min-height: 0;
+    padding: 0;
+    font-size: 17px;
+    background: rgba(55, 38, 18, .85);
+  }
+
+  #mobileControls .empty {
+    visibility: hidden;
+  }
+
+  #dialog {
+    position: absolute;
+    left: 50%;
+    bottom: 10px;
+    transform: translateX(-50%);
+    width: min(620px, calc(100% - 18px));
+    background: rgba(34, 23, 12, .96);
+    border: 3px ridge var(--trim2);
+    padding: 8px;
+    display: none;
+    box-shadow: 0 0 0 2px #000;
+    font-size: clamp(12px, 1.7vw, 15px);
+  }
+
+  #dialogName {
+    color: #8fd3ff;
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+
+  #dialogOptions {
+    display: grid;
+    gap: 4px;
+    margin-top: 7px;
+  }
+
+  #dialogOptions button {
+    text-align: left;
+    min-height: 30px;
+    font-weight: normal;
+  }
+
+  #orientationHint {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 99;
+    background: #120c06;
+    color: var(--text);
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 22px;
+    font-size: 20px;
+  }
+
+  @media (orientation: portrait) and (max-width: 900px) {
+    #orientationHint {
+      display: flex;
+    }
+  }
+
+  @media (max-width: 740px) and (orientation: landscape) {
+    #app {
+      grid-template-columns: minmax(0, 1fr) 158px;
+      grid-template-rows: minmax(0, 1fr) 105px;
+      gap: 2px;
+      padding: 2px;
+    }
+
+    #side {
+      grid-template-rows: 96px auto minmax(0, 1fr);
+    }
+
+    #panel {
+      padding: 5px;
+    }
+
+    #actions {
+      grid-template-columns: repeat(5, 1fr);
+      gap: 2px;
+      padding: 2px;
+    }
+
+    button {
+      min-height: 28px;
+    }
+
+    #messages {
+      padding: 4px 6px;
+    }
+
+    #mobileControls {
+      grid-template-columns: repeat(3, 35px);
+      grid-template-rows: repeat(3, 35px);
+    }
+  }
+</style>
+</head>
+<body>
+<div id="orientationHint">
+  <div>
+    <strong>Landscape mode recommended</strong><br />
+    Rotate your iPhone for the full RPG interface.
+  </div>
+</div>
+
+<div id="app">
+  <div id="gameWrap">
+    <canvas id="game"></canvas>
+
+    <div id="topOverlay">
+      <div class="pill" id="locPill">Lumbridge</div>
+      <div class="pill" id="targetPill">No target</div>
+    </div>
+
+    <div id="dialog">
+      <div id="dialogName"></div>
+      <div id="dialogText"></div>
+      <div id="dialogOptions"></div>
+    </div>
+
+    <div id="mobileControls">
+      <button class="empty"></button>
+      <button data-dir="up">▲</button>
+      <button class="empty"></button>
+      <button data-dir="left">◀</button>
+      <button id="centerAction">●</button>
+      <button data-dir="right">▶</button>
+      <button class="empty"></button>
+      <button data-dir="down">▼</button>
+      <button class="empty"></button>
+    </div>
+  </div>
+
+  <div id="chat">
+    <div id="messages"></div>
+    <div id="actions">
+      <button id="btnTalk">Talk</button>
+      <button id="btnAttack">Attack</button>
+      <button id="btnUse">Use</button>
+      <button id="btnSearch">Search</button>
+      <button id="btnSave">Save</button>
+    </div>
+  </div>
+
+  <aside id="side">
+    <canvas id="miniCanvas"></canvas>
+    <div id="tabs">
+      <button class="tab active" data-tab="stats">Stats</button>
+      <button class="tab" data-tab="inv">Pack</button>
+      <button class="tab" data-tab="quest">Quest</button>
+      <button class="tab" data-tab="help">Help</button>
+    </div>
+    <div id="panel"></div>
+  </aside>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  /******************************************************************
+   * PWA BOOTSTRAP
+   ******************************************************************/
+  const manifest = {
+    name: "Lumbridge Adventure",
+    short_name: "Lumbridge",
+    start_url: ".",
+    display: "standalone",
+    orientation: "landscape",
+    background_color: "#17120b",
+    theme_color: "#3a2a16",
+    icons: []
+  };
+
+  const manifestBlob = new Blob([JSON.stringify(manifest)], {
+    type: "application/manifest+json"
+  });
+
+  const manifestUrl = URL.createObjectURL(manifestBlob);
+  const manifestLink = document.createElement("link");
+  manifestLink.rel = "manifest";
+  manifestLink.href = manifestUrl;
+  document.head.appendChild(manifestLink);
+
+  if ("serviceWorker" in navigator) {
+    const swCode = `
+      const CACHE = "lumbridge-adventure-v1";
+      self.addEventListener("install", event => {
+        event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(["./"])));
+        self.skipWaiting();
+      });
+
+      self.addEventListener("activate", event => {
+        event.waitUntil(self.clients.claim());
+      });
+
+      self.addEventListener("fetch", event => {
+        event.respondWith(
+          caches.match(event.request).then(response => response || fetch(event.request))
+        );
+      });
+    `;
+
+    const swBlob = new Blob([swCode], { type: "text/javascript" });
+    const swUrl = URL.createObjectURL(swBlob);
+    navigator.serviceWorker.register(swUrl).catch(() => {});
+  }
+
+  /******************************************************************
+   * CANVAS AND UI
+   ******************************************************************/
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+
+  const mini = document.getElementById("miniCanvas");
+  const mctx = mini.getContext("2d");
+
+  const messages = document.getElementById("messages");
+  const panel = document.getElementById("panel");
+  const locPill = document.getElementById("locPill");
+  const targetPill = document.getElementById("targetPill");
+
+  const dialog = document.getElementById("dialog");
+  const dialogName = document.getElementById("dialogName");
+  const dialogText = document.getElementById("dialogText");
+  const dialogOptions = document.getElementById("dialogOptions");
+
+  const TILE = 32;
+  const WORLD_W = 48;
+  const WORLD_H = 34;
+
+  function resize() {
+    const rect = canvas.parentElement.getBoundingClientRect();
+    canvas.width = Math.max(320, Math.floor(rect.width));
+    canvas.height = Math.max(180, Math.floor(rect.height));
+
+    const sideRect = mini.parentElement.getBoundingClientRect();
+    mini.width = Math.floor(sideRect.width);
+    mini.height = Math.max(80, Math.floor(sideRect.height * 0.28));
+  }
+
+  window.addEventListener("resize", resize);
+  resize();
+
+  /******************************************************************
+   * WORLD DATA
+   ******************************************************************/
+  const T = {
+    grass: 0,
+    path: 1,
+    water: 2,
+    wall: 3,
+    floor: 4,
+    field: 5,
+    tree: 6,
+    bridge: 7,
+    wheat: 8,
+    flower: 9,
+    fence: 10,
+    dirt: 11,
+    stone: 12
+  };
+
+  const tileColor = {
+    [T.grass]: "#3b8b3b",
+    [T.path]: "#a7793b",
+    [T.water]: "#286db5",
+    [T.wall]: "#786449",
+    [T.floor]: "#9e8052",
+    [T.field]: "#71572c",
+    [T.tree]: "#236b2d",
+    [T.bridge]: "#8a5d2e",
+    [T.wheat]: "#c5a849",
+    [T.flower]: "#4b964b",
+    [T.fence]: "#76512a",
+    [T.dirt]: "#7b5830",
+    [T.stone]: "#777777"
+  };
+
+  const solidTiles = new Set([T.water, T.wall, T.tree, T.fence]);
+
+  const map = Array.from({ length: WORLD_H }, () =>
+    Array.from({ length: WORLD_W }, () => T.grass)
+  );
+
+  function rect(x, y, w, h, t) {
+    for (let yy = y; yy < y + h; yy++) {
+      for (let xx = x; xx < x + w; xx++) {
+        if (xx >= 0 && yy >= 0 && xx < WORLD_W && yy < WORLD_H) {
+          map[yy][xx] = t;
+        }
+      }
+    }
+  }
+
+  function borderRect(x, y, w, h, wall, floor) {
+    rect(x, y, w, h, floor);
+
+    for (let xx = x; xx < x + w; xx++) {
+      map[y][xx] = wall;
+      map[y + h - 1][xx] = wall;
+    }
+
+    for (let yy = y; yy < y + h; yy++) {
+      map[yy][x] = wall;
+      map[yy][x + w - 1] = wall;
+    }
+  }
+
+  function buildMap() {
+    // River Lum.
+    for (let y = 0; y < WORLD_H; y++) {
+      const rx = 32 + Math.floor(Math.sin(y * .45) * 2);
+      for (let w = 0; w < 4; w++) {
+        map[y][rx + w] = T.water;
+      }
+    }
+
+    // Roads.
+    rect(0, 15, WORLD_W, 3, T.path);
+    rect(20, 0, 3, WORLD_H, T.path);
+    rect(8, 8, 25, 2, T.path);
+    rect(7, 23, 26, 2, T.path);
+    rect(32, 15, 5, 3, T.bridge);
+
+    // Lumbridge Castle.
+    borderRect(15, 5, 13, 10, T.wall, T.floor);
+    rect(20, 14, 3, 1, T.path);
+    rect(19, 9, 5, 3, T.stone);
+
+    // Lumbridge Castle Kitchen.
+    borderRect(9, 19, 9, 8, T.wall, T.floor);
+    rect(13, 19, 2, 1, T.path);
+
+    // Lumbridge General Store.
+    borderRect(4, 10, 7, 6, T.wall, T.floor);
+    rect(7, 15, 2, 1, T.path);
+
+    // Lumbridge Church.
+    borderRect(25, 20, 7, 7, T.wall, T.floor);
+    rect(27, 20, 2, 1, T.path);
+
+    // Farm and windmill.
+    rect(2, 25, 12, 7, T.field);
+
+    for (let y = 26; y < 31; y++) {
+      for (let x = 3; x < 13; x++) {
+        if ((x + y) % 2 === 0) {
+          map[y][x] = T.wheat;
+        }
+      }
+    }
+
+    borderRect(15, 26, 6, 6, T.wall, T.floor);
+    rect(17, 26, 2, 1, T.path);
+
+    // Cow and chicken pasture.
+    rect(1, 18, 7, 5, T.dirt);
+
+    for (let x = 1; x < 8; x++) {
+      map[18][x] = T.fence;
+      map[22][x] = T.fence;
+    }
+
+    for (let y = 18; y < 23; y++) {
+      map[y][1] = T.fence;
+      map[y][7] = T.fence;
+    }
+
+    map[20][7] = T.dirt;
+
+    // Goblin woods.
+    rect(36, 4, 9, 12, T.dirt);
+
+    for (let y = 1; y < WORLD_H; y += 2) {
+      for (let x = 35; x < WORLD_W; x += 3) {
+        if (Math.random() < .55 && map[y][x] !== T.water) {
+          map[y][x] = T.tree;
+        }
+      }
+    }
+
+    // Decorative trees.
+    for (let i = 0; i < 150; i++) {
+      const x = Math.floor(Math.random() * WORLD_W);
+      const y = Math.floor(Math.random() * WORLD_H);
+
+      if (map[y][x] === T.grass && Math.random() < .42) {
+        map[y][x] = T.tree;
+      }
+    }
+
+    // Decorative flowers.
+    for (let i = 0; i < 80; i++) {
+      const x = Math.floor(Math.random() * WORLD_W);
+      const y = Math.floor(Math.random() * WORLD_H);
+
+      if (map[y][x] === T.grass) {
+        map[y][x] = T.flower;
+      }
+    }
+
+    // Re-clear important town structures after random decoration.
+    rect(3, 7, 30, 22, T.grass);
+    rect(0, 15, WORLD_W, 3, T.path);
+    rect(20, 0, 3, WORLD_H, T.path);
+    rect(8, 8, 25, 2, T.path);
+    rect(7, 23, 26, 2, T.path);
+    rect(32, 15, 5, 3, T.bridge);
+
+    borderRect(15, 5, 13, 10, T.wall, T.floor);
+    rect(20, 14, 3, 1, T.path);
+    rect(19, 9, 5, 3, T.stone);
+
+    borderRect(9, 19, 9, 8, T.wall, T.floor);
+    rect(13, 19, 2, 1, T.path);
+
+    borderRect(4, 10, 7, 6, T.wall, T.floor);
+    rect(7, 15, 2, 1, T.path);
+
+    borderRect(25, 20, 7, 7, T.wall, T.floor);
+    rect(27, 20, 2, 1, T.path);
+
+    rect(2, 25, 12, 7, T.field);
+
+    for (let y = 26; y < 31; y++) {
+      for (let x = 3; x < 13; x++) {
+        if ((x + y) % 2 === 0) {
+          map[y][x] = T.wheat;
+        }
+      }
+    }
+
+    borderRect(15, 26, 6, 6, T.wall, T.floor);
+    rect(17, 26, 2, 1, T.path);
+
+    rect(1, 18, 7, 5, T.dirt);
+
+    for (let x = 1; x < 8; x++) {
+      map[18][x] = T.fence;
+      map[22][x] = T.fence;
+    }
+
+    for (let y = 18; y < 23; y++) {
+      map[y][1] = T.fence;
+      map[y][7] = T.fence;
+    }
+
+    map[20][7] = T.dirt;
+  }
+
+  buildMap();
+
+  function locationName(x, y) {
+    if (x >= 15 && x <= 27 && y >= 5 && y <= 14) return "Lumbridge Castle";
+    if (x >= 9 && x <= 17 && y >= 19 && y <= 26) return "Lumbridge Castle Kitchen";
+    if (x >= 2 && x <= 20 && y >= 25) return "Lumbridge Farm";
+    if (x >= 35 && y <= 17) return "Goblin Woods";
+    if (x >= 25 && x <= 31 && y >= 20 && y <= 26) return "Lumbridge Church";
+    if (x >= 4 && x <= 10 && y >= 10 && y <= 15) return "Lumbridge General Store";
+    if (x >= 31 && x <= 37) return "River Lum";
+    return "Lumbridge";
+  }
+
+  /******************************************************************
+   * GAME STATE
+   ******************************************************************/
+  const defaultState = {
+    player: {
+      x: 21,
+      y: 16,
+      hp: 20,
+      maxHp: 20,
+      attack: 1,
+      strength: 1,
+      defence: 1,
+      cooking: 1,
+      xp: 0,
+      coins: 8,
+      facing: "down"
+    },
+    inventory: {
+      "Bronze sword": 1,
+      "Bread": 1
+    },
+    quest: {
+      started: false,
+      hasFlour: false,
+      hasEgg: false,
+      hasMilk: false,
+      complete: false,
+      rewardClaimed: false
+    },
+    kills: 0,
+    tab: "stats"
+  };
+
+  let state = loadState() || structuredClone(defaultState);
+  let entities = [];
+
+  function saveState() {
+    localStorage.setItem("lumbridge-save", JSON.stringify(state));
+    log("Game saved.", "system");
+  }
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem("lumbridge-save");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function resetState() {
+    state = structuredClone(defaultState);
+    localStorage.removeItem("lumbridge-save");
+    spawnEntities();
+    log("New game started.", "system");
+    updateUI();
+  }
+
+  /******************************************************************
+   * ENTITIES
+   ******************************************************************/
+  function npc(id, name, x, y, color, role) {
+    return {
+      kind: "npc",
+      id,
+      name,
+      x,
+      y,
+      hp: 999,
+      maxHp: 999,
+      color,
+      role,
+      solid: true
+    };
+  }
+
+  function goblin(id, x, y) {
+    return {
+      kind: "goblin",
+      id,
+      name: "Goblin",
+      x,
+      y,
+      hp: 8,
+      maxHp: 8,
+      color: "#5da84a",
+      attack: 2,
+      respawn: 0,
+      solid: true
+    };
+  }
+
+  function item(id, name, x, y, color, questItem = false) {
+    return {
+      kind: "item",
+      id,
+      name,
+      x,
+      y,
+      color,
+      questItem,
+      solid: false
+    };
+  }
+
+  function spawnEntities() {
+    entities = [
+      npc("cook", "Cook", 13, 22, "#ffffff", "quest"),
+      npc("farmer", "Farmer", 6, 28, "#d8a15a", "farm"),
+      npc("miller", "Millie Miller", 17, 29, "#c9c9c9", "mill"),
+      npc("guide", "Lumbridge Guide", 22, 17, "#68c3ff", "guide"),
+      npc("priest", "Father Aereck", 28, 23, "#ddddff", "priest"),
+      npc("shop", "Shopkeeper", 7, 13, "#ffd56d", "shop"),
+
+      item("egg", "Egg", 5, 20, "#fff4aa", true),
+      item("milk", "Bucket of milk", 4, 21, "#eeeeff", true),
+      item("flour", "Pot of flour", 18, 29, "#f3e2bd", true),
+
+      goblin("g1", 39, 8),
+      goblin("g2", 42, 11),
+      goblin("g3", 38, 14),
+      goblin("g4", 44, 6),
+      goblin("g5", 41, 15)
+    ];
+  }
+
+  spawnEntities();
+
+  /******************************************************************
+   * UTILS
+   ******************************************************************/
+  function log(text, cls = "system") {
+    const div = document.createElement("div");
+    div.className = "msg " + cls;
+    div.textContent = text;
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  function hasItem(name, n = 1) {
+    return (state.inventory[name] || 0) >= n;
+  }
+
+  function addItem(name, n = 1) {
+    state.inventory[name] = (state.inventory[name] || 0) + n;
+    log(`You receive ${n > 1 ? n + " " : ""}${name}.`, "loot");
+  }
+
+  function removeItem(name, n = 1) {
+    if (!hasItem(name, n)) return false;
+
+    state.inventory[name] -= n;
+
+    if (state.inventory[name] <= 0) {
+      delete state.inventory[name];
+    }
+
+    return true;
+  }
+
+  function entityAt(x, y, includeDead = false) {
+    return entities.find(e =>
+      e.x === x &&
+      e.y === y &&
+      (includeDead || e.hp > 0 || e.kind === "item")
+    );
+  }
+
+  function solidAt(x, y) {
+    if (x < 0 || y < 0 || x >= WORLD_W || y >= WORLD_H) return true;
+    if (solidTiles.has(map[y][x])) return true;
+
+    return entities.some(e =>
+      e.solid &&
+      e.x === x &&
+      e.y === y &&
+      e.hp > 0
+    );
+  }
+
+  function dist(a, b) {
+    return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+  }
+
+  function adjacentEntities() {
+    const p = state.player;
+
+    return entities.filter(e =>
+      dist(p, e) === 1 &&
+      (e.hp > 0 || e.kind === "item")
+    );
+  }
+
+  function nearestAdjacent(kind) {
+    return adjacentEntities().find(e => !kind || e.kind === kind);
+  }
+
+  function dirDelta(dir) {
+    return {
+      up: [0, -1],
+      down: [0, 1],
+      left: [-1, 0],
+      right: [1, 0]
+    }[dir];
+  }
+
+  function randomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  /******************************************************************
+   * MOVEMENT AND INTERACTION
+   ******************************************************************/
+  function move(dir) {
+    if (dialog.style.display === "block") {
+      closeDialog();
+      return;
+    }
+
+    const p = state.player;
+    p.facing = dir;
+
+    const [dx, dy] = dirDelta(dir);
+    const nx = p.x + dx;
+    const ny = p.y + dy;
+
+    const ent = entityAt(nx, ny);
+
+    if (ent) {
+      if (ent.kind === "item") {
+        pickup(ent);
+      } else {
+        log(`${ent.name} is standing there.`, "system");
+      }
+
+      updateUI();
+      return;
+    }
+
+    if (!solidAt(nx, ny)) {
+      p.x = nx;
+      p.y = ny;
+
+      maybeRandomGather();
+      npcWander();
+      goblinThink();
+    }
+
+    updateUI();
+  }
+
+  function pickup(ent) {
+    if (ent.questItem) {
+      if (ent.name === "Egg") state.quest.hasEgg = true;
+      if (ent.name === "Bucket of milk") state.quest.hasMilk = true;
+      if (ent.name === "Pot of flour") state.quest.hasFlour = true;
+    }
+
+    addItem(ent.name, 1);
+    entities = entities.filter(e => e !== ent);
+    log(`You pick up ${ent.name}.`, "loot");
+  }
+
+  function maybeRandomGather() {
+    const p = state.player;
+    const tile = map[p.y][p.x];
+
+    if (tile === T.wheat && Math.random() < .09 && !hasItem("Grain")) {
+      addItem("Grain");
+      log("You pluck some grain from the wheat field.", "loot");
+    }
+
+    if (tile === T.flower && Math.random() < .04) {
+      addItem("Wild herb");
+    }
+  }
+
+  function talk() {
+    const e = nearestAdjacent("npc");
+
+    if (!e) {
+      log("There is no one nearby to talk to.", "system");
+      return;
+    }
+
+    openNpcDialog(e);
+  }
+
+  function attack() {
+    const g = nearestAdjacent("goblin");
+
+    if (!g) {
+      log("There is no goblin within reach.", "system");
+      return;
+    }
+
+    const p = state.player;
+    const hit = randomInt(0, p.attack + p.strength + 2);
+
+    g.hp = Math.max(0, g.hp - hit);
+    log(`You swing at the goblin and hit ${hit}.`, "combat");
+
+    if (g.hp <= 0) {
+      state.kills++;
+      state.player.xp += 6;
+
+      const coins = randomInt(1, 5);
+      state.player.coins += coins;
+
+      log(`The goblin falls. You find ${coins} coins.`, "loot");
+
+      g.respawn = 90;
+      maybeLevel();
+    } else {
+      goblinRetaliate(g);
+    }
+
+    updateUI();
+  }
+
+  function goblinRetaliate(g) {
+    const p = state.player;
+    const dmg = Math.max(0, randomInt(0, g.attack + 2) - Math.floor(p.defence / 2));
+
+    p.hp = Math.max(0, p.hp - dmg);
+    log(`The goblin scratches you for ${dmg}.`, "combat");
+
+    if (p.hp <= 0) {
+      log("You collapse and wake up near Lumbridge Castle.", "combat");
+      p.x = 21;
+      p.y = 16;
+      p.hp = p.maxHp;
+    }
+  }
+
+  function maybeLevel() {
+    const p = state.player;
+    const needed = (p.attack + p.strength + p.defence) * 12;
+
+    if (p.xp >= needed) {
+      p.xp = 0;
+      p.attack++;
+      p.strength++;
+      p.defence++;
+      p.maxHp += 2;
+      p.hp = p.maxHp;
+
+      log("Your combat skills improve.", "quest");
+    }
+  }
+
+  function useAction() {
+    const p = state.player;
+
+    if (hasItem("Bread")) {
+      removeItem("Bread");
+      p.hp = Math.min(p.maxHp, p.hp + 5);
+      log("You eat the bread and recover 5 health.", "loot");
+      updateUI();
+      return;
+    }
+
+    if (hasItem("Wild herb")) {
+      removeItem("Wild herb");
+      p.hp = Math.min(p.maxHp, p.hp + 3);
+      log("You chew the wild herb and recover 3 health.", "loot");
+      updateUI();
+      return;
+    }
+
+    if (hasItem("Cake")) {
+      removeItem("Cake");
+      p.hp = Math.min(p.maxHp, p.hp + 8);
+      log("You eat the cake and recover 8 health.", "loot");
+      updateUI();
+      return;
+    }
+
+    log("You do not have anything useful to use.", "system");
+  }
+
+  function searchAction() {
+    const p = state.player;
+    const loc = locationName(p.x, p.y);
+
+    if (loc === "Lumbridge Castle Kitchen" && !hasItem("Empty pot")) {
+      addItem("Empty pot");
+      log("You search the shelves and find an empty pot.", "loot");
+    } else if (loc === "Lumbridge General Store") {
+      log("The shelves contain ropes, pots, tinderboxes, and old adventuring supplies.", "system");
+    } else if (loc === "Goblin Woods") {
+      log("You find muddy tracks and crude campfire ashes.", "system");
+    } else if (loc === "Lumbridge Farm") {
+      log("You search around the farm. Chickens cluck nearby and cows graze by the fence.", "system");
+    } else {
+      log("You search the area but find nothing special.", "system");
+    }
+
+    updateUI();
+  }
+
+  /******************************************************************
+   * NPC DIALOGUE AND QUEST
+   ******************************************************************/
+  function openNpcDialog(e) {
+    dialog.style.display = "block";
+    dialogName.textContent = e.name;
+    dialogOptions.innerHTML = "";
+
+    if (e.role === "quest") return cookDialog();
+    if (e.role === "farm") return farmerDialog();
+    if (e.role === "mill") return millerDialog();
+    if (e.role === "guide") return guideDialog();
+    if (e.role === "priest") return priestDialog();
+    if (e.role === "shop") return shopDialog();
+  }
+
+  function option(text, fn) {
+    const b = document.createElement("button");
+    b.textContent = text;
+    b.onclick = fn;
+    dialogOptions.appendChild(b);
+  }
+
+  function closeDialog() {
+    dialog.style.display = "none";
+    updateUI();
+  }
+
+  function cookDialog() {
+    const q = state.quest;
+
+    if (q.complete) {
+      dialogText.textContent = "Thanks again for helping me with the Duke of Lumbridge's birthday cake!";
+      option("You're welcome.", closeDialog);
+      return;
+    }
+
+    if (!q.started) {
+      dialogText.textContent =
+        "What am I to do? I need to bake a cake for the Duke of Lumbridge, but I've forgotten to get the ingredients. Could you help me?";
+
+      option("Yes, I'll help you.", () => {
+        q.started = true;
+        log("Quest started: Cook's Assistant.", "quest");
+        cookDialog();
+      });
+
+      option("No, I don't feel like it.", closeDialog);
+      return;
+    }
+
+    const hasAll =
+      hasItem("Pot of flour") &&
+      hasItem("Bucket of milk") &&
+      hasItem("Egg");
+
+    if (!hasAll) {
+      dialogText.textContent =
+        "Please bring me a pot of flour, a bucket of milk, and an egg. The Duke is expecting his cake soon!";
+
+      option("Where can I find flour?", () => {
+        dialogText.textContent =
+          "You can get flour from the mill near the farm. Millie Miller may be able to help.";
+        dialogOptions.innerHTML = "";
+        option("Back.", cookDialog);
+      });
+
+      option("Where can I find milk?", () => {
+        dialogText.textContent =
+          "There are dairy cows near Lumbridge. You will need a bucket of milk.";
+        dialogOptions.innerHTML = "";
+        option("Back.", cookDialog);
+      });
+
+      option("Where can I find an egg?", () => {
+        dialogText.textContent =
+          "Try looking around the chicken coop by the farm.";
+        dialogOptions.innerHTML = "";
+        option("Back.", cookDialog);
+      });
+
+      option("Goodbye.", closeDialog);
+      return;
+    }
+
+    dialogText.textContent =
+      "You have everything! Can I have the ingredients now?";
+
+    option("Give the Cook the ingredients.", () => {
+      removeItem("Pot of flour");
+      removeItem("Bucket of milk");
+      removeItem("Egg");
+
+      q.complete = true;
+      q.rewardClaimed = true;
+
+      state.player.cooking++;
+      state.player.xp += 20;
+      state.player.coins += 15;
+
+      addItem("Cake", 1);
+
+      log("Quest complete: Cook's Assistant. Reward: 15 coins, Cooking experience, and a cake.", "quest");
+      closeDialog();
+    });
+
+    option("Not yet.", closeDialog);
+  }
+
+  function farmerDialog() {
+    dialogText.textContent =
+      "The farm feeds Lumbridge. Eggs are near the chicken pen, milk is by the pasture, and wheat grows south of the road.";
+
+    option("Any work for me?", () => {
+      dialogText.textContent =
+        "Keep goblins away from the east woods and Lumbridge will sleep easier.";
+      dialogOptions.innerHTML = "";
+      option("Goodbye.", closeDialog);
+    });
+
+    option("Goodbye.", closeDialog);
+  }
+
+  function millerDialog() {
+    dialogText.textContent =
+      "A good mill turns grain into flour, but for today you may take the spare pot by the millstone if the Cook sent you.";
+
+    option("Thanks.", closeDialog);
+  }
+
+  function guideDialog() {
+    dialogText.textContent =
+      "Welcome to Lumbridge. Use the roads to find the castle, kitchen, farm, church, general store, River Lum bridge, and Goblin Woods.";
+
+    option("How do I fight?", () => {
+      dialogText.textContent =
+        "Stand beside a goblin and press Attack. Eat bread, cake, or herbs if your health gets low.";
+      dialogOptions.innerHTML = "";
+      option("Back.", guideDialog);
+    });
+
+    option("How do I move?", () => {
+      dialogText.textContent =
+        "Use WASD, arrow keys, or the on-screen directional buttons. Tap the center button to interact.";
+      dialogOptions.innerHTML = "";
+      option("Back.", guideDialog);
+    });
+
+    option("Goodbye.", closeDialog);
+  }
+
+  function priestDialog() {
+    dialogText.textContent =
+      "May Saradomin watch over you. Rest a moment and be restored.";
+
+    option("Pray.", () => {
+      state.player.hp = state.player.maxHp;
+      log("You feel restored.", "quest");
+      closeDialog();
+    });
+
+    option("Goodbye.", closeDialog);
+  }
+
+  function shopDialog() {
+    dialogText.textContent =
+      "Welcome to the Lumbridge General Store. I sell bread for 3 coins and simple training blades for 20.";
+
+    option("Buy bread - 3 coins", () => {
+      if (state.player.coins >= 3) {
+        state.player.coins -= 3;
+        addItem("Bread");
+        shopDialog();
+      } else {
+        dialogText.textContent = "You do not have enough coins.";
+      }
+
+      updateUI();
+    });
+
+    option("Buy iron shortblade - 20 coins", () => {
+      if (state.player.coins >= 20) {
+        state.player.coins -= 20;
+        addItem("Iron shortblade");
+        state.player.attack++;
+        log("Your attack improves with the better blade.", "quest");
+        shopDialog();
+      } else {
+        dialogText.textContent = "You do not have enough coins.";
+      }
+
+      updateUI();
+    });
+
+    option("Goodbye.", closeDialog);
+  }
+
+  /******************************************************************
+   * SIMPLE AI
+   ******************************************************************/
+  function npcWander() {
+    for (const e of entities) {
+      if (e.kind !== "npc") continue;
+      if (Math.random() > .12) continue;
+
+      const dirs = ["up", "down", "left", "right"];
+      const [dx, dy] = dirDelta(dirs[randomInt(0, 3)]);
+
+      const nx = e.x + dx;
+      const ny = e.y + dy;
+
+      if (!solidAt(nx, ny) && dist({ x: nx, y: ny }, state.player) > 0) {
+        if (e.role === "quest" && locationName(nx, ny) !== "Lumbridge Castle Kitchen") continue;
+        if (e.role === "farm" && locationName(nx, ny) !== "Lumbridge Farm") continue;
+
+        e.x = nx;
+        e.y = ny;
+      }
+    }
+  }
+
+  function goblinThink() {
+    for (const g of entities) {
+      if (g.kind !== "goblin") continue;
+
+      if (g.hp <= 0) {
+        g.respawn--;
+
+        if (g.respawn <= 0) {
+          g.hp = g.maxHp;
+          g.x = randomInt(37, 44);
+          g.y = randomInt(5, 15);
+
+          log("A goblin wanders back into the woods.", "system");
+        }
+
+        continue;
+      }
+
+      const p = state.player;
+
+      if (dist(g, p) === 1 && Math.random() < .55) {
+        goblinRetaliate(g);
+        continue;
+      }
+
+      if (dist(g, p) < 6) {
+        const dx = Math.sign(p.x - g.x);
+        const dy = Math.sign(p.y - g.y);
+
+        const choices = Math.abs(p.x - g.x) > Math.abs(p.y - g.y)
+          ? [[dx, 0], [0, dy]]
+          : [[0, dy], [dx, 0]];
+
+        for (const [mx, my] of choices) {
+          const nx = g.x + mx;
+          const ny = g.y + my;
+
+          if (!solidAt(nx, ny) && !(nx === p.x && ny === p.y)) {
+            g.x = nx;
+            g.y = ny;
+            break;
+          }
+        }
+      } else if (Math.random() < .25) {
+        const dirs = [[1,0], [-1,0], [0,1], [0,-1]];
+        const [dx, dy] = dirs[randomInt(0, 3)];
+
+        const nx = g.x + dx;
+        const ny = g.y + dy;
+
+        if (!solidAt(nx, ny) && locationName(nx, ny) === "Goblin Woods") {
+          g.x = nx;
+          g.y = ny;
+        }
+      }
+    }
+  }
+
+  /******************************************************************
+   * RENDERING
+   ******************************************************************/
+  function drawTile(x, y, sx, sy) {
+    const t = map[y][x];
+
+    ctx.fillStyle = tileColor[t] || "#000";
+    ctx.fillRect(sx, sy, TILE, TILE);
+
+    ctx.globalAlpha = .16;
+    ctx.fillStyle = "#000";
+
+    for (let i = 0; i < 3; i++) {
+      const px = sx + ((x * 13 + y * 7 + i * 11) % TILE);
+      const py = sy + ((x * 5 + y * 17 + i * 9) % TILE);
+      ctx.fillRect(px, py, 3, 3);
+    }
+
+    ctx.globalAlpha = 1;
+
+    if (t === T.water) {
+      ctx.fillStyle = "rgba(255,255,255,.18)";
+      ctx.fillRect(sx + ((x + y) % 3) * 6, sy + 10, 14, 2);
+    }
+
+    if (t === T.tree) {
+      ctx.fillStyle = "#16451d";
+      ctx.fillRect(sx + 8, sy + 6, 16, 18);
+
+      ctx.fillStyle = "#6b3e1b";
+      ctx.fillRect(sx + 14, sy + 20, 4, 9);
+    }
+
+    if (t === T.wheat) {
+      ctx.fillStyle = "#efd76a";
+
+      for (let i = 0; i < 4; i++) {
+        ctx.fillRect(sx + 5 + i * 6, sy + 8, 2, 18);
+      }
+    }
+
+    if (t === T.wall) {
+      ctx.strokeStyle = "#3b3023";
+      ctx.strokeRect(sx + 1, sy + 1, TILE - 2, TILE - 2);
+
+      ctx.fillStyle = "rgba(255,255,255,.08)";
+      ctx.fillRect(sx + 2, sy + 2, TILE - 4, 3);
+    }
+
+    if (t === T.fence) {
+      ctx.fillStyle = "#4b2c13";
+      ctx.fillRect(sx + 4, sy + 12, 24, 5);
+      ctx.fillRect(sx + 8, sy + 6, 4, 20);
+      ctx.fillRect(sx + 21, sy + 6, 4, 20);
+    }
+  }
+
+  function drawSprite(e, sx, sy) {
+    if (e.kind === "item") {
+      ctx.fillStyle = "#1b1208";
+      ctx.fillRect(sx + 9, sy + 22, 14, 5);
+
+      ctx.fillStyle = e.color;
+      ctx.fillRect(sx + 11, sy + 12, 10, 10);
+      ctx.fillRect(sx + 14, sy + 9, 5, 5);
+      return;
+    }
+
+    if (e.kind === "goblin") {
+      if (e.hp <= 0) return;
+
+      ctx.fillStyle = "#1b1208";
+      ctx.fillRect(sx + 7, sy + 25, 18, 4);
+
+      ctx.fillStyle = "#3f7835";
+      ctx.fillRect(sx + 9, sy + 10, 14, 15);
+
+      ctx.fillStyle = "#6dbc52";
+      ctx.fillRect(sx + 8, sy + 5, 16, 12);
+
+      ctx.fillStyle = "#222";
+      ctx.fillRect(sx + 11, sy + 9, 3, 3);
+      ctx.fillRect(sx + 18, sy + 9, 3, 3);
+
+      ctx.fillStyle = "#6b3e1b";
+      ctx.fillRect(sx + 22, sy + 13, 7, 3);
+
+      drawHpBar(e, sx, sy);
+      return;
+    }
+
+    ctx.fillStyle = "#1b1208";
+    ctx.fillRect(sx + 7, sy + 25, 18, 4);
+
+    ctx.fillStyle = "#9b6b38";
+    ctx.fillRect(sx + 11, sy + 10, 10, 15);
+
+    ctx.fillStyle = e.color;
+    ctx.fillRect(sx + 9, sy + 5, 14, 10);
+
+    ctx.fillStyle = "#222";
+    ctx.fillRect(sx + 12, sy + 9, 2, 2);
+    ctx.fillRect(sx + 18, sy + 9, 2, 2);
+  }
+
+  function drawPlayer(sx, sy) {
+    const p = state.player;
+
+    ctx.fillStyle = "#1b1208";
+    ctx.fillRect(sx + 6, sy + 25, 20, 4);
+
+    ctx.fillStyle = "#2f70bd";
+    ctx.fillRect(sx + 10, sy + 12, 12, 14);
+
+    ctx.fillStyle = "#f1c27d";
+    ctx.fillRect(sx + 9, sy + 5, 14, 10);
+
+    ctx.fillStyle = "#5a3421";
+    ctx.fillRect(sx + 8, sy + 3, 16, 5);
+
+    ctx.fillStyle = "#222";
+    ctx.fillRect(sx + 12, sy + 9, 2, 2);
+    ctx.fillRect(sx + 18, sy + 9, 2, 2);
+
+    ctx.fillStyle = "#b7b7b7";
+
+    if (p.facing === "left") {
+      ctx.fillRect(sx + 4, sy + 13, 8, 3);
+    } else {
+      ctx.fillRect(sx + 20, sy + 13, 8, 3);
+    }
+
+    drawHpBar({ hp: p.hp, maxHp: p.maxHp }, sx, sy - 3);
+  }
+
+  function drawHpBar(e, sx, sy) {
+    const w = 24;
+    const pct = Math.max(0, e.hp / e.maxHp);
+
+    ctx.fillStyle = "#120806";
+    ctx.fillRect(sx + 4, sy + 1, w, 4);
+
+    ctx.fillStyle = pct > .45 ? "#40d35a" : "#e04b41";
+    ctx.fillRect(sx + 4, sy + 1, Math.floor(w * pct), 4);
+  }
+
+  function render() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const p = state.player;
+
+    const viewW = Math.ceil(canvas.width / TILE) + 2;
+    const viewH = Math.ceil(canvas.height / TILE) + 2;
+
+    let camX = Math.floor(p.x - viewW / 2);
+    let camY = Math.floor(p.y - viewH / 2);
+
+    camX = Math.max(0, Math.min(WORLD_W - viewW + 1, camX));
+    camY = Math.max(0, Math.min(WORLD_H - viewH + 1, camY));
+
+    for (let y = camY; y < camY + viewH; y++) {
+      for (let x = camX; x < camX + viewW; x++) {
+        if (x < 0 || y < 0 || x >= WORLD_W || y >= WORLD_H) continue;
+        drawTile(x, y, (x - camX) * TILE, (y - camY) * TILE);
+      }
+    }
+
+    const visible = entities
+      .filter(e =>
+        e.x >= camX &&
+        e.y >= camY &&
+        e.x < camX + viewW &&
+        e.y < camY + viewH
+      )
+      .sort((a, b) => a.y - b.y);
+
+    for (const e of visible) {
+      drawSprite(e, (e.x - camX) * TILE, (e.y - camY) * TILE);
+    }
+
+    drawPlayer((p.x - camX) * TILE, (p.y - camY) * TILE);
+
+    renderMinimap();
+
+    requestAnimationFrame(render);
+  }
+
+  function renderMinimap() {
+    mctx.clearRect(0, 0, mini.width, mini.height);
+
+    const sx = mini.width / WORLD_W;
+    const sy = mini.height / WORLD_H;
+
+    for (let y = 0; y < WORLD_H; y++) {
+      for (let x = 0; x < WORLD_W; x++) {
+        mctx.fillStyle = tileColor[map[y][x]];
+        mctx.fillRect(x * sx, y * sy, Math.ceil(sx), Math.ceil(sy));
+      }
+    }
+
+    for (const e of entities) {
+      if (e.hp <= 0 && e.kind !== "item") continue;
+
+      mctx.fillStyle =
+        e.kind === "goblin"
+          ? "#ff3333"
+          : e.kind === "npc"
+            ? "#ffff66"
+            : "#ffffff";
+
+      mctx.fillRect(
+        e.x * sx,
+        e.y * sy,
+        Math.max(2, sx),
+        Math.max(2, sy)
+      );
+    }
+
+    mctx.fillStyle = "#00ffff";
+    mctx.fillRect(
+      state.player.x * sx - 1,
+      state.player.y * sy - 1,
+      Math.max(3, sx + 2),
+      Math.max(3, sy + 2)
+    );
+  }
+
+  /******************************************************************
+   * UI
+   ******************************************************************/
+  function updateUI() {
+    const p = state.player;
+
+    locPill.textContent = locationName(p.x, p.y);
+
+    const near = adjacentEntities()[0];
+    targetPill.textContent = near ? `${near.name}` : "No target";
+
+    document.querySelectorAll(".tab").forEach(button => {
+      button.classList.toggle("active", button.dataset.tab === state.tab);
+    });
+
+    if (state.tab === "stats") {
+      panel.innerHTML = `
+        <div class="sectionTitle">Character</div>
+        <div class="statLine"><span>Health</span><strong>${p.hp}/${p.maxHp}</strong></div>
+        <div class="bar"><div style="width:${100 * p.hp / p.maxHp}%"></div></div>
+        <div class="statLine"><span>Attack</span><strong>${p.attack}</strong></div>
+        <div class="statLine"><span>Strength</span><strong>${p.strength}</strong></div>
+        <div class="statLine"><span>Defence</span><strong>${p.defence}</strong></div>
+        <div class="statLine"><span>Cooking</span><strong>${p.cooking}</strong></div>
+        <div class="statLine"><span>XP</span><strong>${p.xp}</strong></div>
+        <div class="statLine"><span>Coins</span><strong>${p.coins}</strong></div>
+        <div class="statLine"><span>Goblins defeated</span><strong>${state.kills}</strong></div>
+      `;
+    }
+
+    if (state.tab === "inv") {
+      const rows = Object.entries(state.inventory)
+        .map(([k, v]) => `<div class="invLine"><span>${k}</span><strong>${v}</strong></div>`)
+        .join("") || `<p>Your pack is empty.</p>`;
+
+      panel.innerHTML = `
+        <div class="sectionTitle">Backpack</div>
+        ${rows}
+        <p style="color:var(--muted);margin-top:8px;">
+          Use bread, cake, or herbs to heal. Quest ingredients are handed to the Cook.
+        </p>
+      `;
+    }
+
+    if (state.tab === "quest") {
+      const q = state.quest;
+      const status = q.complete ? "Complete" : q.started ? "In progress" : "Not started";
+
+      panel.innerHTML = `
+        <div class="sectionTitle">Cook's Assistant</div>
+        <div class="questLine"><span>Status</span><strong>${status}</strong></div>
+        <div class="questLine"><span>Pot of flour</span><strong>${hasItem("Pot of flour") ? "Yes" : "No"}</strong></div>
+        <div class="questLine"><span>Bucket of milk</span><strong>${hasItem("Bucket of milk") ? "Yes" : "No"}</strong></div>
+        <div class="questLine"><span>Egg</span><strong>${hasItem("Egg") ? "Yes" : "No"}</strong></div>
+        <p style="color:var(--muted);">
+          Speak to the Cook in Lumbridge Castle Kitchen. Gather an egg, a bucket of milk, and a pot of flour.
+        </p>
+      `;
+    }
+
+    if (state.tab === "help") {
+      panel.innerHTML = `
+        <div class="sectionTitle">Controls</div>
+        <p><strong>Move:</strong> WASD, arrow keys, or touch pad.</p>
+        <p><strong>Talk:</strong> stand beside an NPC and press Talk.</p>
+        <p><strong>Attack:</strong> stand beside a goblin and press Attack.</p>
+        <p><strong>Search:</strong> look for useful items nearby.</p>
+        <p><strong>Save:</strong> stores progress locally.</p>
+        <p style="color:var(--muted);">
+          Unofficial fan project. RuneScape names and references belong to their respective owners.
+        </p>
+        <button id="resetBtn" style="width:100%;margin-top:6px;">Reset Game</button>
+      `;
+
+      document.getElementById("resetBtn").onclick = resetState;
+    }
+  }
+
+  /******************************************************************
+   * INPUT
+   ******************************************************************/
+  window.addEventListener("keydown", event => {
+    const key = event.key.toLowerCase();
+
+    if (["arrowup", "w"].includes(key)) {
+      move("up");
+    } else if (["arrowdown", "s"].includes(key)) {
+      move("down");
+    } else if (["arrowleft", "a"].includes(key)) {
+      move("left");
+    } else if (["arrowright", "d"].includes(key)) {
+      move("right");
+    } else if (key === " " || key === "enter") {
+      contextAction();
+    } else if (key === "escape") {
+      closeDialog();
+    }
+  });
+
+  document.querySelectorAll("[data-dir]").forEach(button => {
+    button.addEventListener("click", () => move(button.dataset.dir));
+  });
+
+  document.getElementById("centerAction").onclick = contextAction;
+  document.getElementById("btnTalk").onclick = talk;
+  document.getElementById("btnAttack").onclick = attack;
+  document.getElementById("btnUse").onclick = useAction;
+  document.getElementById("btnSearch").onclick = searchAction;
+  document.getElementById("btnSave").onclick = saveState;
+
+  document.querySelectorAll(".tab").forEach(button => {
+    button.onclick = () => {
+      state.tab = button.dataset.tab;
+      updateUI();
+    };
+  });
+
+  function contextAction() {
+    const near = nearestAdjacent();
+
+    if (!near) {
+      searchAction();
+      return;
+    }
+
+    if (near.kind === "npc") {
+      talk();
+    } else if (near.kind === "goblin") {
+      attack();
+    } else if (near.kind === "item") {
+      pickup(near);
+    }
+  }
+
+  /******************************************************************
+   * START
+   ******************************************************************/
+  log("Welcome to Lumbridge Adventure.", "system");
+  log("Speak to the Cook in Lumbridge Castle Kitchen to begin Cook's Assistant.", "quest");
+  log("Unofficial fan project. RuneScape names and references belong to their respective owners.", "system");
+  log("Use landscape mode on iPhone for the full RS-style interface.", "system");
+
+  updateUI();
+  render();
+})();
+</script>
+</body>
+</html>

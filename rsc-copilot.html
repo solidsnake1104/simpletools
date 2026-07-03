@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2b2b2b">
+<title>RS Classic Lite</title>
+<style>
+  :root{--bg:#0b1220;--panel:#1b2430;--accent:#c9a24a}
+  html,body{height:100%;margin:0;background:var(--bg);font-family:Verdana,Arial;}
+  #app{display:flex;flex-direction:row;height:100vh;gap:6px;padding:6px;box-sizing:border-box}
+  /* Left: game canvas (landscape-first, iPhone fit) */
+  #gameWrap{flex:1;min-width:640px;background:#081018;border:4px solid #000;position:relative;overflow:hidden}
+  canvas{width:100%;height:100%;display:block}
+  /* Right: UI column RS2-like */
+  #ui{width:360px;background:var(--panel);color:#ddd;padding:8px;display:flex;flex-direction:column;gap:8px}
+  .panel{background:#0f1720;border:2px solid #000;padding:8px;border-radius:4px}
+  #minimap{height:140px;background:#071018;position:relative}
+  #log{flex:1;overflow:auto;font-size:13px;padding:6px;background:#071018}
+  #actions{display:flex;gap:6px;justify-content:space-between}
+  button{background:#111827;color:#fff;border:1px solid #000;padding:8px;border-radius:4px;flex:1}
+  /* Simple sprite tiles */
+  .tile{width:32px;height:32px;display:inline-block}
+  .grass{background:linear-gradient(#2b6,#1a4)}
+  .path{background:#8b6b3a}
+  .water{background:linear-gradient(#1a4,#0a2)}
+  .tree{background:#0b3;border-radius:6px}
+  /* Responsive tweaks for iPhone landscape */
+  @media (max-width:900px){#ui{width:320px}#gameWrap{min-width:520px}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="gameWrap" class="panel">
+    <canvas id="game" width="960" height="640"></canvas>
+    <div id="hud" style="position:absolute;left:8px;top:8px;color:#fff;font-weight:bold">HP: <span id="hp">20</span> | XP: <span id="xp">0</span></div>
+  </div>
+  <div id="ui">
+    <div id="minimap" class="panel"><canvas id="mini" width="320" height="140"></canvas></div>
+    <div id="log" class="panel"></div>
+    <div id="actions" class="panel">
+      <button id="attackBtn">Attack</button>
+      <button id="talkBtn">Talk</button>
+      <button id="inventoryBtn">Inventory</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* --- Core game state --- */
+const TILE=32, MAP_W=30, MAP_H=20;
+const canvas=document.getElementById('game'), ctx=canvas.getContext('2d');
+const mini=document.getElementById('mini'), mctx=mini.getContext('2d');
+const logEl=document.getElementById('log');
+let player={x:14,y:10,hp:20,xp:0,inv:{egg:0,flour:0,milk:0}};
+let goblins=[],npcs=[];
+let map=[]; let quest={cooksAssistant: {state:'not-started'}}; // states: not-started, started, got-items, completed
+
+/* --- Build expanded Lumbridge-like map (fields, castle, cook house, swamp edge) --- */
+function genMap(){
+  for(let y=0;y<MAP_H;y++){map[y]=[];for(let x=0;x<MAP_W;x++){
+    if(y>14) map[y][x]='water';
+    else if(x<3||x>26) map[y][x]='tree';
+    else if((x>10&&x<14&&y>6&&y<10)) map[y][x]='path';
+    else map[y][x]='grass';
+  }}
+  // landmarks
+  map[8][12]='castle'; map[11][8]='cook'; map[6][18]='market';
+}
+genMap();
+
+/* --- Entities --- */
+function spawnGoblins(){
+  goblins=[];
+  for(let i=0;i<6;i++) goblins.push({x:5+i,y:12+((i%2)?1:0),hp:6});
+}
+spawnGoblins();
+npcs.push({id:'cook',name:'Cook',x:8,y:11,dialogue:()=>cookDialogue()});
+
+/* --- Rendering --- */
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const scaleX=canvas.width/MAP_W, scaleY=canvas.height/MAP_H;
+  for(let y=0;y<MAP_H;y++)for(let x=0;x<MAP_W;x++){
+    const t=map[y][x];
+    ctx.fillStyle = t==='water'?'#0a3':'#2a6';
+    if(t==='path') ctx.fillStyle='#8b6b3a';
+    if(t==='tree') ctx.fillStyle='#063';
+    if(t==='castle') ctx.fillStyle='#444';
+    if(t==='cook') ctx.fillStyle='#a33';
+    ctx.fillRect(x*scaleX,y*scaleY,scaleX,scaleY);
+  }
+  // goblins
+  goblins.forEach(g=>{ctx.fillStyle='#6b3';ctx.fillRect(g.x*scaleX+4,g.y*scaleY+4,scaleX-8,scaleY-8)});
+  // player
+  ctx.fillStyle='#ffd700';ctx.fillRect(player.x*scaleX+4,player.y*scaleY+4,scaleX-8,scaleY-8);
+  drawMini();
+}
+function drawMini(){
+  mctx.clearRect(0,0,mini.width,mini.height);
+  const mw=mini.width/MAP_W, mh=mini.height/MAP_H;
+  for(let y=0;y<MAP_H;y++)for(let x=0;x<MAP_W;x++){
+    const t=map[y][x];
+    mctx.fillStyle = t==='water'?'#0a3': t==='path'?'#8b6b3a': t==='tree'?'#063': t==='castle'?'#666': t==='cook'?'#a33':'#2a6';
+    mctx.fillRect(x*mw,y*mh,mw,mh);
+  }
+  mctx.fillStyle='#ffd700'; mctx.fillRect(player.x*mw,player.y*mh,mw,mh);
+}
+
+/* --- Input & Movement --- */
+window.addEventListener('keydown',e=>{
+  const k=e.key;
+  let nx=player.x, ny=player.y;
+  if(k==='ArrowUp') ny--;
+  if(k==='ArrowDown') ny++;
+  if(k==='ArrowLeft') nx--;
+  if(k==='ArrowRight') nx++;
+  if(nx>=0&&nx<MAP_W&&ny>=0&&ny<MAP_H){player.x=nx;player.y=ny;draw();checkTile();}
+});
+document.getElementById('attackBtn').onclick=attackNearest;
+document.getElementById('talkBtn').onclick=tryTalk;
+document.getElementById('inventoryBtn').onclick=showInv;
+
+/* --- Mechanics: combat, NPCs, quest --- */
+function attackNearest(){
+  const g=goblins.find(gg=>Math.abs(gg.x-player.x)+Math.abs(gg.y-player.y)<=1);
+  if(!g){log("No goblin in range.");return;}
+  g.hp-=4; log("You hit the goblin!");
+  if(g.hp<=0){log("Goblin slain."); player.xp+=5; goblins.splice(goblins.indexOf(g),1)}
+  else {log("Goblin HP: "+g.hp); player.hp-=2; log("You take 2 damage.");}
+  updateHUD(); draw();
+}
+function tryTalk(){
+  const npc=npcs.find(n=>Math.abs(n.x-player.x)+Math.abs(n.y-player.y)<=1);
+  if(npc) npc.dialogue();
+  else log("No one to talk to.");
+}
+function cookDialogue(){
+  if(quest.cooksAssistant.state==='not-started'){
+    quest.cooksAssistant.state='started';
+    log("Cook: Oh dear, I've lost my items! Please bring me an egg, a bucket of milk, and some flour.");
+  } else if(quest.cooksAssistant.state==='started'){
+    if(player.inv.egg&&player.inv.milk&&player.inv.flour){
+      quest.cooksAssistant.state='completed';
+      player.xp+=50; log("Cook: Thank you! Quest complete. You gain 50 XP.");
+      player.inv.egg=player.inv.milk=player.inv.flour=0;
+      updateHUD();
+    } else log("Cook: Still missing items.");
+  } else log("Cook: Thanks again!");
+}
+
+/* Simple item pickup when stepping on special tiles */
+function checkTile(){
+  const t=map[player.y][player.x];
+  if(t==='grass' && Math.random()<0.05){player.inv.egg++; log("You found an egg!");}
+  if(t==='path' && Math.random()<0.03){player.inv.flour++; log("You found flour!");}
+  if(t==='water' && Math.random()<0.02){player.inv.milk++; log("You collected milk from a cow near water!");}
+  updateHUD();
+}
+
+/* --- UI helpers --- */
+function log(s){const p=document.createElement('div');p.textContent=s;logEl.prepend(p)}
+function updateHUD(){document.getElementById('hp').textContent=player.hp;document.getElementById('xp').textContent=player.xp}
+
+/* --- Init --- */
+draw(); updateHUD(); log("Welcome to Lumbridge-lite. Talk to the Cook at the red house to start Cook's Assistant quest.");
+</script>
+</body>
+</html>
