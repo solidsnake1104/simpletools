@@ -56,7 +56,6 @@
   }
 })();
 
-
 // -----------------------------------------------------------
 // DOMContentLoaded — Initialize Tools
 // -----------------------------------------------------------
@@ -245,7 +244,6 @@ document.addEventListener("DOMContentLoaded", () => {
     updateJoinButton();
   };
 
-
   // ===========================================================
   // MP3 TRIMMER — WaveSurfer v7 + custom overlay handles
   // ===========================================================
@@ -268,6 +266,77 @@ document.addEventListener("DOMContentLoaded", () => {
   let selEl = null;
   let handleL = null;
   let handleR = null;
+// ---- Large-file (100MB+/multi-hour) trimming via FFmpeg.wasm ----
+// Avoids decoding the whole file to PCM (which needs GBs of RAM).
+const TRIM_LARGE_FILE_BYTES = 40 * 1024 * 1024; // ~40 MB threshold
+let useFFmpegTrim = false;
+let trimFFmpeg = null;
+let trimFFmpegReady = false;
+let trimFFmpegPromise = null;
+
+function trimLoadScript(src, check) {
+  return new Promise((resolve, reject) => {
+    if (check && check()) { resolve(); return; }
+    const script = document.createElement("script");
+    script.src = src;
+    script.crossOrigin = "anonymous";
+    script.onload = resolve;
+    script.onerror = () => reject(new Error("Failed to load " + src));
+    document.head.appendChild(script);
+  });
+}
+
+async function trimToBlobURL(url, mimeType) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Failed to fetch FFmpeg core: " + url);
+  const blob = await res.blob();
+  return URL.createObjectURL(new Blob([blob], { type: mimeType }));
+}
+
+async function ensureTrimFFmpeg() {
+  if (trimFFmpegReady) return trimFFmpeg;
+  if (trimFFmpegPromise) return trimFFmpegPromise;
+  const base = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd";
+  trimFFmpegPromise = (async () => {
+    await trimLoadScript(
+      "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/umd/ffmpeg.js",
+      () => !!window.FFmpeg
+    );
+    if (!window.FFmpeg || !window.FFmpeg.FFmpeg) {
+      throw new Error("FFmpeg.wasm failed to initialise.");
+    }
+    const { FFmpeg } = window.FFmpeg;
+    trimFFmpeg = new FFmpeg();
+    const coreURL = await trimToBlobURL(base + "/ffmpeg-core.js", "text/javascript");
+    const wasmURL = await trimToBlobURL(base + "/ffmpeg-core.wasm", "application/wasm");
+    await trimFFmpeg.load({ coreURL, wasmURL });
+    trimFFmpegReady = true;
+    return trimFFmpeg;
+  })();
+  try { return await trimFFmpegPromise; }
+  finally { trimFFmpegPromise = null; }
+}
+
+// Trim the selected range by stream-copying MP3 frames (no PCM decode).
+async function trimLargeFileWithFFmpeg(file, start, end) {
+  const ffmpeg = await ensureTrimFFmpeg();
+  const isMp3 = /\.mp3$/i.test(file.name);
+  const m = String(file.name).match(/\.[a-z0-9]+$/i);
+  const inputName = "trim_input" + (m ? m[0].toLowerCase() : ".mp3").replace(/[^.a-z0-9]/g, "");
+  const outputName = "trim_output.mp3";
+  try { await ffmpeg.deleteFile(inputName); } catch (_) {}
+  try { await ffmpeg.deleteFile(outputName); } catch (_) {}
+  await ffmpeg.writeFile(inputName, new Uint8Array(await file.arrayBuffer()));
+  const dur = Math.max(0, end - start);
+  const args = isMp3
+    ? ["-y", "-ss", String(start), "-i", inputName, "-t", String(dur), "-c", "copy", outputName]
+    : ["-y", "-ss", String(start), "-i", inputName, "-t", String(dur), "-c:a", "libmp3lame", "-b:a", "192k", outputName];
+  await ffmpeg.exec(args);
+  const data = await ffmpeg.readFile(outputName);
+  try { await ffmpeg.deleteFile(inputName); } catch (_) {}
+  try { await ffmpeg.deleteFile(outputName); } catch (_) {}
+  return new Blob([data.buffer], { type: "audio/mpeg" });
+}
 
   function buildOverlay() {
     if (!waveformEl) return;
@@ -456,8 +525,12 @@ document.addEventListener("DOMContentLoaded", () => {
     audioBlob = file;
     audioBuffer = null;
     duration = 0;
+    useFFmpegTrim = false;
 
-    try {
+    if (file.size > TRIM_LARGE_FILE_BYTES) {
+      useFFmpegTrim = true;
+      console.info("Large audio file (" + (file.size / 1048576).toFixed(1) + " MB) — using low-memory FFmpeg trim path.");
+    } else try {
       const arrayBuf = await file.arrayBuffer();
       const actx = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -467,7 +540,8 @@ document.addEventListener("DOMContentLoaded", () => {
         actx.close();
       }
     } catch (err) {
-      console.warn("Web Audio decode failed:", err);
+      console.warn("Web Audio decode failed; using FFmpeg trim path:", err);
+      useFFmpegTrim = true;
     }
 
     if (wavesurfer) {
@@ -475,6 +549,25 @@ document.addEventListener("DOMContentLoaded", () => {
       wavesurfer = null;
     }
 
+    // Large files: skip WaveSurfer (it decodes the whole file again).
+    if (useFFmpegTrim) {
+      if (waveformEl) {
+        waveformEl.innerHTML = '<p style="padding:1rem;color:#9aa;font-size:0.9rem;">Large file loaded — waveform preview disabled to conserve memory. Set start/end times and trim.</p>';
+      }
+      const tmp = document.createElement("audio");
+      tmp.preload = "metadata";
+      tmp.src = URL.createObjectURL(file);
+      tmp.onloadedmetadata = () => {
+        duration = Number.isFinite(tmp.duration) ? tmp.duration : 0;
+        if (startTimeEl) startTimeEl.value = "0.00";
+        if (endTimeEl) endTimeEl.value = duration.toFixed(2);
+        if (trimBtn) trimBtn.disabled = false;
+        if (playbackControls) playbackControls.style.display = "none";
+        URL.revokeObjectURL(tmp.src);
+      };
+      tmp.onerror = () => { if (trimBtn) trimBtn.disabled = false; };
+      return;
+    }
     if (!window.WaveSurfer || !waveformEl) {
       return;
     }
@@ -539,7 +632,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-
   // ===========================================================
   // SHARED WAV ENCODER
   // ===========================================================
@@ -592,7 +684,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return new Blob([arrayBuffer], { type: "audio/wav" });
   }
 
-
   // ===========================================================
   // MP3 TRIMMER — Trim & Download
   // ===========================================================
@@ -606,6 +697,28 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
+      if (useFFmpegTrim || !audioBuffer) {
+        trimBtn.disabled = true;
+        const prevLabel = trimBtn.textContent;
+        trimBtn.textContent = "Trimming…";
+        try {
+          const trimmedBlob = await trimLargeFileWithFFmpeg(audioBlob, s, e);
+          const url = URL.createObjectURL(trimmedBlob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "trimmed.mp3";
+          a.click();
+          setTimeout(() => URL.revokeObjectURL(url), 10000);
+          showToast("Trimmed audio downloaded!");
+        } catch (err) {
+          console.error("FFmpeg trim error:", err);
+          alert("Trim failed: " + (err && err.message ? err.message : err));
+        } finally {
+          trimBtn.disabled = false;
+          trimBtn.textContent = prevLabel;
+        }
+        return;
+      }
       if (!audioBuffer) {
         alert("Audio not decoded yet — please wait a moment and try again.");
         return;
@@ -659,7 +772,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-
 
   // ===========================================================
   // VIDEO AUDIO EXTRACTOR — Native first, FFmpeg.wasm fallback
@@ -1296,3 +1408,5 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
+
