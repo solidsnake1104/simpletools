@@ -1268,6 +1268,7 @@ function renderDashboard(){
             <button class="new-set-btn subset-btn" onclick="openSubsetPicker()">📑 Subset of Default List</button>
           </div>
           ${cards}
+          <div class="dashboard-btn-row"><button class="new-set-btn" style="background:var(--ink);box-shadow:0 8px 18px rgba(39,48,58,.3);" onclick="exportUserSets()">⬇️ Export My Sets</button><button class="new-set-btn" style="background:var(--gold);color:#7A5B00;box-shadow:0 8px 18px rgba(255,209,102,.4);" onclick="triggerImport()">⬆️ Import Backup</button></div><input type="file" id="importFileInput" accept=".csv,.txt" style="display:none" onchange="handleImportFile(event)">
         </div>
       </div>
     </div>
@@ -1296,6 +1297,12 @@ function deleteSet(id){
   renderDashboard();
 }
 
+/* Backup/restore: only user-made sets are exported. The built-in "Default Sight Words List" and the built-in Farm set are skipped because they auto-load on a fresh cache. */ const DEFAULT_SET_IDS = ['starter','farm1']; function isUserCreatedSet(s){ return DEFAULT_SET_IDS.indexOf(s.id) === -1; }
+function csvCell(v){ v = String(v==null?'':v); return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g,'""') + '"' : v; } function setsToCsv(sets){ return sets.map(s=>[csvCell(s.name),csvCell(s.theme||'pirate'),...s.words.map(csvCell)].join(',')).join('\r\n'); }
+function parseCsv(text){ const rows=[]; let row=[], field='', q=false; for(let i=0;i<text.length;i++){ const c=text[i]; if(q){ if(c==='"'){ if(text[i+1]==='"'){ field+='"'; i++; } else { q=false; } } else { field+=c; } } else { if(c==='"'){ q=true; } else if(c===','){ row.push(field); field=''; } else if(c==='\n'){ row.push(field); rows.push(row); row=[]; field=''; } else if(c==='\r'){} else { field+=c; } } } if(field.length||row.length){ row.push(field); rows.push(row); } return rows; }
+function importSetsFromCsv(text){ const rows = parseCsv(text).filter(r=>r.length && r.some(c=>String(c).trim()!=='')); const sets = loadSets(); let added=0; rows.forEach(r=>{ const name = String(r[0]||'').trim() || 'Imported Set'; let theme = String(r[1]||'').trim().toLowerCase(); if(!THEMES[theme]) theme='pirate'; const { clean } = validateWordList(r.slice(2)); if(!clean.length) return; sets.push({ id:uid(), name, theme, words:clean, createdAt:Date.now(), updatedAt:Date.now() }); added++; }); if(added) saveSets(sets); return added; }
+function exportUserSets(){ const custom = loadSets().filter(isUserCreatedSet); if(!custom.length){ alert('You have no custom word sets to export yet. The Default Sight Words List loads automatically, so it is not included.'); return; } const blob = new Blob([setsToCsv(custom)], {type:'text/csv'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'sight-word-sets-' + new Date().toISOString().slice(0,10) + '.csv'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url), 1000); }
+function triggerImport(){ const el = document.getElementById('importFileInput'); if(el) el.click(); } function handleImportFile(e){ const file = e.target.files && e.target.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = function(){ try{ const added = importSetsFromCsv(String(reader.result||'')); if(added > 0){ if(state.view==='dashboard') renderDashboard(); alert('Imported ' + added + ' word set' + (added===1?'':'s') + '.'); } else { alert('No valid word sets were found in that file.'); } }catch(err){ alert('Sorry, that file could not be read as a word-set backup.'); } }; reader.readAsText(file); e.target.value=''; }
 /* =========================================================
    SET EDITOR
 ========================================================= */
