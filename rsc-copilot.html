@@ -1,1285 +1,1010 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Irondale – Classic Browser RPG (Isometric 2D)</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Misthalin Isometric RPG</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;}
-body{background:#000;overflow:hidden;font-family:'Segoe UI',monospace;user-select:none;display:flex;align-items:center;justify-content:center;height:100vh;width:100vw;}
-#game-wrapper{position:relative;width:765px;height:503px;background:#000;border:2px solid #3a2a1a;}
-#game-canvas{display:block;width:765px;height:503px;}
-#hud{position:absolute;top:0;left:0;width:765px;height:503px;pointer-events:none;overflow:hidden;}
-#loading-screen{position:absolute;inset:0;background:#0a0500;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;}
-@keyframes spin{to{transform:rotate(360deg);}}
-.loader-spinner{width:32px;height:32px;border:3px solid #3a2a1a;border-top-color:#c5a028;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px;}
-#loading-screen h1{color:#c5a028;font-family:Georgia,serif;font-size:48px;text-shadow:0 0 20px #c5a028,0 0 40px #8a6a10;letter-spacing:4px;}
-#loading-screen .sub{color:#8a6a3a;font-size:14px;margin:8px 0 24px;font-style:italic;}
-#load-bar-outer{width:300px;height:20px;border:1px solid #5a4a2a;background:#0a0500;border-radius:2px;}
-#load-bar{height:100%;background:linear-gradient(90deg,#8a6a10,#c5a028);width:0%;transition:width 0.3s;border-radius:1px;}
-#load-status{color:#8a6a3a;font-size:12px;margin-top:8px;}
-#top-bar{position:absolute;top:0;left:0;right:160px;height:24px;background:rgba(0,0,0,0.8);border-bottom:1px solid #3a2a1a;display:flex;align-items:center;padding:0 8px;gap:12px;font-size:11px;font-family:monospace;pointer-events:auto;color:#ff981f;z-index:10;}
-#top-bar .title{color:#c5a028;font-weight:bold;letter-spacing:1px;}
-#top-bar span{color:#aaa;}
-#top-bar .val{color:#fff;}
-#minimap-wrap{position:absolute;top:0;right:0;width:160px;height:160px;background:#0a0a05;border:2px solid #5a4a2a;border-top:none;border-right:none;pointer-events:auto;cursor:crosshair;z-index:10;overflow:hidden;display:flex;align-items:center;justify-content:center;}
-#minimap{width:152px;height:152px;}
-.data-orb{position:absolute;left:3px;width:52px;height:52px;border-radius:50%;border:2px solid #5a4a2a;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:9px;font-family:monospace;font-weight:bold;cursor:pointer;pointer-events:auto;z-index:10;}
-#hp-orb{top:160px;background:radial-gradient(circle,#4a0000 0%,#1a0000 100%);color:#ff4444;}
-#prayer-orb{top:216px;background:radial-gradient(circle,#001a4a 0%,#000a1a 100%);color:#44aaff;}
-#run-orb{top:272px;background:radial-gradient(circle,#1a3a00 0%,#0a1a00 100%);color:#88ff44;}
-.orb-icon{font-size:14px;line-height:1;}
-.orb-val{font-size:10px;line-height:1;}
-#chatbox{position:absolute;bottom:0;left:0;width:519px;height:142px;background:rgba(0,0,0,0.88);border-top:1px solid #3a2a1a;display:flex;flex-direction:column;pointer-events:auto;z-index:10;}
-#chat-tabs{display:flex;height:20px;background:#0a0500;border-bottom:1px solid #3a2a1a;flex-shrink:0;}
-.chat-tab{flex:1;background:#1a0f05;color:#ff981f;font-size:10px;cursor:pointer;border-right:1px solid #3a2a1a;text-align:center;padding-top:3px;font-family:monospace;}
-.chat-tab.active{background:#2a1a0a;color:#fff;}
-#chat-messages{flex:1;overflow-y:auto;padding:2px 4px;font-size:11px;font-family:monospace;scrollbar-width:thin;scrollbar-color:#3a2a1a #0a0500;}
-#chat-messages::-webkit-scrollbar{width:6px;}
-#chat-messages::-webkit-scrollbar-track{background:#0a0500;}
-#chat-messages::-webkit-scrollbar-thumb{background:#3a2a1a;}
-.chat-msg{padding:1px 0;line-height:1.3;}
-.chat-game{color:#ff981f;}.chat-player{color:#00ffff;}.chat-quest{color:#9f4fff;}.chat-combat{color:#ff4444;}.chat-item{color:#00ff00;}.chat-skill{color:#ffff00;}
-#chat-input-bar{height:22px;display:flex;background:#0a0a0a;border-top:1px solid #3a2a1a;flex-shrink:0;}
-#chat-input{flex:1;background:transparent;border:none;color:#ffff00;font-size:11px;font-family:monospace;padding:0 4px;outline:none;}
-#right-panel{position:absolute;right:0;bottom:0;width:196px;height:303px;background:rgba(15,10,5,0.95);border-left:1px solid #5a4a2a;border-top:1px solid #5a4a2a;display:flex;flex-direction:column;pointer-events:auto;z-index:10;}
-#panel-tabs{display:flex;height:30px;background:#0a0500;border-bottom:1px solid #3a2a1a;flex-shrink:0;}
-.panel-tab{flex:1;display:flex;align-items:center;justify-content:center;background:#1a0f05;color:#ff981f;font-size:13px;cursor:pointer;border-right:1px solid #2a1a0a;transition:background 0.15s;}
-.panel-tab.active{background:#2a1a0a;color:#fff;}
-.panel-tab:hover{background:#2a1a0a;}
-#panel-content{flex:1;overflow-y:auto;padding:4px;scrollbar-width:thin;scrollbar-color:#3a2a1a #0a0500;}
-#panel-content::-webkit-scrollbar{width:5px;}
-#panel-content::-webkit-scrollbar-track{background:#0a0500;}
-#panel-content::-webkit-scrollbar-thumb{background:#3a2a1a;}
-.inv-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;}
-.inv-slot{width:44px;height:34px;background:#0a0500;border:1px solid #3a2a1a;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;font-size:8px;color:#ff981f;text-align:center;overflow:hidden;transition:border-color 0.15s;}
-.inv-slot:hover{border-color:#ff981f;}
-.inv-slot .item-icon{width:32px;height:26px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:7px;color:#fff;text-shadow:0 0 2px #000;font-weight:bold;}
-.inv-slot .stack-count{position:absolute;bottom:1px;left:2px;font-size:8px;color:#ffff00;font-weight:bold;text-shadow:1px 1px 0 #000;}
-.skill-row{display:flex;align-items:center;padding:2px 4px;font-size:10px;font-family:monospace;border-bottom:1px solid #1a1208;}
-.skill-row .sk-icon{width:16px;text-align:center;margin-right:4px;}
-.skill-row .sk-name{flex:1;color:#ff981f;}
-.skill-row .sk-lvl{color:#fff;min-width:30px;text-align:right;}
-.quest-item{padding:4px;cursor:pointer;font-size:11px;font-family:monospace;border-bottom:1px solid #1a1208;}
-.quest-item .q-name{font-weight:bold;}
-.q-not_started .q-name{color:#ff0000;}
-.q-in_progress .q-name{color:#ffff00;}
-.q-complete .q-name{color:#00ff00;}
-.quest-obj{font-size:10px;color:#aaa;padding-left:12px;margin-top:2px;}
-.quest-obj.done{color:#00ff00;text-decoration:line-through;}
-.combat-styles{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;}
-.style-btn{padding:6px;background:#1a0f05;border:1px solid #3a2a1a;color:#ff981f;font-size:10px;font-family:monospace;cursor:pointer;text-align:center;border-radius:2px;}
-.style-btn.active{background:#2a1a0a;border-color:#c5a028;color:#fff;}
-.style-btn:hover{border-color:#ff981f;}
-.equip-grid{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;}
-.equip-row{display:flex;gap:2px;}
-.equip-slot{width:40px;height:34px;background:#0a0500;border:1px solid #3a2a1a;display:flex;align-items:center;justify-content:center;font-size:7px;color:#555;cursor:pointer;text-align:center;}
-.equip-slot.filled{color:#ff981f;border-color:#5a4a2a;}
-#context-menu{position:absolute;display:none;background:#1a1208;border:1px solid #5a4a2a;min-width:130px;z-index:1000;pointer-events:auto;font-size:12px;font-family:monospace;}
-.ctx-option{padding:4px 10px;color:#ff981f;cursor:pointer;}
-.ctx-option:first-child{color:#ffff00;background:#0a0500;cursor:default;font-weight:bold;font-size:11px;}
-.ctx-option:not(:first-child):hover{background:#2a1a0a;color:#fff;}
-#dialog-panel{position:absolute;bottom:142px;left:0;width:519px;background:rgba(0,0,0,0.94);border:1px solid #5a4a2a;border-bottom:none;border-left:none;padding:10px;pointer-events:auto;display:none;z-index:20;}
-#dialog-name{color:#ffff00;font-size:13px;font-weight:bold;margin-bottom:6px;font-family:monospace;}
-#dialog-text{color:#fff;font-size:12px;margin-bottom:10px;line-height:1.5;font-family:monospace;}
-#dialog-options{display:flex;flex-direction:column;gap:3px;}
-.dialog-option{color:#00ffff;font-size:11px;cursor:pointer;padding:2px 0;font-family:monospace;}
-.dialog-option:hover{color:#ffffff;}
-.dialog-option::before{content:'▶ ';}
-#bank-modal{position:absolute;inset:0;background:rgba(0,0,0,0.85);display:none;z-index:100;pointer-events:auto;flex-direction:column;align-items:center;justify-content:center;}
-#bank-inner{width:500px;background:#1a1208;border:2px solid #5a4a2a;border-radius:4px;overflow:hidden;}
-#bank-header{background:#0a0500;padding:6px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #3a2a1a;}
-#bank-header span{color:#c5a028;font-size:14px;font-weight:bold;font-family:monospace;}
-#bank-close{color:#ff4444;cursor:pointer;font-size:18px;font-weight:bold;}
-#bank-items{display:grid;grid-template-columns:repeat(8,1fr);gap:2px;padding:8px;min-height:160px;}
-.bank-slot{width:54px;height:40px;background:#0a0500;border:1px solid #3a2a1a;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;font-size:7px;color:#ff981f;text-align:center;}
-.bank-slot:hover{border-color:#ff981f;}
-.bank-slot .stack-count{position:absolute;bottom:1px;left:2px;font-size:8px;color:#ffff00;font-weight:bold;text-shadow:1px 1px 0 #000;}
-#bank-inv{border-top:1px solid #3a2a1a;padding:8px;}
-#bank-inv-label{color:#ff981f;font-size:10px;font-family:monospace;margin-bottom:4px;}
-#bank-inv-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
-#bank-actions{display:flex;gap:4px;padding:4px 8px 8px;justify-content:center;}
-.bank-btn{padding:4px 12px;background:#2a1a0a;border:1px solid #5a4a2a;color:#ff981f;font-size:11px;font-family:monospace;cursor:pointer;border-radius:2px;}
-.bank-btn:hover{background:#3a2a1a;color:#fff;}
-#level-up-popup{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.95);border:2px solid #c5a028;padding:20px 30px;display:none;z-index:200;pointer-events:none;text-align:center;border-radius:4px;}
-#level-up-popup h2{color:#ffff00;font-size:16px;margin-bottom:4px;font-family:monospace;}
-#level-up-popup p{color:#fff;font-size:13px;font-family:monospace;}
-#save-indicator{position:absolute;top:28px;left:8px;color:#3a8a3a;font-size:10px;font-family:monospace;pointer-events:none;opacity:0;transition:opacity 0.5s;z-index:10;}
-#tooltip{position:absolute;display:none;background:#1a1208;border:1px solid #5a4a2a;padding:3px 6px;font-size:10px;font-family:monospace;color:#ff981f;z-index:600;pointer-events:none;white-space:nowrap;}
-footer{position:fixed;bottom:2px;right:4px;color:#3a2a1a;font-size:9px;font-family:monospace;z-index:0;}
+:root{--panel:#27190c;--trim:#8b6a36;--text:#ecd8a0;--muted:#bca879}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#070503;color:var(--text);font-family:Georgia,"Times New Roman",serif}
+#app{width:100vw;height:100dvh;display:grid;grid-template-columns:minmax(0,1fr) 286px;grid-template-rows:minmax(0,1fr) 150px;gap:4px;padding:4px;background:linear-gradient(#26180a,#090604)}
+#gameWrap{position:relative;grid-column:1;grid-row:1;border:3px ridge var(--trim);overflow:hidden;background:#000}
+canvas{display:block;width:100%;height:100%}
+#game,#labels{position:absolute;inset:0}
+#hud{position:absolute;left:8px;top:7px;z-index:5;text-shadow:1px 1px #000;font-size:14px;color:#fff1a8;pointer-events:none}
+#pills{position:absolute;left:8px;top:31px;display:flex;gap:6px;z-index:5;pointer-events:none;font-size:13px}
+.pill{background:rgba(20,12,6,.82);border:1px solid var(--trim);border-radius:999px;padding:3px 7px;text-shadow:1px 1px #000}
+#side{grid-column:2;grid-row:1/span 2;border:3px ridge var(--trim);background:var(--panel);display:grid;grid-template-rows:170px auto minmax(0,1fr);overflow:hidden}
+#miniWrap{position:relative;background:#101010;border-bottom:2px groove var(--trim)}
+#mini{width:100%;height:100%;image-rendering:pixelated;cursor:pointer}
+#orbs{position:absolute;right:4px;top:4px;display:grid;gap:3px}
+.orb{width:52px;height:22px;border-radius:999px;border:2px ridge #6c522b;background:#191007;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold;text-shadow:1px 1px #000}
+.hp{color:#ff8a80}.run{color:#ffe27c}.song{color:#9bff9b}
+#tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;padding:3px;background:#171008}
+.tab{min-height:28px;border:2px outset var(--trim);background:#493315;color:var(--text);font-weight:bold;font-size:12px}
+.tab.active{background:#76521f;color:#fff0b5}
+#panel{overflow:auto;padding:7px;font-size:13px;line-height:1.32}
+.title{color:#c9a55c;font-weight:bold;border-bottom:1px solid var(--trim);padding-bottom:3px;margin-bottom:6px}
+.row{display:flex;justify-content:space-between;gap:8px;padding:2px 0}
+.gridInv{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.slot{min-height:34px;background:#15100a;border:2px inset #6a4b21;display:flex;align-items:center;justify-content:center;text-align:center;font-size:10px;padding:2px;position:relative;color:#f2ddb1}
+.slot .qty{position:absolute;right:2px;bottom:0;color:#ffea70;font-size:10px;text-shadow:1px 1px #000}
+#chat{grid-column:1;grid-row:2;border:3px ridge var(--trim);background:#20150b;display:grid;grid-template-rows:minmax(0,1fr) auto;overflow:hidden}
+#messages{overflow:auto;padding:5px 8px;font-size:13px;line-height:1.25}
+.msg{margin-bottom:2px}.system{color:#d9c178}.combat{color:#ff928a}.loot{color:#9cff9c}.quest{color:#ffe36e}
+#actions{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;padding:4px;background:#140d07}
+button{border:2px outset var(--trim);background:#4a341a;color:var(--text);font-family:Georgia,"Times New Roman",serif;font-weight:bold;font-size:12px;min-height:31px;cursor:pointer}
+button:active{border-style:inset;transform:translateY(1px)}
+@media(max-width:760px) and (orientation:landscape){
+  #app{grid-template-columns:minmax(0,1fr) 176px;grid-template-rows:minmax(0,1fr) 105px;gap:2px;padding:2px}
+  #side{grid-template-rows:96px auto minmax(0,1fr)}
+  #panel{padding:5px}.tab{min-height:25px;font-size:10px}button{min-height:26px}
+}
 </style>
 </head>
-<body data-id="0">
-<app-icon data-id="1" hidden data-icon="sword" data-palette="Earth"></app-icon>
-<div data-id="2" id="game-wrapper">
-<canvas data-id="3" id="game-canvas" width="765" height="503"></canvas>
-<div data-id="4" id="hud">
-<div data-id="5" id="loading-screen"><div data-id="6" class="loader-spinner"></div><h1 data-id="7">IRONDALE</h1><p data-id="8" class="sub">A Medieval Fantasy Adventure</p><div data-id="9" id="load-bar-outer"><div data-id="10" id="load-bar"></div></div><p data-id="11" id="load-status">Initializing world...</p></div>
-<div data-id="12" id="top-bar"><span data-id="13" class="title">⚔ Irondale</span><span data-id="14">Total: <span data-id="15" class="val" id="total-level">15</span></span><span data-id="16">QP: <span data-id="17" class="val" id="quest-points">0</span></span><span data-id="18">Deaths: <span data-id="19" class="val" id="death-count">0</span></span></div>
-<div data-id="20" id="minimap-wrap"><canvas data-id="21" id="minimap" width="152" height="152"></canvas></div>
-<div data-id="22" class="data-orb" id="hp-orb"><span data-id="23" class="orb-icon">❤</span><span data-id="24" class="orb-val" id="hp-val">10/10</span></div>
-<div data-id="25" class="data-orb" id="prayer-orb"><span data-id="26" class="orb-icon">✙</span><span data-id="27" class="orb-val" id="prayer-val">1/1</span></div>
-<div data-id="28" class="data-orb" id="run-orb"><span data-id="29" class="orb-icon">🏃</span><span data-id="30" class="orb-val" id="run-val">100%</span></div>
-<div data-id="31" id="chatbox">
-<div data-id="32" id="chat-tabs"><div data-id="33" class="chat-tab active" data-ct="all">All</div><div data-id="34" class="chat-tab" data-ct="game">Game</div><div data-id="35" class="chat-tab" data-ct="combat">Combat</div></div>
-<div data-id="36" id="chat-messages"></div>
-<div data-id="37" id="chat-input-bar"><input data-id="38" id="chat-input" type="text" placeholder="Press Enter to chat..." maxlength="80"></div>
+<body>
+<div id="app">
+  <div id="gameWrap">
+    <canvas id="game"></canvas>
+    <canvas id="labels"></canvas>
+    <div id="hud">Walk here</div>
+    <div id="pills">
+      <div class="pill" id="locPill">Misthalin</div>
+      <div class="pill" id="targetPill">No target</div>
+    </div>
+  </div>
+
+  <div id="chat">
+    <div id="messages"></div>
+    <div id="actions">
+      <button id="btnTalk">Talk</button>
+      <button id="btnAttack">Attack</button>
+      <button id="btnUse">Use</button>
+      <button id="btnSearch">Search</button>
+      <button id="btnBank">Bank</button>
+      <button id="btnSave">Save</button>
+    </div>
+  </div>
+
+  <aside id="side">
+    <div id="miniWrap">
+      <canvas id="mini"></canvas>
+      <div id="orbs">
+        <div class="orb hp" id="hpOrb">HP</div>
+        <div class="orb run" id="runOrb">Run</div>
+        <div class="orb song" id="songOrb">Music</div>
+      </div>
+    </div>
+    <div id="tabs">
+      <button class="tab active" data-tab="combat">⚔</button>
+      <button class="tab" data-tab="map">🗺</button>
+      <button class="tab" data-tab="inv">🎒</button>
+      <button class="tab" data-tab="equip">🛡</button>
+      <button class="tab" data-tab="settings">⚙</button>
+    </div>
+    <div id="panel"></div>
+  </aside>
 </div>
-<div data-id="39" id="right-panel">
-<div data-id="40" id="panel-tabs">
-<div data-id="41" class="panel-tab" data-panel="combat" title="Combat">⚔</div>
-<div data-id="42" class="panel-tab active" data-panel="skills" title="Skills">📊</div>
-<div data-id="43" class="panel-tab" data-panel="quests" title="Quests">📜</div>
-<div data-id="44" class="panel-tab" data-panel="inventory" title="Inventory">🎒</div>
-<div data-id="45" class="panel-tab" data-panel="equipment" title="Equipment">🛡</div>
-</div>
-<div data-id="46" id="panel-content"></div>
-</div>
-<div data-id="47" id="dialog-panel"><div data-id="48" id="dialog-name"></div><div data-id="49" id="dialog-text"></div><div data-id="50" id="dialog-options"></div></div>
-<div data-id="51" id="context-menu"></div>
-<div data-id="52" id="level-up-popup"><h2 data-id="53" id="lvlup-title"></h2><p data-id="54" id="lvlup-desc"></p></div>
-<div data-id="55" id="bank-modal"><div data-id="56" id="bank-inner"><div data-id="57" id="bank-header"><span data-id="58">⚔ Irondale Bank</span><div data-id="59" id="bank-close">✕</div></div><div data-id="60" id="bank-items"></div><div data-id="61" id="bank-actions"><div data-id="62" class="bank-btn" id="deposit-all-btn">Deposit All</div></div><div data-id="63" id="bank-inv"><div data-id="64" id="bank-inv-label">Inventory</div><div data-id="65" id="bank-inv-grid"></div></div></div></div>
-<div data-id="66" id="save-indicator">Game saved.</div>
-<div data-id="67" id="tooltip"></div>
-</div>
-</div>
-<footer data-id="68">Made by Copilot</footer>
+
 <script>
-(function(){
+(() => {
 "use strict";
-const W=765,H=503,MAP=60,TICK_MS=600;
-const TILE_W=64,TILE_H=32,TILE_DEPTH=16;
-let tickCount=0,audioCtx=null,audioStarted=false;
 
-// ---- ISO HELPERS ----
-function tileToScreen(gx,gy){return{x:(gx-gy)*(TILE_W/2),y:(gx+gy)*(TILE_H/2)};}
-function screenToTile(sx,sy){
-const gx=Math.floor((sx/(TILE_W/2)+sy/(TILE_H/2))/2);
-const gy=Math.floor((sy/(TILE_H/2)-sx/(TILE_W/2))/2);
-return{x:gx,y:gy};
-}
+/* =========================================================
+   CANVAS / DOM
+========================================================= */
+const game = document.getElementById("game");
+const labels = document.getElementById("labels");
+const mini = document.getElementById("mini");
+const ctx = game.getContext("2d");
+const lctx = labels.getContext("2d");
+const mctx = mini.getContext("2d");
+const hud = document.getElementById("hud");
+const locPill = document.getElementById("locPill");
+const targetPill = document.getElementById("targetPill");
+const messages = document.getElementById("messages");
+const panel = document.getElementById("panel");
+const hpOrb = document.getElementById("hpOrb");
+const runOrb = document.getElementById("runOrb");
+const songOrb = document.getElementById("songOrb");
 
-let camX=0,camY=0,camTargetX=0,camTargetY=0;
-let hoverTile=null;
-
-// ---- ITEMS DB ----
-const ITEMS={
-coins:{id:'coins',name:'Coins',stackable:true,examine:'Shiny gold pieces.',value:1,color:'#ffd700'},
-bones:{id:'bones',name:'Bones',stackable:false,examine:'Them old bones.',value:1,color:'#e8e8d8'},
-raw_chicken:{id:'raw_chicken',name:'Raw Chicken',stackable:false,examine:'Raw chicken meat.',value:5,color:'#e8c89a'},
-cooked_chicken:{id:'cooked_chicken',name:'Cooked Chicken',stackable:false,examine:'Mmm, chicken.',value:10,color:'#c87840',heals:3},
-raw_beef:{id:'raw_beef',name:'Raw Beef',stackable:false,examine:'Raw beef.',value:5,color:'#c87a6a'},
-cooked_meat:{id:'cooked_meat',name:'Cooked Meat',stackable:false,examine:'Nicely cooked.',value:10,color:'#8a4a2a',heals:3},
-feather:{id:'feather',name:'Feather',stackable:true,examine:'A light feather.',value:1,color:'#f0f0f0'},
-egg:{id:'egg',name:'Egg',stackable:false,examine:'A fresh egg.',value:5,color:'#f5e6c8'},
-logs:{id:'logs',name:'Logs',stackable:false,examine:'A sturdy log.',value:5,color:'#8a6a3a'},
-copper_ore:{id:'copper_ore',name:'Copper Ore',stackable:false,examine:'Copper ore.',value:5,color:'#b87a5a'},
-cowhide:{id:'cowhide',name:'Cowhide',stackable:false,examine:'The hide of a cow.',value:25,color:'#c8a87a'},
-raw_shrimps:{id:'raw_shrimps',name:'Raw Shrimps',stackable:false,examine:'A raw shrimp.',value:3,color:'#d4b4a4'},
-cooked_shrimps:{id:'cooked_shrimps',name:'Cooked Shrimps',stackable:false,examine:'Cooked shrimps.',value:6,color:'#c88060',heals:2},
-bucket_milk:{id:'bucket_milk',name:'Bucket of Milk',stackable:false,examine:'A full bucket of milk.',value:10,color:'#f0f0f8'},
-pot_flour:{id:'pot_flour',name:'Pot of Flour',stackable:false,examine:'A pot of flour.',value:10,color:'#f5f0e8'},
-bronze_sword:{id:'bronze_sword',name:'Bronze Sword',stackable:false,examine:'A bronze sword.',value:50,color:'#c8a068',type:'weapon',slot:'weapon',atkBonus:4,strBonus:4,defBonus:0},
-iron_sword:{id:'iron_sword',name:'Iron Sword',stackable:false,examine:'An iron sword.',value:200,color:'#909090',type:'weapon',slot:'weapon',atkBonus:10,strBonus:9,defBonus:0},
-iron_dagger:{id:'iron_dagger',name:'Iron Dagger',stackable:false,examine:'A sharp iron dagger.',value:100,color:'#a0a0a0',type:'weapon',slot:'weapon',atkBonus:8,strBonus:5,defBonus:0},
-research_notes:{id:'research_notes',name:'Research Notes',stackable:false,examine:'Important arcane research.',value:0,color:'#f5e6c8'},
-ghost_skull:{id:'ghost_skull',name:"Ghost's Skull",stackable:false,examine:'A ghostly skull.',value:0,color:'#d8d8c8'},
+/* =========================================================
+   WORLD CONFIG
+========================================================= */
+const WORLD = {
+  W: 640,
+  H: 760,
+  render: 64,
+  entityRender: 48,
+  labelRender: 34,
+  tileW: 32,
+  tileH: 16,
+  stepMs: 95,
+  combatTickMs: 600
 };
 
-// ---- PLAYER STATE ----
-const player={
-tile:{x:30,y:30},path:[],target:null,
-skills:{attack:{level:1,xp:0},strength:{level:1,xp:0},defence:{level:1,xp:0},hitpoints:{level:10,xp:1154},
-prayer:{level:1,xp:0},cooking:{level:1,xp:0},woodcutting:{level:1,xp:0},fishing:{level:1,xp:0},
-mining:{level:1,xp:0},firemaking:{level:1,xp:0},crafting:{level:1,xp:0},smithing:{level:1,xp:0}},
-currentHp:10,maxHp:10,prayer:1,maxPrayer:1,runEnergy:100,isRunning:false,
-inventory:[],equipment:{head:null,body:null,legs:null,weapon:null,shield:null},
-gold:25,attackStyle:'accurate',inCombat:false,combatTarget:null,attackCooldown:0,
-quests:{feast_assistant:'not_started',arcane_mystery:'not_started',restless_spirit:'not_started'},
-questFlags:{milkDone:false,eggDone:false,flourDone:false,notesReceived:false,notesDelivered:false,skullFound:false,skullReturned:false},
-respawnTile:{x:30,y:42},deathCount:0,skillingAction:null,skillingTicks:0,
-lerpX:30,lerpY:30
+const T = {
+  grass:0, forest:1, path:2, road:3, water:4, bridge:5, dirt:6, swamp:7,
+  sand:8, floor:9, wall:10, door:11, stone:12, field:13, dark:14
 };
 
-// ---- XP SYSTEM ----
-function xpForLevel(lvl){let p=0;for(let l=1;l<lvl;l++)p+=Math.floor(l+300*Math.pow(2,l/7));return Math.floor(p/4);}
-function levelFromXP(xp){for(let l=98;l>=1;l--)if(xp>=xpForLevel(l+1))return l+1;return 1;}
-function getTotalLevel(){let t=0;for(let s in player.skills)t+=player.skills[s].level;return t;}
+const COLOR = {
+  [T.grass]:"#3d8a2e",
+  [T.forest]:"#256b27",
+  [T.path]:"#9d743c",
+  [T.road]:"#7f704f",
+  [T.water]:"#235d9e",
+  [T.bridge]:"#8a4f22",
+  [T.dirt]:"#60411f",
+  [T.swamp]:"#1f4e32",
+  [T.sand]:"#c9ad57",
+  [T.floor]:"#68635a",
+  [T.wall]:"#77766f",
+  [T.door]:"#6b3a18",
+  [T.stone]:"#595b58",
+  [T.field]:"#ad8c2e",
+  [T.dark]:"#263225"
+};
 
-// ---- MAP ----
-const TILE_TYPES={GRASS:0,STONE:1,WATER:2,WALL:3,FLOOR:4,DOOR:5,SAND:6,BLOCKED:7,SWAMP:8};
-const TILE_WALK=[true,true,false,false,true,true,true,false,true];
-const tileMap=new Array(MAP*MAP).fill(0);
-const clipFlags=new Array(MAP*MAP).fill(0);
-function tIdx(x,y){return y*MAP+x;}
-function setTile(x,y,t){if(x>=0&&x<MAP&&y>=0&&y<MAP){tileMap[tIdx(x,y)]=t;clipFlags[tIdx(x,y)]=TILE_WALK[t]?0:1;}}
-function getTile(x,y){if(x<0||x>=MAP||y<0||y>=MAP)return TILE_TYPES.BLOCKED;return tileMap[tIdx(x,y)];}
-function isWalkable(x,y){if(x<0||x>=MAP||y<0||y>=MAP)return false;return clipFlags[tIdx(x,y)]===0;}
+const LANDMARKS = {
+  edgeville:        {name:"Edgeville", x:70,  y:70,  w:70, h:62},
+  grandExchange:   {name:"Grand Exchange", x:184, y:82,  w:94, h:72},
+  cooksGuild:      {name:"Cooks' Guild", x:208, y:170, w:38, h:42},
+  varrock:         {name:"Varrock", x:302, y:122, w:165,h:142},
+  varrockPalace:   {name:"Varrock Palace", x:345,y:132,w:76,h:44},
+  lumberYard:      {name:"Lumber Yard", x:500,y:70,w:72,h:54},
+  digsite:         {name:"Digsite", x:555,y:295,w:68,h:70},
+  examCentre:      {name:"Exam Centre", x:515,y:350,w:50,h:36},
+  barbarianVillage:{name:"Barbarian Village", x:18,y:205,w:72,h:70},
+  draynorManor:    {name:"Draynor Manor", x:112,y:322,w:82,h:78},
+  draynorVillage:  {name:"Draynor Village", x:70,y:450,w:108,h:82},
+  wizardsTower:    {name:"Wizards' Tower", x:66,y:612,w:54,h:58},
+  tutorialIsland:  {name:"Tutorial Island", x:64,y:682,w:108,h:56},
+  theNode:         {name:"The Node", x:86,y:742,w:62,h:20},
+  championsGuild:  {name:"Champions' Guild", x:294,y:338,w:58,h:48},
+  hamsHideout:     {name:"H.A.M. Hideout", x:228,y:406,w:42,h:34},
+  millLaneMill:    {name:"Mill Lane Mill", x:300,y:462,w:36,h:48},
+  fredFarm:        {name:"Fred's Farm", x:250,y:500,w:70,h:58},
+  groatsFarm:      {name:"Groats' Farm", x:314,y:494,w:76,h:60},
+  lumbridge:       {name:"Lumbridge", x:330,y:505,w:112,h:118},
+  lumbridgeCastle: {name:"Lumbridge Castle", x:356,y:526,w:60,h:58},
+  lumbridgeChurch: {name:"Lumbridge Church", x:392,y:600,w:34,h:42},
+  lumbridgeSwamp:  {name:"Lumbridge Swamp", x:300,y:620,w:156,h:78},
+  alKharid:        {name:"Al Kharid", x:505,y:520,w:104,h:110},
+  shantayPass:     {name:"Shantay Pass", x:526,y:648,w:74,h:40},
+  desert:          {name:"Kharidian Desert", x:450,y:610,w:190,h:150},
+  kalphiteLair:    {name:"Kalphite Lair", x:430,y:694,w:46,h:36},
+  riverLum:        {name:"River Lum", x:260,y:90,w:28,h:560},
+  riverSalve:      {name:"River Salve", x:624,y:120,w:12,h:240}
+};
 
-// Tile color palette for iso rendering
-const ISO_TILE_COLORS=[
-{top:'#4a7c3f',left:'#2d5228',right:'#3a6333'},// GRASS
-{top:'#7a7069',left:'#4a4542',right:'#5c5450'},// STONE
-{top:'#1a4a8a',left:'#0f2d57',right:'#143a6e'},// WATER
-{top:'#6a5a4a',left:'#3d3329',right:'#52432e',raised:true,boxH:28},// WALL
-{top:'#8a7a6a',left:'#5c5248',right:'#6e6052'},// FLOOR
-{top:'#8a6a3a',left:'#5c4527',right:'#6e5430'},// DOOR
-{top:'#c8b878',left:'#8a7c50',right:'#a08e5e'},// SAND
-{top:'#3a3a3a',left:'#222222',right:'#2e2e2e'},// BLOCKED
-{top:'#2a4a2a',left:'#182e18',right:'#213921'},// SWAMP
-];
-const MINIMAP_COLORS=['#4a7c3f','#7a7069','#1a4a8a','#5c4a3a','#8a7a6a','#7a5a3a','#c8b878','#3a3a3a','#2a4a2a'];
+/* =========================================================
+   MAP ARRAYS
+========================================================= */
+const ground = new Uint8Array(WORLD.W * WORLD.H);
+const solid = new Uint8Array(WORLD.W * WORLD.H);
+const region = new Uint16Array(WORLD.W * WORLD.H);
+const objects = [];
+const entities = [];
+const items = [];
+const projectiles = [];
 
-function buildMap(){
-for(let x=0;x<MAP;x++)for(let y=0;y<MAP;y++)setTile(x,y,TILE_TYPES.GRASS);
-for(let x=0;x<MAP;x++)for(let y=10;y<=12;y++)setTile(x,y,TILE_TYPES.WATER);
-for(let y=10;y<=12;y++)for(let x=29;x<=31;x++)setTile(x,y,TILE_TYPES.STONE);
-for(let x=24;x<=36;x++){setTile(x,22,TILE_TYPES.WALL);setTile(x,34,TILE_TYPES.WALL);}
-for(let y=22;y<=34;y++){setTile(24,y,TILE_TYPES.WALL);setTile(36,y,TILE_TYPES.WALL);}
-for(let x=25;x<=35;x++)for(let y=23;y<=33;y++)setTile(x,y,TILE_TYPES.STONE);
-for(let x=28;x<=32;x++){setTile(x,25,TILE_TYPES.WALL);setTile(x,29,TILE_TYPES.WALL);}
-for(let y=25;y<=29;y++){setTile(28,y,TILE_TYPES.WALL);setTile(32,y,TILE_TYPES.WALL);}
-for(let x=29;x<=31;x++)for(let y=26;y<=28;y++)setTile(x,y,TILE_TYPES.FLOOR);
-setTile(30,25,TILE_TYPES.DOOR);setTile(30,29,TILE_TYPES.DOOR);
-setTile(29,34,TILE_TYPES.STONE);setTile(30,34,TILE_TYPES.STONE);setTile(31,34,TILE_TYPES.STONE);
-for(let y=34;y<=55;y++){setTile(29,y,TILE_TYPES.STONE);setTile(30,y,TILE_TYPES.STONE);setTile(31,y,TILE_TYPES.STONE);}
-for(let x=20;x<=40;x++){setTile(x,43,TILE_TYPES.STONE);setTile(x,44,TILE_TYPES.STONE);}
-const buildings=[{x:22,y:40,w:5,h:4},{x:34,y:40,w:5,h:4},{x:23,y:46,w:4,h:4},{x:34,y:46,w:5,h:4},{x:22,y:51,w:4,h:3}];
-buildings.forEach(b=>{
-for(let bx=b.x;bx<b.x+b.w;bx++)for(let by=b.y;by<b.y+b.h;by++){
-if(bx===b.x||bx===b.x+b.w-1||by===b.y||by===b.y+b.h-1)setTile(bx,by,TILE_TYPES.WALL);
-else setTile(bx,by,TILE_TYPES.FLOOR);
+let tick = 0;
+let hoverEntity = null;
+let hoverTile = null;
+let currentMusic = "";
+let musicStarted = false;
+
+const cam = {x:370,y:560,zoom:1,drag:false,sx:0,sy:0,cx:0,cy:0};
+const player = {
+  id:"player", name:"You", x:382, y:572, rx:382, ry:572, dir:"down",
+  hp:10, maxHp:10, run:100, attack:1, strength:1, defence:1,
+  weapon:"Bronze sword", color:"#2c5fd7", combatTarget:null, cooldown:0
+};
+let path = [];
+let lastStep = 0;
+
+const state = {
+  tab:"combat",
+  coins:25,
+  inv:[{name:"Bronze sword",qty:1},{name:"Bread",qty:1},{name:"Bucket",qty:1},{name:"Empty pot",qty:1}],
+  equip:{weapon:null},
+  audio:true,
+  music:true,
+  renderBoxes:false
+};
+
+/* =========================================================
+   UTIL
+========================================================= */
+function idx(x,y){return y*WORLD.W+x;}
+function inb(x,y){return x>=0&&y>=0&&x<WORLD.W&&y<WORLD.H;}
+function setTile(x,y,t,block=false,rid=0){if(!inb(x,y))return;ground[idx(x,y)]=t;solid[idx(x,y)]=block?1:0;if(rid)region[idx(x,y)]=rid;}
+function getTile(x,y){return inb(x,y)?ground[idx(x,y)]:T.water;}
+function isSolid(x,y){return !inb(x,y)||solid[idx(x,y)]===1;}
+function rect(x,y,w,h,t,block=false,rid=0){for(let yy=y;yy<y+h;yy++)for(let xx=x;xx<x+w;xx++)setTile(xx,yy,t,block,rid);}
+function dist(a,b){return Math.abs(a.x-b.x)+Math.abs(a.y-b.y);}
+function rand(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+function log(text,cls="system"){const d=document.createElement("div");d.className="msg "+cls;d.textContent=text;messages.appendChild(d);messages.scrollTop=messages.scrollHeight;}
+function within(x,y,o){return x>=o.x&&y>=o.y&&x<o.x+o.w&&y<o.y+o.h;}
+function nearPlayer(o,range=WORLD.render){const cx=o.x+(o.w||1)/2,cy=o.y+(o.h||1)/2;return Math.abs(cx-player.x)<=range&&Math.abs(cy-player.y)<=range;}
+function dirBetween(a,b){if(b.x>a.x)return"right";if(b.x<a.x)return"left";if(b.y>a.y)return"down";if(b.y<a.y)return"up";return player.dir;}
+function addObj(o){objects.push(o);return o;}
+function addItem(name,x,y,qty=1){items.push({name,x,y,rx:x,ry:y,qty});}
+function addEnt(e){entities.push(Object.assign({rx:e.x,ry:e.y,dir:"down",hp:e.hp||10,maxHp:e.hp||10,cooldown:0,hostile:false,hitbox:34,labelZ:36},e));}
+
+/* =========================================================
+   MAP BUILDING
+========================================================= */
+function addBuilding(name,x,y,w,h,kind="house",doors=[]){
+  rect(x,y,w,h,T.floor,false);
+  for(let xx=x;xx<x+w;xx++){setTile(xx,y,T.wall,true);setTile(xx,y+h-1,T.wall,true);}
+  for(let yy=y;yy<y+h;yy++){setTile(x,yy,T.wall,true);setTile(x+w-1,yy,T.wall,true);}
+  for(const [dx,dy] of doors){setTile(x+dx,y+dy,T.door,false);}
+  addObj({type:"building",kind,name,x,y,w,h,doors});
 }
-setTile(b.x+Math.floor(b.w/2),b.y+b.h-1,TILE_TYPES.DOOR);
+
+function addCityWall(name,x,y,w,h,doors=[]){
+  for(let xx=x;xx<x+w;xx++){setTile(xx,y,T.wall,true);setTile(xx,y+h-1,T.wall,true);}
+  for(let yy=y;yy<y+h;yy++){setTile(x,yy,T.wall,true);setTile(x+w-1,yy,T.wall,true);}
+  for(const [dx,dy,dw,dh] of doors)rect(x+dx,y+dy,dw,dh,T.door,false);
+  addObj({type:"wallring",name,x,y,w,h,doors});
+}
+
+function road(points,width=5,t=T.road){
+  for(let i=0;i<points.length-1;i++){
+    const a=points[i],b=points[i+1],dx=Math.sign(b.x-a.x),dy=Math.sign(b.y-a.y);
+    let x=a.x,y=a.y;
+    while(x!==b.x||y!==b.y){
+      rect(x-Math.floor(width/2),y-Math.floor(width/2),width,width,t,false);
+      if(x!==b.x)x+=dx;
+      if(y!==b.y)y+=dy;
+    }
+  }
+}
+
+function river(points,width=12){
+  for(let i=0;i<points.length-1;i++){
+    const a=points[i],b=points[i+1],steps=Math.max(Math.abs(b.x-a.x),Math.abs(b.y-a.y));
+    for(let s=0;s<=steps;s++){
+      const x=Math.round(a.x+(b.x-a.x)*s/steps);
+      const y=Math.round(a.y+(b.y-a.y)*s/steps);
+      rect(x-Math.floor(width/2),y-Math.floor(width/2),width,width,T.water,true);
+    }
+  }
+}
+
+function scatterTrees(area,count,dense=false){
+  for(let i=0;i<count;i++){
+    const x=rand(area.x,area.x+area.w-1),y=rand(area.y,area.y+area.h-1);
+    if(getTile(x,y)!==T.grass&&getTile(x,y)!==T.forest)continue;
+    if(isSolid(x,y))continue;
+    setTile(x,y,dense?T.forest:T.grass,false);
+    addObj({type:"tree",name:"Tree",x,y,w:1,h:1});
+    solid[idx(x,y)]=1;
+  }
+}
+
+function buildWorld(){
+  rect(0,0,WORLD.W,WORLD.H,T.grass,false);
+
+  // Large regions
+  rect(450,500,190,260,T.sand,false);               // Desert / Al Kharid side
+  rect(292,620,170,86,T.swamp,false);               // Lumbridge Swamp
+  rect(104,310,100,105,T.dark,false);               // Draynor Manor dark woods
+  rect(42,666,145,76,T.grass,false);                // Tutorial Island
+  rect(75,742,80,18,T.dark,false);                  // The Node
+  rect(482,60,130,120,T.forest,false);              // Lumber Yard woods
+  rect(520,260,110,110,T.forest,false);             // Digsite woods edge
+
+  // Rivers
+  river([{x:252,y:0},{x:258,y:65},{x:232,y:150},{x:250,y:230},{x:290,y:340},{x:350,y:445},{x:388,y:548},{x:398,y:620},{x:384,y:707}],14);
+  river([{x:0,y:560},{x:70,y:588},{x:130,y:612},{x:200,y:652},{x:295,y:690},{x:385,y:720}],16);
+  river([{x:628,y:118},{x:626,y:190},{x:630,y:260},{x:626,y:360}],10);
+
+  // Main proportional roads from reference image
+  road([{x:382,y:570},{x:382,y:515},{x:340,y:430},{x:322,y:363},{x:335,y:300},{x:365,y:245},{x:382,y:190}],7,T.road); // Lumbridge to Varrock
+  road([{x:382,y:190},{x:360,y:170},{x:300,y:138},{x:235,y:125}],6,T.road); // Varrock to GE
+  road([{x:235,y:125},{x:160,y:120},{x:100,y:100}],6,T.road); // GE to Edgeville
+  road([{x:300,y:138},{x:232,y:172},{x:224,y:190}],6,T.road); // Cooks' Guild
+  road([{x:338,y:300},{x:230,y:340},{x:160,y:357}],6,T.road); // Champions to Draynor Manor
+  road([{x:160,y:357},{x:130,y:455},{x:112,y:492}],5,T.road); // Manor to Draynor Village
+  road([{x:112,y:492},{x:100,y:610},{x:90,y:640}],5,T.road); // Draynor to Wizards Tower
+  road([{x:388,y:570},{x:465,y:560},{x:542,y:570}],6,T.road); // Lumbridge to Al Kharid
+  road([{x:542,y:570},{x:565,y:655}],6,T.road); // Al Kharid to Shantay
+  road([{x:382,y:190},{x:490,y:150},{x:545,y:104}],5,T.road); // Varrock to Lumber Yard
+  road([{x:430,y:230},{x:540,y:320}],5,T.road); // Varrock to Digsite
+
+  // Bridges
+  rect(340,440,28,12,T.bridge,false);
+  rect(378,535,30,10,T.bridge,false);
+  rect(216,145,28,10,T.bridge,false);
+  rect(95,608,28,10,T.bridge,false);
+
+  // Major cities / landmarks
+  addCityWall("Varrock city walls",302,122,165,142,[[0,64,6,10],[159,64,6,10],[76,136,14,6],[74,0,14,6]]);
+  rect(306,126,157,134,T.floor,false);
+  addBuilding("Varrock Palace",345,132,76,44,"castle",[[38,43]]);
+  addBuilding("Varrock West Bank",316,210,34,28,"bank",[[17,27]]);
+  addBuilding("Varrock East Bank",423,204,34,28,"bank",[[17,27]]);
+  addBuilding("Varrock Museum",428,258,42,42,"museum",[[20,41]]);
+  addBuilding("Aubury's Rune Shop",402,226,25,24,"shop",[[12,23]]);
+  addBuilding("Thessalia's Fine Clothes",352,245,28,22,"shop",[[14,21]]);
+  addBuilding("Blue Moon Inn",330,272,36,24,"pub",[[18,0]]);
+  addBuilding("Dancing Donkey Inn",410,272,34,24,"pub",[[17,0]]);
+  addBuilding("Jolly Boar Inn",455,138,34,24,"pub",[[0,12]]);
+  addObj({type:"fountain",name:"Varrock Fountain",x:378,y:213,w:5,h:5});
+
+  addCityWall("Grand Exchange ring",184,82,94,72,[[44,71,8,4],[44,0,8,4],[0,34,4,8],[90,34,4,8]]);
+  rect(188,86,86,64,T.stone,false);
+  addObj({type:"ge",name:"Grand Exchange",x:184,y:82,w:94,h:72});
+  for(let i=0;i<16;i++){const a=i/16*Math.PI*2;addObj({type:"post",name:"Grand Exchange pillar",x:231+Math.cos(a)*34,y:118+Math.sin(a)*22,w:1,h:1});}
+
+  addBuilding("Cooks' Guild",208,170,38,42,"guild",[[19,41]]);
+  addBuilding("Champions' Guild",294,338,58,48,"guild",[[29,47]]);
+  addBuilding("Draynor Manor",112,322,82,78,"manor",[[41,77]]);
+  addBuilding("Draynor Village Bank",74,474,34,26,"bank",[[17,25]]);
+  addBuilding("Draynor Jail",132,502,26,22,"jail",[[13,0]]);
+  addBuilding("Wizards' Tower",66,612,54,58,"tower",[[27,0]]);
+  addBuilding("Edgeville Bank",72,86,32,24,"bank",[[16,23]]);
+  addBuilding("Lumber Yard",500,70,72,54,"yard",[[36,53]]);
+  addBuilding("Exam Centre",515,350,50,36,"exam",[[25,35]]);
+
+  // Lumbridge
+  rect(330,505,112,118,T.floor,false);
+  addCityWall("Lumbridge Castle courtyard",356,526,60,58,[[28,57,6,3],[28,0,6,3]]);
+  rect(360,530,52,50,T.floor,false);
+  addObj({type:"castleKeep",name:"Lumbridge Castle",x:368,y:536,w:36,h:34});
+  addBuilding("Lumbridge General Store",430,560,28,24,"shop",[[0,12]]);
+  addBuilding("Bob's Brilliant Axes",426,596,28,24,"shop",[[0,12]]);
+  addBuilding("Lumbridge Church",392,600,34,42,"church",[[17,0]]);
+  addBuilding("Castle Kitchen",342,575,28,24,"kitchen",[[27,12]]);
+  addObj({type:"graveyard",name:"Lumbridge Graveyard",x:420,y:628,w:42,h:28});
+  addBuilding("Mill Lane Mill",300,462,36,48,"mill",[[18,47]]);
+  rect(250,500,70,58,T.field,false);
+  rect(314,494,76,60,T.field,false);
+  rect(320,555,56,42,T.dirt,false);
+  rect(285,555,40,32,T.dirt,false);
+  rect(300,620,156,78,T.swamp,false);
+
+  // Al Kharid / desert edge
+  addCityWall("Al Kharid walls",505,520,104,110,[[0,45,5,10],[50,0,8,5],[50,105,8,5]]);
+  rect(510,525,94,100,T.sand,false);
+  addBuilding("Al Kharid Bank",540,574,34,26,"bank",[[17,25]]);
+  addBuilding("Al Kharid Palace",558,530,38,34,"palace",[[19,33]]);
+  addObj({type:"gate",name:"Toll Gate",x:487,y:562,w:10,h:16});
+  addBuilding("Shantay Pass",526,648,74,40,"pass",[[37,0],[37,39]]);
+  addObj({type:"cave",name:"Kalphite Lair",x:430,y:694,w:10,h:10});
+
+  // Tutorial Island and node
+  addBuilding("Tutorial Island Building",92,692,54,28,"tutorial",[[27,27]]);
+  addObj({type:"node",name:"The Node",x:106,y:746,w:20,h:8});
+
+  // Farms/details
+  addBuilding("Fred the Farmer's House",260,510,26,22,"farmhouse",[[13,21]]);
+  addBuilding("Groats' Farmhouse",334,502,26,22,"farmhouse",[[13,21]]);
+  addBuilding("H.A.M. Hideout Entrance",228,406,42,34,"hideout",[[21,33]]);
+
+  // Forest density
+  scatterTrees({x:0,y:0,w:640,h:760},1100,false);
+  scatterTrees({x:110,y:310,w:110,h:120},180,true);
+  scatterTrees({x:480,y:60,w:140,h:150},210,true);
+  scatterTrees({x:300,y:620,w:150,h:80},120,true);
+
+  // Important spawns
+  addItem("Egg",292,566); addItem("Egg",306,572); addItem("Shears",265,522);
+  addItem("Bronze dagger",385,566); addItem("Bucket",348,584); addItem("Empty pot",350,586);
+  addItem("Logs",394,540); addItem("Mind rune",374,570);
+}
+
+/* =========================================================
+   NPC / MONSTER BUILD
+========================================================= */
+function buildEntities(){
+  // Lumbridge NPCs
+  addEnt({id:"cook",name:"Cook",x:350,y:584,hp:10,role:"npc",color:"#e8dcc5"});
+  addEnt({id:"duke",name:"Duke Horacio",x:386,y:548,hp:20,role:"npc",color:"#d8b04a"});
+  addEnt({id:"hans",name:"Hans",x:370,y:570,hp:10,role:"npc",color:"#8b5a2b"});
+  addEnt({id:"guide",name:"Lumbridge Guide",x:394,y:574,hp:10,role:"npc",color:"#5b8ee8"});
+  addEnt({id:"father",name:"Father Aereck",x:409,y:620,hp:10,role:"npc",color:"#dfe8ff"});
+  addEnt({id:"bob",name:"Bob",x:438,y:607,hp:10,role:"shop",color:"#966136"});
+  addEnt({id:"shopkeeper",name:"Shop keeper",x:442,y:570,hp:10,role:"shop",color:"#d8b44b"});
+  addEnt({id:"fred",name:"Fred the Farmer",x:274,y:525,hp:10,role:"npc",color:"#b87935"});
+  addEnt({id:"millie",name:"Millie Miller",x:318,y:486,hp:10,role:"npc",color:"#caa36a"});
+  addEnt({id:"ghost",name:"Restless ghost",x:438,y:638,hp:10,role:"npc",color:"#aeeaff"});
+
+  // Varrock / GE NPCs
+  addEnt({id:"king",name:"King Roald",x:384,y:148,hp:30,role:"npc",color:"#d8b04a"});
+  addEnt({id:"ellamaria",name:"Queen Ellamaria",x:390,y:150,hp:30,role:"npc",color:"#d986cc"});
+  addEnt({id:"reldo",name:"Reldo",x:374,y:154,hp:10,role:"npc",color:"#90a8d8"});
+  addEnt({id:"aubury",name:"Aubury",x:414,y:238,hp:10,role:"shop",color:"#7b5bd8"});
+  addEnt({id:"thessalia",name:"Thessalia",x:365,y:255,hp:10,role:"shop",color:"#d85aa2"});
+  addEnt({id:"aris",name:"Gypsy Aris",x:386,y:258,hp:10,role:"npc",color:"#b85b9c"});
+  addEnt({id:"zaff",name:"Zaff",x:421,y:220,hp:10,role:"shop",color:"#445bd8"});
+  addEnt({id:"benny",name:"Benny",x:392,y:230,hp:10,role:"npc",color:"#c8a36b"});
+  addEnt({id:"curator",name:"Curator Haig Halen",x:450,y:280,hp:10,role:"npc",color:"#b9b9b9"});
+
+  const geNames=["Grand Exchange clerk","Grand Exchange clerk","Grand Exchange clerk","Grand Exchange clerk","Brugsen Bursen","Bob Barter","Murky Matt","Farid Morrisane","Relobo Blinyo","Hofuthand"];
+  geNames.forEach((n,i)=>addEnt({id:"ge"+i,name:n,x:210+(i%5)*10,y:112+Math.floor(i/5)*14,hp:10,role:"banker",color:i<4?"#4a86d9":"#d9bd63"}));
+
+  // Draynor / Edgeville / other
+  addEnt({id:"diango",name:"Diango",x:105,y:486,hp:10,role:"shop",color:"#b8752b"});
+  addEnt({id:"count",name:"Count Draynor",x:154,y:356,hp:35,hostile:true,role:"monster",color:"#7a2020",attack:3});
+  addEnt({id:"bankedge",name:"Banker",x:88,y:98,hp:10,role:"banker",color:"#4a86d9"});
+  addEnt({id:"wizardtower",name:"Wizard Mizgog",x:94,y:632,hp:10,role:"npc",color:"#485bd8"});
+
+  // Guards
+  for(let i=0;i<14;i++)addEnt({id:"guard"+i,name:"Guard",x:318+rand(0,130),y:138+rand(0,105),hp:18,role:"npc",color:"#777d88"});
+
+  // Hostiles and animals
+  for(let i=0;i<14;i++)addEnt({id:"gob"+i,name:"Goblin",x:430+rand(0,30),y:540+rand(0,45),hp:8,hostile:true,role:"monster",color:"#4ca943",attack:2});
+  for(let i=0;i<10;i++)addEnt({id:"cow"+i,name:"Cow",x:326+rand(0,44),y:560+rand(0,30),hp:6,hostile:true,role:"animal",species:"Cow",color:"#ddd8c7",attack:1});
+  for(let i=0;i<10;i++)addEnt({id:"chicken"+i,name:"Chicken",x:288+rand(0,30),y:558+rand(0,22),hp:3,hostile:true,role:"animal",species:"Chicken",color:"#f1e38a",attack:1});
+  for(let i=0;i<9;i++)addEnt({id:"sheep"+i,name:"Sheep",x:260+rand(0,48),y:512+rand(0,32),hp:5,role:"animal",species:"Sheep",color:"#ddd9ca"});
+  for(let i=0;i<12;i++)addEnt({id:"rat"+i,name:"Rat",x:310+rand(0,120),y:640+rand(0,52),hp:4,hostile:true,role:"animal",species:"Rat",color:"#6e675b",attack:1});
+  for(let i=0;i<6;i++)addEnt({id:"spider"+i,name:"Giant spider",x:420+rand(0,40),y:545+rand(0,40),hp:5,hostile:true,role:"animal",species:"Giant spider",color:"#171513",attack:1});
+  for(let i=0;i<7;i++)addEnt({id:"darkwiz"+i,name:"Dark wizard",x:316+rand(0,40),y:300+rand(0,30),hp:14,hostile:true,role:"monster",color:"#21122f",attack:4});
+  for(let i=0;i<8;i++)addEnt({id:"barb"+i,name:"Barbarian",x:32+rand(0,48),y:220+rand(0,45),hp:14,hostile:true,role:"monster",color:"#9a592e",attack:3});
+}
+
+/* =========================================================
+   AUDIO
+========================================================= */
+const AudioSys = {
+  ctx:null, musicTimer:null, step:0,
+  tracks:{
+    "Lumbridge":{bpm:92,lead:["E4","G4","A4","B4","A4","G4","E4","D4"],bass:["E2","E2","C2","D2"]},
+    "Varrock":{bpm:104,lead:["D4","F4","A4","D5","C5","A4","F4","E4"],bass:["D2","A2","Bb2","C3"]},
+    "Grand Exchange":{bpm:112,lead:["G4","B4","D5","B4","A4","G4","E4","D4"],bass:["G2","D2","E2","C2"]},
+    "Swamp":{bpm:76,lead:["A3","C4","D4","C4","A3","G3"],bass:["A1","A1","G1","E1"]},
+    "Desert":{bpm:96,lead:["F4","G4","A4","C5","A4","G4"],bass:["F2","C2","D2","E2"]},
+    "Misthalin":{bpm:88,lead:["C4","E4","G4","A4","G4","E4"],bass:["C2","G2","A2","F2"]}
+  }
+};
+const NOTE = {"C1":32.7,"D1":36.7,"E1":41.2,"F1":43.7,"G1":49,"A1":55,"Bb2":116.5,"C2":65.4,"D2":73.4,"E2":82.4,"F2":87.3,"G2":98,"A2":110,"C3":130.8,"D3":146.8,"E3":164.8,"F3":174.6,"G3":196,"A3":220,"B3":246.9,"C4":261.6,"D4":293.7,"E4":329.6,"F4":349.2,"G4":392,"A4":440,"B4":493.9,"C5":523.3,"D5":587.3};
+function initAudio(){
+  if(AudioSys.ctx||!state.audio)return;
+  AudioSys.ctx = new (window.AudioContext||window.webkitAudioContext)();
+  musicStarted = true;
+}
+function tone(note,dur=0.1,type="square",vol=0.08){
+  if(!state.audio||!AudioSys.ctx)return;
+  const ac=AudioSys.ctx,osc=ac.createOscillator(),gain=ac.createGain();
+  osc.type=type;osc.frequency.value=NOTE[note]||note||220;
+  gain.gain.setValueAtTime(0,ac.currentTime);
+  gain.gain.linearRampToValueAtTime(vol,ac.currentTime+0.01);
+  gain.gain.exponentialRampToValueAtTime(0.0001,ac.currentTime+dur);
+  osc.connect(gain).connect(ac.destination);osc.start();osc.stop(ac.currentTime+dur);
+}
+function noise(dur=0.05,vol=0.08){
+  if(!state.audio||!AudioSys.ctx)return;
+  const ac=AudioSys.ctx,buf=ac.createBuffer(1,ac.sampleRate*dur,ac.sampleRate),data=buf.getChannelData(0);
+  for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*(1-i/data.length);
+  const src=ac.createBufferSource(),gain=ac.createGain();
+  src.buffer=buf;gain.gain.value=vol;src.connect(gain).connect(ac.destination);src.start();
+}
+function sfx(name){
+  if(name==="click")tone("G4",0.04,"square",0.05);
+  if(name==="step")tone("C2",0.025,"triangle",0.025);
+  if(name==="hit"){noise(0.04,0.07);tone("C3",0.06,"square",0.08);}
+  if(name==="death"){tone("D3",0.09,"sawtooth",0.08);setTimeout(()=>tone("A2",0.12,"sawtooth",0.07),80);}
+}
+function musicZone(){
+  if(within(player.x,player.y,LANDMARKS.grandExchange))return"Grand Exchange";
+  if(within(player.x,player.y,LANDMARKS.varrock))return"Varrock";
+  if(within(player.x,player.y,LANDMARKS.lumbridge)||within(player.x,player.y,LANDMARKS.lumbridgeCastle))return"Lumbridge";
+  if(within(player.x,player.y,LANDMARKS.lumbridgeSwamp))return"Swamp";
+  if(within(player.x,player.y,LANDMARKS.desert)||within(player.x,player.y,LANDMARKS.alKharid))return"Desert";
+  return"Misthalin";
+}
+function setMusic(track){
+  currentMusic=track;songOrb.textContent=track.slice(0,8);
+  if(!state.music||!AudioSys.ctx)return;
+  if(AudioSys.musicTimer)clearInterval(AudioSys.musicTimer);
+  const tr=AudioSys.tracks[track],beat=60000/tr.bpm/2;
+  AudioSys.step=0;
+  AudioSys.musicTimer=setInterval(()=>{
+    if(!state.music||!AudioSys.ctx)return;
+    const i=AudioSys.step++;
+    tone(tr.lead[i%tr.lead.length],beat/1000*0.72,"square",0.035);
+    if(i%2===0)tone(tr.bass[Math.floor(i/2)%tr.bass.length],beat/1000*1.4,"triangle",0.035);
+  },beat);
+}
+
+/* =========================================================
+   PATHFINDING
+========================================================= */
+function passable(x,y){
+  if(!inb(x,y))return false;
+  if(isSolid(x,y))return false;
+  const t=getTile(x,y);
+  return t!==T.water && t!==T.wall;
+}
+function h(a,b){return Math.abs(a.x-b.x)+Math.abs(a.y-b.y);}
+function reconstruct(came,cur,sx,sy){
+  const out=[];
+  while(!(cur.x===sx&&cur.y===sy)){
+    out.push({x:cur.x,y:cur.y});
+    cur=came.get(cur.x+","+cur.y);
+    if(!cur)break;
+  }
+  return out.reverse();
+}
+function findPath(sx,sy,gx,gy){
+  if(!passable(gx,gy)){
+    const alt=nearestPassable(gx,gy);
+    if(!alt)return[];
+    gx=alt.x;gy=alt.y;
+  }
+  const open=[{x:sx,y:sy,g:0,f:h({x:sx,y:sy},{x:gx,y:gy})}],came=new Map(),gscore=new Map([[sx+","+sy,0]]),closed=new Set(),goal=gx+","+gy;
+  let loops=0;
+  while(open.length&&loops++<22000){
+    open.sort((a,b)=>a.f-b.f);
+    const cur=open.shift(),ck=cur.x+","+cur.y;
+    if(ck===goal)return reconstruct(came,cur,sx,sy);
+    if(closed.has(ck))continue;
+    closed.add(ck);
+    for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+      const nx=cur.x+dx,ny=cur.y+dy,nk=nx+","+ny;
+      if(!passable(nx,ny)||closed.has(nk))continue;
+      const ng=cur.g+1;
+      if(ng<(gscore.get(nk)??1e9)){
+        came.set(nk,cur);gscore.set(nk,ng);
+        open.push({x:nx,y:ny,g:ng,f:ng+h({x:nx,y:ny},{x:gx,y:gy})});
+      }
+    }
+  }
+  return[];
+}
+function nearestPassable(gx,gy){
+  for(let r=1;r<=8;r++){
+    const opts=[];
+    for(let y=gy-r;y<=gy+r;y++)for(let x=gx-r;x<=gx+r;x++){
+      if(Math.abs(x-gx)!==r&&Math.abs(y-gy)!==r)continue;
+      if(passable(x,y))opts.push({x,y,d:Math.abs(x-gx)+Math.abs(y-gy)});
+    }
+    opts.sort((a,b)=>a.d-b.d);
+    if(opts.length)return opts[0];
+  }
+  return null;
+}
+function pathToAdjacent(e){
+  const opts=[];
+  for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]])if(passable(e.x+dx,e.y+dy))opts.push({x:e.x+dx,y:e.y+dy});
+  opts.sort((a,b)=>h(player,a)-h(player,b));
+  for(const o of opts){const p=findPath(player.x,player.y,o.x,o.y);if(p.length)return p;}
+  return[];
+}
+function setDestination(x,y){
+  player.combatTarget=null;
+  const p=findPath(player.x,player.y,x,y);
+  if(!p.length){log("I can't reach that.");sfx("click");return;}
+  path=p;sfx("click");
+}
+
+/* =========================================================
+   COMBAT
+========================================================= */
+function getEntity(id){return entities.find(e=>e.id===id&&e.hp>0);}
+function adjacent(a,b){return Math.abs(a.x-b.x)+Math.abs(a.y-b.y)<=1;}
+function startCombat(e){
+  if(!e.hostile){setDestination(e.x,e.y);return;}
+  player.combatTarget=e.id;
+  if(!adjacent(player,e))path=pathToAdjacent(e);
+  log("Attacking "+e.name+".","combat");
+  sfx("click");
+}
+function combatTick(){
+  if(!player.combatTarget)return;
+  const e=getEntity(player.combatTarget);
+  if(!e){player.combatTarget=null;return;}
+  if(!adjacent(player,e)){
+    if(!path.length)path=pathToAdjacent(e);
+    return;
+  }
+  player.dir=dirBetween(player,e);
+  if(player.cooldown>0){player.cooldown--;return;}
+  const hit=Math.random()<0.72?rand(0,Math.max(1,player.attack+1)):0;
+  e.hp=Math.max(0,e.hp-hit);
+  log("You hit the "+e.name+" for "+hit+".","combat");
+  sfx("hit");
+  player.cooldown=4;
+  if(e.hp<=0){
+    log(e.name+" dies.","loot");
+    addItem("Bones",e.x,e.y);
+    sfx("death");
+    player.combatTarget=null;
+    return;
+  }
+  if(e.hostile){
+    const dmg=Math.random()<0.55?rand(0,e.attack||1):0;
+    player.hp=Math.max(0,player.hp-dmg);
+    if(dmg)log(e.name+" hits you for "+dmg+".","combat");
+    if(player.hp<=0){
+      log("You collapse and wake up in Lumbridge.","combat");
+      Object.assign(player,{x:382,y:572,rx:382,ry:572,hp:player.maxHp,combatTarget:null});
+      path=[];
+    }
+  }
+}
+
+/* =========================================================
+   PROJECTION / DRAWING
+========================================================= */
+function resize(){
+  const r=game.parentElement.getBoundingClientRect();
+  for(const c of [game,labels]){c.width=Math.floor(r.width);c.height=Math.floor(r.height);}
+  const mr=mini.parentElement.getBoundingClientRect();
+  mini.width=Math.floor(mr.width);mini.height=Math.floor(mr.height);
+}
+window.addEventListener("resize",resize);
+resize();
+
+function worldToScreen(x,y,z=0){
+  const tw=WORLD.tileW*cam.zoom,th=WORLD.tileH*cam.zoom;
+  return {
+    x:(x-y)*tw/2 + game.width/2 + cam.x,
+    y:(x+y)*th/2 + cam.y - z*cam.zoom
+  };
+}
+function screenToWorld(sx,sy){
+  const tw=WORLD.tileW*cam.zoom,th=WORLD.tileH*cam.zoom;
+  const X=sx-game.width/2-cam.x,Y=sy-cam.y;
+  const x=Math.floor(Y/th + X/tw);
+  const y=Math.floor(Y/th - X/tw);
+  return {x,y};
+}
+function poly(points,fill,stroke="#00000055"){
+  ctx.beginPath();
+  ctx.moveTo(points[0].x,points[0].y);
+  for(let i=1;i<points.length;i++)ctx.lineTo(points[i].x,points[i].y);
+  ctx.closePath();ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.stroke();}
+}
+function tileDiamond(x,y,color){
+  const p=worldToScreen(x,y,0),tw=WORLD.tileW*cam.zoom,th=WORLD.tileH*cam.zoom;
+  poly([{x:p.x,y:p.y-th/2},{x:p.x+tw/2,y:p.y},{x:p.x,y:p.y+th/2},{x:p.x-tw/2,y:p.y}],color,null);
+}
+function cubeIso(x,y,z,w,h,d,color,outline=true){
+  const a=worldToScreen(x,y,z),b=worldToScreen(x+w,y,z),c=worldToScreen(x+w,y+h,z),d0=worldToScreen(x,y+h,z);
+  const az=worldToScreen(x,y,z+d),bz=worldToScreen(x+w,y,z+d),cz=worldToScreen(x+w,y+h,z+d),dz=worldToScreen(x,y+h,z+d);
+  poly([az,bz,cz,dz],color,outline?"#0008":null);
+  poly([d0,c,cz,dz],shadeHex(color,.72),outline?"#0008":null);
+  poly([b,c,cz,bz],shadeHex(color,.58),outline?"#0008":null);
+}
+function shadeHex(hex,f){
+  const n=parseInt(hex.slice(1),16),r=Math.min(255,((n>>16)&255)*f),g=Math.min(255,((n>>8)&255)*f),b=Math.min(255,(n&255)*f);
+  return `rgb(${r|0},${g|0},${b|0})`;
+}
+function drawTriangleMarker(x,y,z,color){
+  const p=worldToScreen(x+.5,y+.5,z);
+  poly([{x:p.x,y:p.y-16*cam.zoom},{x:p.x+10*cam.zoom,y:p.y+8*cam.zoom},{x:p.x-10*cam.zoom,y:p.y+8*cam.zoom}],color,"#0008");
+}
+
+/* =========================================================
+   ANGULAR ASSETS
+========================================================= */
+function drawTree(o){
+  cubeIso(o.x+.35,o.y+.35,0,.3,.3,16,"#5d351b");
+  drawTriangleMarker(o.x+.5,o.y+.5,30,"#1f6a25");
+  drawTriangleMarker(o.x+.35,o.y+.4,22,"#2b7d2d");
+  drawTriangleMarker(o.x+.65,o.y+.55,24,"#246f28");
+}
+function drawWallTile(x,y){
+  cubeIso(x,y,0,1,1,42,"#77766f");
+  if((x+y)%2===0)cubeIso(x+.12,y+.05,18,.32,.08,4,"#8a8982",false);
+  cubeIso(x+.2,y+.2,42,.6,.6,5,"#8c8b84");
+}
+function drawDoorTile(x,y){tileDiamond(x,y,"#6b3a18");cubeIso(x+.15,y+.15,0,.7,.7,22,"#6b3a18");}
+function drawBuilding(o){
+  if(o.kind==="castle"){
+    cubeIso(o.x,o.y,0,o.w,o.h,24,"#68635a");
+    cubeIso(o.x+5,o.y+5,24,o.w-10,o.h-10,50,"#7d7b74");
+    for(let i=0;i<o.w;i+=5){cubeIso(o.x+i,o.y,48,2,1,8,"#918f87");cubeIso(o.x+i,o.y+o.h-1,48,2,1,8,"#918f87");}
+    return;
+  }
+  if(o.kind==="tower"){cubeIso(o.x,o.y,0,o.w,o.h,52,"#62625e");drawTriangleMarker(o.x+o.w/2,o.y+o.h/2,74,"#2e59a8");return;}
+  if(o.kind==="yard"){cubeIso(o.x,o.y,0,o.w,o.h,14,"#8a6a36");return;}
+  if(o.kind==="ge"){return;}
+  cubeIso(o.x,o.y,0,o.w,o.h,20,o.kind==="bank"?"#617b9c":o.kind==="pub"?"#8c4b30":o.kind==="shop"?"#8b6a36":o.kind==="church"?"#b8b8b0":"#77766f");
+  cubeIso(o.x+2,o.y+2,20,Math.max(2,o.w-4),Math.max(2,o.h-4),12,o.kind==="church"?"#d0d0c8":"#8e3829");
+}
+function drawSpecialObj(o){
+  if(o.type==="tree")return drawTree(o);
+  if(o.type==="building")return drawBuilding(o);
+  if(o.type==="wallring")return;
+  if(o.type==="castleKeep"){cubeIso(o.x,o.y,0,o.w,o.h,70,"#7d7b74");return;}
+  if(o.type==="ge"){
+    cubeIso(o.x+8,o.y+8,0,o.w-16,o.h-16,18,"#77766f");
+    for(let i=0;i<12;i++){const a=i/12*Math.PI*2;cubeIso(o.x+o.w/2+Math.cos(a)*32,o.y+o.h/2+Math.sin(a)*22,0,2,2,22,"#8d8c85");}
+    return;
+  }
+  if(o.type==="fountain"){cubeIso(o.x,o.y,0,o.w,o.h,8,"#777");drawTriangleMarker(o.x+2,o.y+2,20,"#79bde8");return;}
+  if(o.type==="graveyard"){for(let i=0;i<8;i++)cubeIso(o.x+2+i*4,o.y+4+(i%2)*8,0,1,2,12,"#797972");return;}
+  if(o.type==="post"){cubeIso(o.x,o.y,0,1,1,18,"#8d8c85");return;}
+  if(o.type==="gate"||o.type==="node"||o.type==="cave"){cubeIso(o.x,o.y,0,o.w,o.h,10,"#4e3a22");return;}
+}
+
+/* Living characters: angular only */
+function drawHuman(e,isPlayer=false){
+  const x=e.rx,y=e.ry,c=e.color||"#d0a064";
+  cubeIso(x+.30,y+.35,0,.25,.25,7,"#2a1709");
+  cubeIso(x+.55,y+.35,0,.25,.25,7,"#2a1709");
+  cubeIso(x+.34,y+.35,7,.22,.22,16,isPlayer?"#075f35":"#4a3320");
+  cubeIso(x+.58,y+.35,7,.22,.22,16,isPlayer?"#075f35":"#4a3320");
+  cubeIso(x+.20,y+.18,23,.70,.66,22,isPlayer?"#77752e":c);
+  cubeIso(x+.12,y+.18,43,.20,.22,18,"#b98655");
+  cubeIso(x+.88,y+.18,43,.20,.22,18,"#b98655");
+  cubeIso(x+.36,y+.18,58,.34,.34,14,"#b98655");
+  cubeIso(x+.40,y+.08,70,.26,.22,6,"#2a1a08");
+}
+function drawGoblin(e){
+  const x=e.rx,y=e.ry;
+  cubeIso(x+.25,y+.25,0,.28,.28,8,"#211308");
+  cubeIso(x+.58,y+.25,0,.28,.28,8,"#211308");
+  cubeIso(x+.24,y+.20,12,.55,.55,22,"#563818");
+  cubeIso(x+.12,y+.18,34,.20,.20,22,"#4ca943");
+  cubeIso(x+.88,y+.18,34,.20,.20,22,"#4ca943");
+  cubeIso(x+.30,y+.12,55,.46,.42,18,"#4ca943");
+  cubeIso(x+.16,y+.20,64,.18,.08,6,"#4ca943");
+  cubeIso(x+.78,y+.20,64,.18,.08,6,"#4ca943");
+}
+function drawAnimal(e){
+  const x=e.rx,y=e.ry,s=e.species;
+  if(s==="Cow"){cubeIso(x+.05,y+.18,12,1.05,.62,22,"#d8d2bd");cubeIso(x+.86,y+.22,24,.38,.34,16,"#d8d2bd");cubeIso(x+.2,y+.1,18,.25,.08,8,"#422819");}
+  else if(s==="Chicken"){cubeIso(x+.25,y+.25,8,.45,.38,18,"#e8dc86");cubeIso(x+.62,y+.30,22,.20,.18,10,"#e8dc86");drawTriangleMarker(x+.76,y+.39,34,"#e87512");}
+  else if(s==="Sheep"){cubeIso(x+.1,y+.18,10,.85,.62,22,"#d8d5c8");cubeIso(x+.82,y+.28,24,.32,.26,14,"#30251b");}
+  else if(s==="Rat"){cubeIso(x+.20,y+.35,5,.60,.30,10,"#696157");cubeIso(x+.75,y+.38,11,.22,.18,8,"#696157");}
+  else if(s==="Giant spider"){cubeIso(x+.15,y+.25,8,.74,.55,12,"#171513");for(let i=0;i<4;i++){cubeIso(x+.08+i*.22,y-.10,8,.08,.42,5,"#171513");cubeIso(x+.08+i*.22,y+.70,8,.08,.42,5,"#171513");}}
+}
+function drawEntity(e){
+  if(e.id==="player")return drawHuman(e,true);
+  if(e.role==="animal")return drawAnimal(e);
+  if(e.name==="Goblin")return drawGoblin(e);
+  if(e.name==="Restless ghost"){cubeIso(e.rx+.25,e.ry+.20,12,.55,.55,34,"#aeeaff");return;}
+  drawHuman(e,false);
+}
+
+/* =========================================================
+   LABELS / HOVER
+========================================================= */
+function drawLabels(visible){
+  lctx.clearRect(0,0,labels.width,labels.height);
+  hoverEntity=null;
+  for(const e of visible){
+    if(Math.abs(e.x-player.x)>WORLD.labelRender||Math.abs(e.y-player.y)>WORLD.labelRender)continue;
+    const p=worldToScreen(e.rx+.5,e.ry+.5,92);
+    if(p.x<-80||p.y<-60||p.x>labels.width+80||p.y>labels.height+80)continue;
+    e.hoverBox={x:p.x-42,y:p.y-44,w:84,h:62};
+    if(mouse.x>=e.hoverBox.x&&mouse.x<=e.hoverBox.x+e.hoverBox.w&&mouse.y>=e.hoverBox.y&&mouse.y<=e.hoverBox.y+e.hoverBox.h)hoverEntity=e;
+
+    lctx.font="bold 12px Georgia";
+    lctx.textAlign="center";
+    lctx.lineWidth=3;
+    lctx.strokeStyle="#000";
+    lctx.fillStyle=e.hostile?"#ffdd66":"#fff2a8";
+    lctx.strokeText(e.name,p.x,p.y);
+    lctx.fillText(e.name,p.x,p.y);
+
+    if(state.renderBoxes){
+      lctx.strokeStyle="#ff0";
+      lctx.strokeRect(e.hoverBox.x,e.hoverBox.y,e.hoverBox.w,e.hoverBox.h);
+    }
+  }
+}
+
+/* =========================================================
+   MINIMAP
+========================================================= */
+function drawMini(){
+  const sx=mini.width/WORLD.W,sy=mini.height/WORLD.H;
+  mctx.clearRect(0,0,mini.width,mini.height);
+  for(let y=0;y<WORLD.H;y+=3)for(let x=0;x<WORLD.W;x+=3){
+    mctx.fillStyle=COLOR[getTile(x,y)];
+    mctx.fillRect(x*sx,y*sy,Math.ceil(3*sx),Math.ceil(3*sy));
+  }
+  for(const e of entities){
+    if(e.hp<=0)continue;
+    mctx.fillStyle=e.hostile?"#f33":"#ff5";
+    mctx.fillRect(e.x*sx-1,e.y*sy-1,3,3);
+  }
+  mctx.fillStyle="#0ff";
+  mctx.fillRect(player.x*sx-2,player.y*sy-2,5,5);
+  mctx.strokeStyle="#fff";
+  mctx.strokeRect((player.x-WORLD.render)*sx,(player.y-WORLD.render)*sy,WORLD.render*2*sx,WORLD.render*2*sy);
+}
+
+/* =========================================================
+   RENDER LOOP
+========================================================= */
+const mouse={x:0,y:0,down:false};
+
+function updateStep(now){
+  if(path.length&&now-lastStep>WORLD.stepMs){
+    lastStep=now;
+    const n=path.shift();
+    player.dir=dirBetween(player,n);
+    player.x=n.x;player.y=n.y;
+    sfx("step");
+  }
+  player.rx+=(player.x-player.rx)*.28;
+  player.ry+=(player.y-player.ry)*.28;
+  for(const e of entities){e.rx+=(e.x-e.rx)*.18;e.ry+=(e.y-e.ry)*.18;}
+}
+
+function drawFrame(now=0){
+  tick++;
+  updateStep(now);
+
+  const mz=musicZone();
+  if(mz!==currentMusic)setMusic(mz);
+
+  ctx.clearRect(0,0,game.width,game.height);
+
+  const minX=Math.max(0,player.x-WORLD.render),maxX=Math.min(WORLD.W,player.x+WORLD.render);
+  const minY=Math.max(0,player.y-WORLD.render),maxY=Math.min(WORLD.H,player.y+WORLD.render);
+
+  for(let y=minY;y<maxY;y++){
+    for(let x=minX;x<maxX;x++){
+      const t=getTile(x,y);
+      if(t===T.wall)drawWallTile(x,y);
+      else if(t===T.door)drawDoorTile(x,y);
+      else tileDiamond(x,y,COLOR[t]);
+    }
+  }
+
+  const visibleObjects=objects.filter(o=>nearPlayer(o,WORLD.render));
+  visibleObjects.sort((a,b)=>(a.x+a.y)-(b.x+b.y));
+  for(const o of visibleObjects)drawSpecialObj(o);
+
+  for(const it of items){
+    if(Math.abs(it.x-player.x)>WORLD.render||Math.abs(it.y-player.y)>WORLD.render)continue;
+    cubeIso(it.rx+.25,it.ry+.25,8,.5,.5,6,"#d9b858");
+  }
+
+  const visibleEntities=entities.filter(e=>e.hp>0&&Math.abs(e.x-player.x)<=WORLD.entityRender&&Math.abs(e.y-player.y)<=WORLD.entityRender);
+  visibleEntities.push(Object.assign({id:"player",rx:player.rx,ry:player.ry,x:player.x,y:player.y,name:"You",color:player.color},player));
+  visibleEntities.sort((a,b)=>(a.rx+a.ry)-(b.rx+b.ry));
+  for(const e of visibleEntities)drawEntity(e);
+
+  drawLabels(visibleEntities.filter(e=>e.id!=="player"));
+  drawMini();
+  updateHud();
+  requestAnimationFrame(drawFrame);
+}
+
+/* =========================================================
+   INPUT
+========================================================= */
+function worldClick(x,y){
+  initAudio();
+  if(hoverEntity){
+    if(hoverEntity.hostile)startCombat(hoverEntity);
+    else {
+      log("You approach "+hoverEntity.name+".");
+      path = findPath(player.x,player.y,hoverEntity.x,hoverEntity.y);
+    }
+    return;
+  }
+  setDestination(x,y);
+}
+
+game.addEventListener("mousemove",e=>{
+  const r=game.getBoundingClientRect();
+  mouse.x=e.clientX-r.left; mouse.y=e.clientY-r.top;
+  hoverTile=screenToWorld(mouse.x,mouse.y);
+  if(hoverEntity)hud.textContent=hoverEntity.hostile?"Attack "+hoverEntity.name:"Talk-to "+hoverEntity.name;
+  else hud.textContent=inb(hoverTile.x,hoverTile.y)?"Walk here":"";
 });
-for(let x=40;x<=50;x++){setTile(x,40,TILE_TYPES.WALL);setTile(x,50,TILE_TYPES.WALL);}
-for(let y=40;y<=50;y++){setTile(40,y,TILE_TYPES.WALL);setTile(50,y,TILE_TYPES.WALL);}
-setTile(45,50,TILE_TYPES.DOOR);setTile(40,45,TILE_TYPES.DOOR);
-for(let x=41;x<=49;x++)for(let y=41;y<=49;y++)setTile(x,y,TILE_TYPES.GRASS);
-for(let x=5;x<=18;x++)for(let y=48;y<=58;y++){if(Math.random()<0.7)setTile(x,y,TILE_TYPES.SWAMP);}
-for(let x=37;x<=55;x++){setTile(x,35,TILE_TYPES.SAND);setTile(x,36,TILE_TYPES.SAND);}
-setTile(10,52,TILE_TYPES.SWAMP);
-setTile(25,48,TILE_TYPES.STONE);
-}
-buildMap();
-
-// ---- WORLD OBJECTS ----
-const worldObjects=[];
-const treePositions=[];
-for(let i=0;i<35;i++){
-let tx,ty;do{tx=Math.floor(Math.random()*MAP);ty=Math.floor(Math.random()*10);}while(!isWalkable(tx,ty)||treePositions.some(p=>Math.abs(p[0]-tx)<2&&Math.abs(p[1]-ty)<2));
-treePositions.push([tx,ty]);worldObjects.push({type:'tree',tile:{x:tx,y:ty},alive:true,respawnAt:0});
-clipFlags[tIdx(tx,ty)]=1;
-}
-for(let i=0;i<20;i++){
-let tx,ty;do{tx=2+Math.floor(Math.random()*15);ty=14+Math.floor(Math.random()*20);}while(!isWalkable(tx,ty));
-treePositions.push([tx,ty]);worldObjects.push({type:'tree',tile:{x:tx,y:ty},alive:true,respawnAt:0});
-clipFlags[tIdx(tx,ty)]=1;
-}
-const rockPositions=[[5,6],[7,4],[12,7],[14,5],[8,8]];
-rockPositions.forEach(([rx,ry])=>{worldObjects.push({type:'rock',tile:{x:rx,y:ry},alive:true,respawnAt:0});clipFlags[tIdx(rx,ry)]=1;});
-[[28,10],[32,10],[25,11]].forEach(([fx,fy])=>worldObjects.push({type:'fish',tile:{x:fx,y:fy}}));
-worldObjects.push({type:'range',tile:{x:23,y:41}});
-worldObjects.push({type:'coffin',tile:{x:25,y:48}});
-worldObjects.push({type:'ground_item',tile:{x:10,y:52},itemId:'ghost_skull',qty:1,taken:false,respawnAt:0});
-worldObjects.push({type:'dairy',tile:{x:45,y:45}});
-
-// ---- GROUND ITEMS ----
-const groundItems=[
-{id:'bronze_sword',tile:{x:26,y:27},qty:1,respawn:80,taken:false,respawnAt:0},
-{id:'coins',tile:{x:33,y:26},qty:15,respawn:60,taken:false,respawnAt:0},
-];
-
-// ---- NPCs ----
-const NPCS=[
-{id:'edgar',name:'Edgar the Servant',tile:{x:30,y:26},color:'#8a7a6a',level:0,wander:3,aggressive:false,
-dialog:[{text:"I've worked in this castle for many years, traveller.",opts:[{t:"How long?",next:1},{t:"Goodbye.",next:null}]},{text:"Oh, longer than I can remember! The Duke keeps me busy.",opts:[{t:"Farewell.",next:null}]}]},
-{id:'duke',name:'Duke Aldric',tile:{x:30,y:27},color:'#2a4a8a',level:0,wander:0,aggressive:false,
-dialog:[{text:"Ah, adventurer! I have a matter of great importance. Take these research notes to the scholar east of town.",opts:[{t:"I will do it.",next:1},{t:"Not now.",next:null}]},{text:"Excellent. Return when you have delivered them.",opts:[{t:"Understood.",next:null}]}],questStart:'arcane_mystery'},
-{id:'cook',name:'Gareth the Cook',tile:{x:23,y:41},color:'#c87a3a',level:0,wander:0,aggressive:false,
-dialog:[{text:"The Duke's feast is tonight and I need: a bucket of milk, an egg, and flour. Can you help?",opts:[{t:"I'll get them!",next:1},{t:"Maybe later.",next:null}]},{text:"The dairy farm is east. The mill is south-west. Hurry!",opts:[{t:"On my way.",next:null}]}],questStart:'feast_assistant'},
-{id:'guard1',name:'Castle Guard',tile:{x:30,y:35},color:'#4a4a7a',level:9,wander:0,aggressive:false,
-dialog:[{text:"Welcome to the castle, traveller. Stay out of trouble.",opts:[{t:"Thanks.",next:null}]}]},
-{id:'blacksmith',name:"Bob the Smith",tile:{x:35,y:42},color:'#6a3a2a',level:0,wander:0,aggressive:false,
-dialog:[{text:"Finest blades in Irondale! I sell bronze and iron swords.",opts:[{t:"Show me.",next:1},{t:"No thanks.",next:null}]},{text:"Bronze sword: 50gp. Iron sword: 200gp. What'll it be?",opts:[{t:"Buy Bronze (50gp)",next:'BUY_BRONZE'},{t:"Buy Iron (200gp)",next:'BUY_IRON'},{t:"Nothing.",next:null}]}]},
-{id:'priest',name:'Father Aldwin',tile:{x:24,y:47},color:'#e8e8e8',level:0,wander:0,aggressive:false,
-dialog:[{text:"Peace be with you. A troubled spirit haunts the old graveyard. Find its skull in the swamp and return it to the coffin nearby.",opts:[{t:"I'll do it.",next:1},{t:"Goodbye.",next:null}]},{text:"Bless you. The swamp is to the south-west. Be careful!",opts:[{t:"On my way.",next:null}]}],questStart:'restless_spirit'},
-{id:'farmer',name:'Fred the Farmer',tile:{x:44,y:44},color:'#8a6a3a',level:0,wander:2,aggressive:false,
-dialog:[{text:"Watch out for them cows! Got a spare egg if you need one for the cook.",opts:[{t:"Thanks!",next:null}]}]},
-{id:'millie',name:'Millie the Miller',tile:{x:23,y:52},color:'#c8a87a',level:0,wander:0,aggressive:false,
-dialog:[{text:"The mill's running well! I can give you flour if you need it.",opts:[{t:"I need flour.",next:1},{t:"Thanks.",next:null}]},{text:"Here you go - a pot of flour!",opts:[{t:"Thank you!",next:'GIVE_FLOUR'}]}]},
-{id:'guide',name:'Town Guide',tile:{x:31,y:43},color:'#3a8a3a',level:0,wander:0,aggressive:false,
-dialog:[{text:"Welcome to Irondale! Castle is north. Click on trees to chop, fish to catch, monsters to fight!",opts:[{t:"Combat tips?",next:1},{t:"Skilling tips?",next:2},{t:"Bye.",next:null}]},{text:"Click monsters to attack. Check your combat tab to change styles. Eat food to heal!",opts:[{t:"Thanks!",next:null}]},{text:"Chop trees for Woodcutting XP, fish for Fishing XP, mine rocks for Mining. Cook food on ranges!",opts:[{t:"Thanks!",next:null}]}]},
-{id:'banker',name:'Banker Rowan',tile:{x:35,y:47},color:'#2a6a4a',level:0,wander:0,aggressive:false,
-dialog:[{text:"Welcome to Irondale Bank! Would you like to access your bank?",opts:[{t:"Open bank.",next:'OPEN_BANK'},{t:"No thanks.",next:null}]}]},
-{id:'scholar',name:'Scholar Elara',tile:{x:42,y:36},color:'#6a3a8a',level:0,wander:0,aggressive:false,
-dialog:[{text:"Greetings. I study the arcane arts here. Do you bring something for me?",opts:[{t:"I have notes.",next:'DELIVER_NOTES'},{t:"Just looking.",next:null}]}]},
-];
-
-// ---- MONSTERS ----
-const MONSTER_DEFS=[
-{id:'goblin',name:'Goblin',color:'#4a6a2a',level:2,hp:7,maxHit:1,atkSpeed:4,xpPerDmg:4,spawnArea:[20,37,35,55],count:4,aggressive:false,aggroRange:0,drops:[{id:'coins',qty:[1,5],rate:0.8},{id:'bones',qty:1,rate:1.0}]},
-{id:'goblin_warrior',name:'Goblin Warrior',color:'#3a5a1a',level:5,hp:15,maxHit:2,atkSpeed:4,xpPerDmg:4,spawnArea:[20,37,35,55],count:2,aggressive:true,aggroRange:4,drops:[{id:'coins',qty:[3,15],rate:0.8},{id:'bones',qty:1,rate:1.0},{id:'bronze_sword',qty:1,rate:0.1}]},
-{id:'chicken',name:'Chicken',color:'#e8e8c8',level:1,hp:3,maxHit:1,atkSpeed:4,xpPerDmg:4,spawnArea:[41,41,49,49],count:4,aggressive:false,aggroRange:0,drops:[{id:'raw_chicken',qty:1,rate:1.0},{id:'feather',qty:[5,10],rate:1.0},{id:'egg',qty:1,rate:0.25}]},
-{id:'cow',name:'Cow',color:'#d4c8b4',level:2,hp:8,maxHit:1,atkSpeed:5,xpPerDmg:4,spawnArea:[41,41,49,49],count:3,aggressive:false,aggroRange:0,drops:[{id:'raw_beef',qty:1,rate:1.0},{id:'cowhide',qty:1,rate:1.0}]},
-{id:'rat',name:'Giant Rat',color:'#7a6a5a',level:3,hp:6,maxHit:1,atkSpeed:4,xpPerDmg:4,spawnArea:[5,48,18,58],count:3,aggressive:true,aggroRange:3,drops:[{id:'bones',qty:1,rate:1.0}]},
-];
-
-const npcInstances=[];
-const monsterInstances=[];
-
-// ---- CANVAS 2D SETUP ----
-const canvas=document.getElementById('game-canvas');
-const ctx=canvas.getContext('2d');
-canvas.width=W;canvas.height=H;
-
-// ---- ISO DRAWING PRIMITIVES ----
-function drawIsoTile(cx,sx,sy,topColor,leftColor,rightColor,raised){
-const hw=TILE_W/2,hh=TILE_H/2;
-const depth=raised?TILE_DEPTH:4;
-cx.beginPath();cx.moveTo(sx,sy);cx.lineTo(sx+hw,sy+hh);cx.lineTo(sx,sy+TILE_H);cx.lineTo(sx-hw,sy+hh);cx.closePath();
-cx.fillStyle=topColor;cx.fill();
-if(raised){
-cx.beginPath();cx.moveTo(sx-hw,sy+hh);cx.lineTo(sx,sy+TILE_H);cx.lineTo(sx,sy+TILE_H+depth);cx.lineTo(sx-hw,sy+hh+depth);cx.closePath();
-cx.fillStyle=leftColor;cx.fill();
-cx.beginPath();cx.moveTo(sx,sy+TILE_H);cx.lineTo(sx+hw,sy+hh);cx.lineTo(sx+hw,sy+hh+depth);cx.lineTo(sx,sy+TILE_H+depth);cx.closePath();
-cx.fillStyle=rightColor;cx.fill();
-}
-}
-function drawIsoWall(cx,sx,sy,topColor,leftColor,rightColor,boxH){
-const hw=TILE_W/2,hh=TILE_H/2;
-const bsy=sy-boxH;
-cx.beginPath();cx.moveTo(sx,bsy);cx.lineTo(sx+hw,bsy+hh);cx.lineTo(sx,bsy+TILE_H);cx.lineTo(sx-hw,bsy+hh);cx.closePath();
-cx.fillStyle=topColor;cx.fill();
-cx.beginPath();cx.moveTo(sx-hw,bsy+hh);cx.lineTo(sx,bsy+TILE_H);cx.lineTo(sx,sy+TILE_H);cx.lineTo(sx-hw,sy+hh);cx.closePath();
-cx.fillStyle=leftColor;cx.fill();
-cx.beginPath();cx.moveTo(sx,bsy+TILE_H);cx.lineTo(sx+hw,bsy+hh);cx.lineTo(sx+hw,sy+hh);cx.lineTo(sx,sy+TILE_H);cx.closePath();
-cx.fillStyle=rightColor;cx.fill();
-}
-
-// ---- SPRITE DRAWING ----
-function drawTree2D(cx,sx,sy){
-if(!sx&&sx!==0)return;
-cx.fillStyle='#5c3a1a';cx.fillRect(sx-3,sy-4,6,18);
-cx.fillStyle='#2d6a2d';cx.beginPath();cx.arc(sx,sy-12,14,0,Math.PI*2);cx.fill();
-cx.fillStyle='#3a8a3a';cx.beginPath();cx.arc(sx-4,sy-16,9,0,Math.PI*2);cx.fill();
-}
-function drawRock2D(cx,sx,sy){
-cx.fillStyle='#6a6a6a';cx.beginPath();cx.ellipse(sx,sy+8,12,8,0,0,Math.PI*2);cx.fill();
-cx.fillStyle='#888';cx.beginPath();cx.ellipse(sx-2,sy+4,8,6,-0.3,0,Math.PI*2);cx.fill();
-}
-function drawFish2D(cx,sx,sy,tick){
-const alpha=0.4+0.4*Math.abs(Math.sin(tick*0.05));
-cx.save();cx.globalAlpha=alpha;cx.fillStyle='#44aaff';cx.beginPath();cx.arc(sx,sy+10,8,0,Math.PI*2);cx.fill();cx.restore();
-cx.fillStyle='#88ccff';cx.font='11px monospace';cx.textAlign='center';cx.fillText('≈',sx,sy+4);
-}
-function drawRange2D(cx,sx,sy){
-cx.fillStyle='#4a2a0a';cx.fillRect(sx-10,sy-8,20,16);
-cx.fillStyle='#cc4400';cx.beginPath();cx.arc(sx,sy,6,0,Math.PI*2);cx.fill();
-cx.fillStyle='#ff8844';cx.beginPath();cx.arc(sx,sy,3,0,Math.PI*2);cx.fill();
-}
-function drawCoffin2D(cx,sx,sy){
-cx.fillStyle='#5a4a3a';cx.fillRect(sx-12,sy-4,24,10);
-cx.fillStyle='#7a6a5a';cx.fillRect(sx-10,sy-3,20,8);
-}
-function drawGroundItemDot(cx,sx,sy,color){
-cx.fillStyle=color||'#d8d8c8';cx.beginPath();cx.arc(sx,sy+6,5,0,Math.PI*2);cx.fill();
-cx.fillStyle='#ffffff';cx.beginPath();cx.arc(sx-1,sy+4,2,0,Math.PI*2);cx.fill();
-}
-function drawDairy2D(cx,sx,sy){
-cx.fillStyle='#d4c8b4';cx.fillRect(sx-10,sy-6,20,14);
-cx.fillStyle='#f0f0f0';cx.fillRect(sx-6,sy-2,12,6);
-}
-function drawHumanoid2D(cx,sx,sy,bodyColor,headColor,nameLabel,hpFrac,lvl){
-const bx=sx,by=sy-4;
-cx.save();cx.globalAlpha=0.35;cx.fillStyle='#000';cx.beginPath();cx.ellipse(bx,by+20,10,5,0,0,Math.PI*2);cx.fill();cx.restore();
-cx.fillStyle='#3a2a1a';cx.fillRect(bx-5,by+16,4,10);cx.fillRect(bx+1,by+16,4,10);
-cx.fillStyle=bodyColor;cx.fillRect(bx-7,by+4,14,14);
-cx.fillStyle=bodyColor;cx.fillRect(bx-11,by+5,4,10);cx.fillRect(bx+7,by+5,4,10);
-cx.fillStyle=headColor;cx.beginPath();cx.arc(bx,by,7,0,Math.PI*2);cx.fill();
-if(nameLabel){
-cx.font='9px monospace';cx.textAlign='center';
-const tw=cx.measureText(nameLabel).width;
-cx.fillStyle='rgba(0,0,0,0.6)';cx.fillRect(bx-tw/2-2,by-22,tw+4,12);
-cx.fillStyle='#ffff00';cx.fillText(nameLabel,bx,by-12);
-}
-if(hpFrac!==undefined&&hpFrac!==null&&hpFrac<1){
-const bw=28;cx.fillStyle='#440000';cx.fillRect(bx-bw/2,by-28,bw,4);
-cx.fillStyle=hpFrac>0.5?'#00cc00':hpFrac>0.25?'#cccc00':'#cc0000';
-cx.fillRect(bx-bw/2,by-28,bw*hpFrac,4);
-}
-}
-function drawChicken2D(cx,sx,sy){
-cx.fillStyle='#e8e8c8';cx.beginPath();cx.ellipse(sx,sy+6,8,6,0,0,Math.PI*2);cx.fill();
-cx.fillStyle='#ff8844';cx.beginPath();cx.moveTo(sx+8,sy+6);cx.lineTo(sx+12,sy+8);cx.lineTo(sx+8,sy+10);cx.closePath();cx.fill();
-cx.fillStyle='#ff3333';cx.fillRect(sx-2,sy-2,4,4);
-}
-function drawCow2D(cx,sx,sy){
-cx.fillStyle='#d4c8b4';cx.fillRect(sx-14,sy-2,28,14);
-cx.fillStyle='#3a2a1a';cx.fillRect(sx-12,sy+10,5,8);cx.fillRect(sx+7,sy+10,5,8);
-cx.fillStyle='#e8d8c8';cx.beginPath();cx.arc(sx+14,sy+2,8,0,Math.PI*2);cx.fill();
-}
-function drawPlayer2D(cx,sx,sy){
-const bx=sx,by=sy-4;
-cx.save();cx.globalAlpha=0.4;cx.fillStyle='#000';cx.beginPath();cx.ellipse(bx,by+20,11,5,0,0,Math.PI*2);cx.fill();cx.restore();
-cx.fillStyle='#2a3a6a';cx.fillRect(bx-5,by+16,4,11);cx.fillRect(bx+1,by+16,4,11);
-cx.fillStyle='#5a6a9a';cx.fillRect(bx-8,by+4,16,14);
-cx.fillStyle='#8a6a2a';cx.fillRect(bx-8,by+14,16,3);
-cx.fillStyle='#5a6a9a';cx.fillRect(bx-12,by+5,4,10);cx.fillRect(bx+8,by+5,4,10);
-cx.fillStyle='#e8b89a';cx.beginPath();cx.arc(bx,by,7,0,Math.PI*2);cx.fill();
-cx.fillStyle='#8a5a2a';cx.beginPath();cx.arc(bx,by-3,7,Math.PI,0);cx.fill();
-// weapon
-if(player.equipment.weapon){
-const wc=ITEMS[player.equipment.weapon];
-cx.fillStyle=wc?wc.color:'#aaa';
-cx.save();cx.translate(bx+12,by+4);cx.rotate(-0.5);cx.fillRect(-2,-14,4,16);cx.restore();
-}
-const hpFrac=player.currentHp/player.maxHp;
-const bw=30;cx.fillStyle='#440000';cx.fillRect(bx-bw/2,by-28,bw,4);
-cx.fillStyle=hpFrac>0.5?'#00cc00':hpFrac>0.25?'#cccc00':'#cc0000';
-cx.fillRect(bx-bw/2,by-28,bw*hpFrac,4);
-cx.font='bold 10px monospace';cx.textAlign='center';cx.fillStyle='#ffffff';cx.fillText('You',bx,by-32);
-}
-
-// ---- HITSPLATS & XP DROPS (canvas-based) ----
-const hitsplats=[];
-const xpDrops=[];
-function spawnHitsplat(tx,ty,dmg,miss){hitsplats.push({tx,ty,damage:dmg,isHit:!miss,life:60});}
-function spawnXPDrop(skillName,amount){
-xpDrops.push({text:'+'+Math.round(amount)+' '+skillName,life:80,tx:player.tile.x,ty:player.tile.y});
-}
-function drawHitsplats(){
-for(let i=hitsplats.length-1;i>=0;i--){
-const h=hitsplats[i];h.life--;
-if(h.life<=0){hitsplats.splice(i,1);continue;}
-const s=tileToScreen(h.tx,h.ty);
-const sx=s.x+camX,sy=s.y+camY-(60-h.life)*0.5;
-const alpha=Math.min(1,h.life/20);
-ctx.save();ctx.globalAlpha=alpha;
-ctx.fillStyle=h.isHit?'#cc0000':'#3333cc';
-ctx.beginPath();ctx.arc(sx,sy,12,0,Math.PI*2);ctx.fill();
-ctx.fillStyle='#fff';ctx.font='bold 11px monospace';ctx.textAlign='center';ctx.fillText(h.damage,sx,sy+4);
-ctx.restore();
-}
-}
-function drawXPDrops(){
-for(let i=xpDrops.length-1;i>=0;i--){
-const d=xpDrops[i];d.life--;
-if(d.life<=0){xpDrops.splice(i,1);continue;}
-const s=tileToScreen(d.tx,d.ty);
-const sx=s.x+camX+15,sy=s.y+camY-(80-d.life)*0.5-20;
-ctx.save();ctx.globalAlpha=Math.min(1,d.life/20);
-ctx.font='bold 11px monospace';ctx.textAlign='center';
-ctx.fillStyle='#000';ctx.fillText(d.text,sx+1,sy+1);
-ctx.fillStyle='#ffff00';ctx.fillText(d.text,sx,sy);
-ctx.restore();
-}
-}
-
-// ---- SPAWN NPCs ----
-NPCS.forEach(def=>{
-const npc={...def,currentTile:{...def.tile},homeTile:{...def.tile},wanderTimer:0,lerpX:def.tile.x,lerpY:def.tile.y};
-npcInstances.push(npc);
+labels.addEventListener("mousemove",e=>{
+  const r=labels.getBoundingClientRect();
+  mouse.x=e.clientX-r.left; mouse.y=e.clientY-r.top;
 });
-
-// ---- SPAWN MONSTERS ----
-MONSTER_DEFS.forEach(def=>{
-for(let i=0;i<def.count;i++){
-const [x1,y1,x2,y2]=def.spawnArea;
-let sx2,sy2,attempts=0;
-do{sx2=x1+Math.floor(Math.random()*(x2-x1));sy2=y1+Math.floor(Math.random()*(y2-y1));attempts++;}while(!isWalkable(sx2,sy2)&&attempts<50);
-const inst={...def,currentTile:{x:sx2,y:sy2},spawnTile:{x:sx2,y:sy2},currentHp:def.hp,alive:true,respawnAt:0,wanderTimer:0,target:null,atkCooldown:0,idx:monsterInstances.length,lerpX:sx2,lerpY:sy2};
-monsterInstances.push(inst);
-}
+labels.addEventListener("click",e=>{
+  const r=labels.getBoundingClientRect();
+  mouse.x=e.clientX-r.left; mouse.y=e.clientY-r.top;
+  const w=screenToWorld(mouse.x,mouse.y);
+  worldClick(w.x,w.y);
 });
-
-// ---- A* PATHFINDING ----
-function findPath(sx,sy,ex,ey){
-if(!isWalkable(ex,ey)){
-let best=null,bestD=Infinity;
-for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++){
-const nx=ex+dx,ny=ey+dy;
-if(isWalkable(nx,ny)){const dd=Math.abs(nx-sx)+Math.abs(ny-sy);if(dd<bestD){bestD=dd;best={x:nx,y:ny};}}
-}
-if(best){ex=best.x;ey=best.y;}else return[];
-}
-if(sx===ex&&sy===ey)return[];
-const open=[],closed=new Set();
-const gS={},fS={},par={};
-const k=(x,y)=>x+','+y;
-const h=(x,y)=>Math.abs(x-ex)+Math.abs(y-ey);
-const sk=k(sx,sy);
-gS[sk]=0;fS[sk]=h(sx,sy);
-open.push({x:sx,y:sy,f:fS[sk]});
-let iters=0;
-while(open.length>0&&iters<2000){
-iters++;open.sort((a,b)=>a.f-b.f);
-const cur=open.shift();const ck=k(cur.x,cur.y);
-if(cur.x===ex&&cur.y===ey){
-const path=[];let p=ck;
-while(p){const[px,py]=p.split(',').map(Number);path.unshift({x:px,y:py});p=par[p];}
-return path.slice(1);
-}
-closed.add(ck);
-const dirs=[[0,1],[0,-1],[1,0],[-1,0]];
-for(const[ddx,ddy]of dirs){
-const nx=cur.x+ddx,ny=cur.y+ddy;const nk=k(nx,ny);
-if(closed.has(nk)||!isWalkable(nx,ny))continue;
-const ng=(gS[ck]||0)+1;
-if(gS[nk]===undefined||ng<gS[nk]){
-gS[nk]=ng;fS[nk]=ng+h(nx,ny);par[nk]=ck;
-if(!open.some(o=>o.x===nx&&o.y===ny))open.push({x:nx,y:ny,f:fS[nk]});
-}
-}
-}
-return[];
-}
-
-// ---- INVENTORY ----
-function addInventoryItem(item){
-if(player.inventory.length>=28&&!item.stackable){addChat('Your inventory is full.','game');return false;}
-if(item.stackable||item.id==='coins'){
-const existing=player.inventory.find(i=>i.id===item.id);
-if(existing){existing.qty+=(item.qty||1);updateInventoryPanel();return true;}
-}
-if(player.inventory.length>=28){addChat('Your inventory is full.','game');return false;}
-player.inventory.push({id:item.id,qty:item.qty||1});
-updateInventoryPanel();return true;
-}
-function removeInventoryItem(idx,qty){
-qty=qty||1;const item=player.inventory[idx];if(!item)return;
-item.qty-=qty;if(item.qty<=0)player.inventory.splice(idx,1);
-updateInventoryPanel();
-}
-function hasItem(id){return player.inventory.some(i=>i.id===id);}
-function countItem(id){const i=player.inventory.find(x=>x.id===id);return i?i.qty:0;}
-
-// ---- XP helpers ----
-function addXP(skill,amount){
-amount=Math.floor(amount);if(amount<=0)return;
-player.skills[skill].xp+=amount;
-const nl=levelFromXP(player.skills[skill].xp);
-if(nl>player.skills[skill].level){player.skills[skill].level=nl;showLevelUp(skill,nl);if(skill==='hitpoints'){player.maxHp=nl;player.currentHp=Math.min(player.currentHp+1,player.maxHp);}playLevelUp();}
-updateStatsPanel();spawnXPDrop(skill.charAt(0).toUpperCase()+skill.slice(1),amount);
-}
-
-// ---- COMBAT ----
-function getEffectiveLevel(base,skill){
-let bonus=0;
-if(player.attackStyle==='accurate'&&skill==='attack')bonus=3;
-if(player.attackStyle==='aggressive'&&skill==='strength')bonus=3;
-if(player.attackStyle==='defensive'&&skill==='defence')bonus=3;
-if(player.attackStyle==='controlled')bonus=1;
-return Math.floor(base+bonus+8);
-}
-function getEquipBonus(type){
-let b=0;for(let slot in player.equipment){
-const eid=player.equipment[slot];
-if(eid){const itm=ITEMS[eid];if(itm){if(type==='atk')b+=(itm.atkBonus||0);if(type==='str')b+=(itm.strBonus||0);if(type==='def')b+=(itm.defBonus||0);}}
-}return b;
-}
-function calcMaxHit(){
-const effStr=getEffectiveLevel(player.skills.strength.level,'strength');
-const strBonus=getEquipBonus('str');
-return Math.max(1,Math.floor(effStr*(strBonus+64)/640+0.5));
-}
-function calcHitChance(effAtk,atkBonus,effDef,defBonus){
-const ar=effAtk*(atkBonus+64),dr=effDef*(defBonus+64);
-if(ar>dr)return 1-(dr+2)/(2*(ar+1));return ar/(2*(dr+1));
-}
-function playerAttackMonster(mon){
-const effAtk=getEffectiveLevel(player.skills.attack.level,'attack');
-const atkBonus=getEquipBonus('atk');const effDef=Math.floor(mon.level+8);
-const hitChance=calcHitChance(effAtk,atkBonus,effDef,0);
-if(Math.random()<hitChance){
-const maxHit=calcMaxHit();const dmg=Math.floor(Math.random()*(maxHit+1));
-if(dmg===0){spawnHitsplat(mon.currentTile.x,mon.currentTile.y,0,true);return;}
-mon.currentHp=Math.max(0,mon.currentHp-dmg);
-spawnHitsplat(mon.currentTile.x,mon.currentTile.y,dmg,false);
-playSwordSwing();
-if(player.attackStyle==='accurate')addXP('attack',dmg*4);
-else if(player.attackStyle==='aggressive')addXP('strength',dmg*4);
-else if(player.attackStyle==='defensive')addXP('defence',dmg*4);
-else{addXP('attack',Math.floor(dmg*4/3));addXP('strength',Math.floor(dmg*4/3));addXP('defence',Math.floor(dmg*4/3));}
-addXP('hitpoints',Math.floor(dmg*1.33));
-if(mon.currentHp<=0)killMonster(mon);
-}else{spawnHitsplat(mon.currentTile.x,mon.currentTile.y,0,true);}
-}
-function monsterAttackPlayer(mon){
-const effAtk=Math.floor(mon.level+8);
-const effDef=getEffectiveLevel(player.skills.defence.level,'defence');
-const defBonus=getEquipBonus('def');
-const hitChance=calcHitChance(effAtk,0,effDef,defBonus);
-if(Math.random()<hitChance){
-const dmg=Math.floor(Math.random()*(mon.maxHit+1));
-if(dmg===0){spawnHitsplat(player.tile.x,player.tile.y,0,true);return;}
-player.currentHp=Math.max(0,player.currentHp-dmg);
-spawnHitsplat(player.tile.x,player.tile.y,dmg,false);
-updateOrbs();if(player.currentHp<=0)playerDeath();
-}else{spawnHitsplat(player.tile.x,player.tile.y,0,true);}
-}
-function killMonster(mon){
-mon.alive=false;mon.respawnAt=tickCount+50+Math.floor(Math.random()*30);
-addChat('You defeated the '+mon.name+'!','combat');
-mon.drops.forEach(drop=>{
-if(Math.random()<drop.rate){
-const qty=Array.isArray(drop.qty)?drop.qty[0]+Math.floor(Math.random()*(drop.qty[1]-drop.qty[0]+1)):drop.qty;
-if(drop.id==='coins'){player.gold+=qty;addChat('You received '+qty+' coins.','item');}
-else{const def=ITEMS[drop.id];if(def)addInventoryItem({id:drop.id,qty});}
-}
+game.addEventListener("click",e=>{
+  const r=game.getBoundingClientRect();
+  const w=screenToWorld(e.clientX-r.left,e.clientY-r.top);
+  worldClick(w.x,w.y);
 });
-player.inCombat=false;player.combatTarget=null;
-}
-function playerDeath(){
-addChat('Oh dear, you are dead!','game');
-player.inCombat=false;player.combatTarget=null;player.path=[];player.skillingAction=null;
-const sorted=[...player.inventory].sort((a,b)=>(ITEMS[b.id]?.value||0)-(ITEMS[a.id]?.value||0));
-player.inventory=sorted.slice(0,3);
-player.tile={...player.respawnTile};player.lerpX=player.tile.x;player.lerpY=player.tile.y;
-player.currentHp=Math.max(3,Math.floor(player.maxHp*0.15));
-player.deathCount++;document.getElementById('death-count').textContent=player.deathCount;
-updateOrbs();updateInventoryPanel();
-addChat('You respawn in Irondale town.','game');
-}
-
-// ---- AUDIO ----
-function initAudio(){if(audioStarted)return;try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();audioStarted=true;}catch(e){}}
-function playFootstep(){if(!audioCtx)return;try{const buf=audioCtx.createBuffer(1,audioCtx.sampleRate*0.04,audioCtx.sampleRate);const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.exp(-i/800)*0.15;const src=audioCtx.createBufferSource();src.buffer=buf;const f=audioCtx.createBiquadFilter();f.frequency.value=150;src.connect(f);f.connect(audioCtx.destination);src.start();}catch(e){}}
-function playSwordSwing(){if(!audioCtx)return;try{const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.type='sawtooth';osc.frequency.setValueAtTime(500,audioCtx.currentTime);osc.frequency.exponentialRampToValueAtTime(80,audioCtx.currentTime+0.12);gain.gain.setValueAtTime(0.15,audioCtx.currentTime);gain.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.12);osc.connect(gain);gain.connect(audioCtx.destination);osc.start();osc.stop(audioCtx.currentTime+0.12);}catch(e){}}
-function playLevelUp(){if(!audioCtx)return;try{[261,329,392,523].forEach((freq,i)=>{const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.frequency.value=freq;gain.gain.setValueAtTime(0.2,audioCtx.currentTime+i*0.1);gain.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+i*0.1+0.18);osc.connect(gain);gain.connect(audioCtx.destination);osc.start(audioCtx.currentTime+i*0.1);osc.stop(audioCtx.currentTime+i*0.1+0.2);});}catch(e){}}
-function playPickup(){if(!audioCtx)return;try{const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.type='sine';osc.frequency.setValueAtTime(600,audioCtx.currentTime);osc.frequency.exponentialRampToValueAtTime(1200,audioCtx.currentTime+0.08);gain.gain.setValueAtTime(0.12,audioCtx.currentTime);gain.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.1);osc.connect(gain);gain.connect(audioCtx.destination);osc.start();osc.stop(audioCtx.currentTime+0.1);}catch(e){}}
-
-// ---- CHATBOX ----
-let chatFilter='all';
-function addChat(text,type){
-type=type||'game';
-const msgs=document.getElementById('chat-messages');
-const div=document.createElement('div');div.className='chat-msg chat-'+type;div.textContent=text;
-msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;
-}
-
-// ---- DIALOG ----
-let currentDialog=null;
-function openDialog(npcId,nodeIdx){
-nodeIdx=nodeIdx||0;
-const npc=NPCS.find(n=>n.id===npcId);if(!npc)return;
-const node=npc.dialog[nodeIdx];if(!node)return;
-currentDialog={npcId,nodeIdx};
-const panel=document.getElementById('dialog-panel');
-document.getElementById('dialog-name').textContent=npc.name;
-document.getElementById('dialog-text').textContent=node.text;
-const opts=document.getElementById('dialog-options');opts.innerHTML='';
-(node.opts||[]).forEach((opt)=>{
-const d=document.createElement('div');d.className='dialog-option';d.textContent=opt.t;
-d.addEventListener('click',()=>handleDialogOption(npcId,opt));
-opts.appendChild(d);
+game.addEventListener("mousedown",e=>{cam.drag=true;cam.sx=e.clientX;cam.sy=e.clientY;cam.cx=cam.x;cam.cy=cam.y;});
+window.addEventListener("mouseup",()=>cam.drag=false);
+window.addEventListener("mousemove",e=>{
+  if(cam.drag){cam.x=cam.cx+e.clientX-cam.sx;cam.y=cam.cy+e.clientY-cam.sy;}
 });
-panel.style.display='block';
-if(npc.questStart&&player.quests[npc.questStart]==='not_started'){
-player.quests[npc.questStart]='in_progress';
-addChat('Quest started: '+getQuestName(npc.questStart),'quest');
-if(npc.questStart==='arcane_mystery'){addInventoryItem({id:'research_notes',qty:1});player.questFlags.notesReceived=true;}
-}
-}
-function handleDialogOption(npcId,opt){
-if(opt.next===null){closeDialog();return;}
-if(opt.next==='OPEN_BANK'){closeDialog();openBank();return;}
-if(opt.next==='BUY_BRONZE'){closeDialog();if(player.gold>=50){player.gold-=50;addInventoryItem({id:'bronze_sword',qty:1});addChat('You bought a Bronze Sword for 50gp.','item');}else addChat("You don't have enough gold.",'game');return;}
-if(opt.next==='BUY_IRON'){closeDialog();if(player.gold>=200){player.gold-=200;addInventoryItem({id:'iron_sword',qty:1});addChat('You bought an Iron Sword for 200gp.','item');}else addChat("You don't have enough gold.",'game');return;}
-if(opt.next==='GIVE_FLOUR'){closeDialog();if(player.quests.feast_assistant==='in_progress'&&!player.questFlags.flourDone){addInventoryItem({id:'pot_flour',qty:1});player.questFlags.flourDone=true;addChat('You received a pot of flour!','item');playPickup();checkFeastQuest();}else addChat('Millie smiles at you.','game');return;}
-if(opt.next==='DELIVER_NOTES'){closeDialog();if(player.quests.arcane_mystery==='in_progress'&&hasItem('research_notes')){const idx=player.inventory.findIndex(i=>i.id==='research_notes');if(idx>=0)removeInventoryItem(idx);player.questFlags.notesDelivered=true;player.quests.arcane_mystery='complete';player.gold+=100;addChat('Quest complete: Arcane Mystery! +100gp','quest');playLevelUp();updateQuestPoints();}else addChat("You don't have any notes for me.",'game');return;}
-const npc=NPCS.find(n=>n.id===npcId);
-if(npc&&npc.dialog[opt.next])openDialog(npcId,opt.next);else closeDialog();
-}
-function closeDialog(){document.getElementById('dialog-panel').style.display='none';currentDialog=null;}
-function getQuestName(id){const names={feast_assistant:"The Duke's Feast",arcane_mystery:'Arcane Mystery',restless_spirit:'The Restless Spirit'};return names[id]||id;}
-function checkFeastQuest(){if(player.questFlags.milkDone&&player.questFlags.eggDone&&player.questFlags.flourDone){if(hasItem('bucket_milk')&&hasItem('egg')&&hasItem('pot_flour'))addChat('You have all the ingredients! Talk to Gareth the Cook.','quest');}}
-function updateQuestPoints(){let qp=0;for(let q in player.quests)if(player.quests[q]==='complete')qp++;document.getElementById('quest-points').textContent=qp;}
-
-// ---- BANK ----
-const bank={items:[],isOpen:false};
-function openBank(){bank.isOpen=true;document.getElementById('bank-modal').style.display='flex';renderBank();}
-function closeBank(){bank.isOpen=false;document.getElementById('bank-modal').style.display='none';}
-function depositItem(invIdx){const item=player.inventory[invIdx];if(!item)return;const existing=bank.items.find(b=>b.id===item.id);if(existing)existing.qty+=item.qty;else bank.items.push({id:item.id,qty:item.qty});player.inventory.splice(invIdx,1);renderBank();updateInventoryPanel();}
-function depositAll(){while(player.inventory.length>0)depositItem(0);}
-function withdrawItem(bankIdx){const item=bank.items[bankIdx];if(!item)return;const def=ITEMS[item.id];if(player.inventory.length>=28&&!(def&&def.stackable&&player.inventory.find(i=>i.id===item.id))){addChat('Inventory full.','game');return;}if(addInventoryItem({id:item.id,qty:1})){item.qty--;if(item.qty<=0)bank.items.splice(bankIdx,1);}renderBank();}
-function renderBank(){
-const grid=document.getElementById('bank-items');grid.innerHTML='';
-bank.items.forEach((item,i)=>{const def=ITEMS[item.id];const slot=document.createElement('div');slot.className='bank-slot';const icon=document.createElement('div');icon.className='item-icon';icon.style.background=def?def.color:'#555';icon.style.width='40px';icon.style.height='28px';icon.style.borderRadius='2px';icon.textContent=def?def.name.substring(0,5):'?';icon.style.fontSize='7px';icon.style.color='#fff';icon.style.display='flex';icon.style.alignItems='center';icon.style.justifyContent='center';slot.appendChild(icon);if(item.qty>1){const sc=document.createElement('span');sc.className='stack-count';sc.textContent=item.qty;slot.appendChild(sc);}slot.addEventListener('click',()=>withdrawItem(i));grid.appendChild(slot);});
-for(let i=bank.items.length;i<40;i++){const slot=document.createElement('div');slot.className='bank-slot';grid.appendChild(slot);}
-const invGrid=document.getElementById('bank-inv-grid');invGrid.innerHTML='';
-player.inventory.forEach((item,i)=>{const def=ITEMS[item.id];const slot=document.createElement('div');slot.className='inv-slot';slot.style.width='44px';slot.style.height='34px';const icon=document.createElement('div');icon.className='item-icon';icon.style.background=def?def.color:'#555';icon.textContent=def?def.name.substring(0,5):'?';slot.appendChild(icon);if(item.qty>1){const sc=document.createElement('span');sc.className='stack-count';sc.textContent=item.qty;slot.appendChild(sc);}slot.addEventListener('click',()=>{depositItem(i);});invGrid.appendChild(slot);});
-}
-
-// ---- LEVEL UP POPUP ----
-function showLevelUp(skill,level){
-const popup=document.getElementById('level-up-popup');
-document.getElementById('lvlup-title').textContent='Level Up!';
-document.getElementById('lvlup-desc').textContent=skill.charAt(0).toUpperCase()+skill.slice(1)+' is now level '+level+'!';
-popup.style.display='block';addChat('Congratulations! Your '+skill+' level is now '+level+'!','skill');
-setTimeout(()=>{popup.style.display='none';},2500);
-}
-
-// ---- UI PANELS ----
-let activePanel='skills';
-function renderPanel(){
-const c=document.getElementById('panel-content');c.innerHTML='';
-if(activePanel==='skills')renderSkillsPanel(c);
-else if(activePanel==='inventory')renderInventoryPanel(c);
-else if(activePanel==='quests')renderQuestsPanel(c);
-else if(activePanel==='combat')renderCombatPanel(c);
-else if(activePanel==='equipment')renderEquipmentPanel(c);
-}
-function renderSkillsPanel(c){
-const skills=['attack','strength','defence','hitpoints','prayer','cooking','woodcutting','fishing','mining','firemaking','crafting','smithing'];
-const icons=['⚔','💪','🛡','❤','✙','🍳','🪓','🐟','⛏','🔥','🔨','⚒'];
-skills.forEach((s,i)=>{
-const row=document.createElement('div');row.className='skill-row';
-const icon=document.createElement('span');icon.className='sk-icon';icon.textContent=icons[i];
-const name=document.createElement('span');name.className='sk-name';name.textContent=s.charAt(0).toUpperCase()+s.slice(1);
-const lvl=document.createElement('span');lvl.className='sk-lvl';
-const lv=player.skills[s].level;lvl.textContent=lv;
-if(lv>=99)lvl.style.color='#00ffff';else if(lv>=61)lvl.style.color='#ffa500';else if(lv>=31)lvl.style.color='#ffff00';
-const xp=player.skills[s].xp;const nextLvXp=xpForLevel(lv+1);const curLvXp=xpForLevel(lv);
-const pct=lv>=99?100:Math.floor((xp-curLvXp)/(nextLvXp-curLvXp)*100);
-row.title=s+': '+xp+' XP ('+pct+'% to next)';
-row.appendChild(icon);row.appendChild(name);row.appendChild(lvl);c.appendChild(row);
+game.addEventListener("wheel",e=>{
+  e.preventDefault();
+  cam.zoom=Math.max(.45,Math.min(2.0,cam.zoom+(e.deltaY<0?.08:-.08)));
+},{passive:false});
+mini.addEventListener("click",e=>{
+  initAudio();
+  const r=mini.getBoundingClientRect();
+  const x=Math.floor((e.clientX-r.left)/r.width*WORLD.W);
+  const y=Math.floor((e.clientY-r.top)/r.height*WORLD.H);
+  setDestination(x,y);
 });
-const total=document.createElement('div');total.className='skill-row';total.style.borderTop='1px solid #3a2a1a';
-total.innerHTML='<span class="sk-icon">Σ</span><span class="sk-name" style="color:#c5a028">Total</span><span class="sk-lvl" style="color:#c5a028">'+getTotalLevel()+'</span>';
-c.appendChild(total);
-const gold=document.createElement('div');gold.className='skill-row';
-gold.innerHTML='<span class="sk-icon">💰</span><span class="sk-name" style="color:#ffd700">Gold</span><span class="sk-lvl" style="color:#ffd700">'+player.gold+'</span>';
-c.appendChild(gold);
-}
-function renderInventoryPanel(c){
-const grid=document.createElement('div');grid.className='inv-grid';
-for(let i=0;i<28;i++){
-const slot=document.createElement('div');slot.className='inv-slot';
-if(i<player.inventory.length){
-const item=player.inventory[i];const def=ITEMS[item.id];
-const icon=document.createElement('div');icon.className='item-icon';icon.style.background=def?def.color:'#555';icon.textContent=def?def.name.substring(0,6):'?';slot.appendChild(icon);
-if(item.qty>1){const sc=document.createElement('span');sc.className='stack-count';sc.textContent=item.qty;slot.appendChild(sc);}
-slot.addEventListener('contextmenu',(e)=>{e.preventDefault();showItemContextMenu(e,i);});
-slot.addEventListener('click',()=>{useInventoryItem(i);});
-}
-grid.appendChild(slot);
-}c.appendChild(grid);
-}
-function renderQuestsPanel(c){
-const quests=[
-{id:'feast_assistant',name:"The Duke's Feast",objs:['Get bucket of milk','Get an egg','Get pot of flour','Return to Cook'],checks:[player.questFlags.milkDone,player.questFlags.eggDone,player.questFlags.flourDone,false]},
-{id:'arcane_mystery',name:'Arcane Mystery',objs:['Get notes from Duke','Deliver to Scholar Elara'],checks:[player.questFlags.notesReceived,player.questFlags.notesDelivered]},
-{id:'restless_spirit',name:'The Restless Spirit',objs:['Speak to Father Aldwin','Find skull in swamp','Return skull to coffin'],checks:[player.quests.restless_spirit!=='not_started',player.questFlags.skullFound,player.questFlags.skullReturned]},
-];
-quests.forEach(q=>{
-const status=player.quests[q.id];const div=document.createElement('div');div.className='quest-item q-'+status;
-const name=document.createElement('div');name.className='q-name';
-name.textContent=(status==='complete'?'✓ ':status==='in_progress'?'◯ ':'✗ ')+q.name;div.appendChild(name);
-if(status!=='not_started'){q.objs.forEach((obj,i)=>{const od=document.createElement('div');od.className='quest-obj'+(q.checks[i]?' done':'');od.textContent=(q.checks[i]?'☑ ':'☐ ')+obj;div.appendChild(od);});}
-c.appendChild(div);
-});
-}
-function renderCombatPanel(c){
-const styles=['accurate','aggressive','defensive','controlled'];
-const div=document.createElement('div');div.className='combat-styles';
-styles.forEach(s=>{const btn=document.createElement('div');btn.className='style-btn'+(player.attackStyle===s?' active':'');btn.textContent=s.charAt(0).toUpperCase()+s.slice(1);btn.addEventListener('click',()=>{player.attackStyle=s;renderPanel();addChat('Attack style: '+s,'game');});div.appendChild(btn);});
-c.appendChild(div);
-const stats=document.createElement('div');stats.style.cssText='padding:6px;font-size:10px;font-family:monospace;color:#ff981f;';
-stats.innerHTML='<div>Atk Bonus: +'+getEquipBonus('atk')+'</div><div>Str Bonus: +'+getEquipBonus('str')+'</div><div>Def Bonus: +'+getEquipBonus('def')+'</div><div>Max Hit: '+calcMaxHit()+'</div>';
-c.appendChild(stats);
-}
-function renderEquipmentPanel(c){
-const slots=['head','body','legs','weapon','shield'];const labels=['Head','Body','Legs','Weapon','Shield'];
-const grid=document.createElement('div');grid.className='equip-grid';
-slots.forEach((s,i)=>{const row=document.createElement('div');row.className='equip-row';const slot=document.createElement('div');
-slot.className='equip-slot'+(player.equipment[s]?' filled':'');const eid=player.equipment[s];
-if(eid){const def=ITEMS[eid];slot.textContent=def?def.name.substring(0,8):'?';slot.style.color='#ff981f';slot.style.background=def?def.color+'33':'#0a0500';slot.addEventListener('click',()=>unequipItem(s));}else{slot.textContent=labels[i];}
-row.appendChild(slot);grid.appendChild(row);});c.appendChild(grid);
-}
-function updateStatsPanel(){document.getElementById('total-level').textContent=getTotalLevel();if(activePanel==='skills'||activePanel==='combat'||activePanel==='equipment')renderPanel();}
-function updateInventoryPanel(){if(activePanel==='inventory')renderPanel();}
-function updateOrbs(){
-document.getElementById('hp-val').textContent=player.currentHp+'/'+player.maxHp;
-document.getElementById('prayer-val').textContent=player.prayer+'/'+player.maxPrayer;
-document.getElementById('run-val').textContent=Math.floor(player.runEnergy)+'%';
-}
-
-// ---- ITEM INTERACTIONS ----
-function useInventoryItem(idx){
-const item=player.inventory[idx];if(!item)return;const def=ITEMS[item.id];if(!def)return;
-if(def.type==='weapon'){const old=player.equipment.weapon;player.equipment.weapon=item.id;player.inventory.splice(idx,1);if(old)addInventoryItem({id:old,qty:1});addChat('You equip the '+def.name+'.','item');renderPanel();return;}
-if(def.heals){if(player.currentHp>=player.maxHp){addChat('You are already at full health.','game');return;}player.currentHp=Math.min(player.maxHp,player.currentHp+def.heals);removeInventoryItem(idx);addChat('You eat the '+def.name+'. It heals '+def.heals+'.','game');updateOrbs();return;}
-if(item.id==='bones'){removeInventoryItem(idx);addXP('prayer',5);addChat('You bury the bones.','game');return;}
-addChat(def.examine,'game');
-}
-function unequipItem(slot){const eid=player.equipment[slot];if(!eid)return;if(player.inventory.length>=28){addChat('Inventory full.','game');return;}player.equipment[slot]=null;addInventoryItem({id:eid,qty:1});addChat('You unequip the '+ITEMS[eid].name+'.','item');renderPanel();}
-function showItemContextMenu(e,idx){
-const item=player.inventory[idx];if(!item)return;const def=ITEMS[item.id];if(!def)return;
-const menu=document.getElementById('context-menu');menu.innerHTML='';
-const header=document.createElement('div');header.className='ctx-option';header.textContent=def.name;menu.appendChild(header);
-if(def.type==='weapon'){const eq=document.createElement('div');eq.className='ctx-option';eq.textContent='Wield';eq.addEventListener('click',()=>{useInventoryItem(idx);menu.style.display='none';});menu.appendChild(eq);}
-if(def.heals){const eat=document.createElement('div');eat.className='ctx-option';eat.textContent='Eat';eat.addEventListener('click',()=>{useInventoryItem(idx);menu.style.display='none';});menu.appendChild(eat);}
-if(item.id.startsWith('raw_')){const cook=document.createElement('div');cook.className='ctx-option';cook.textContent='Cook (use on range)';cook.addEventListener('click',()=>{addChat('Go to a range and click it to cook.','game');menu.style.display='none';});menu.appendChild(cook);}
-const examine=document.createElement('div');examine.className='ctx-option';examine.textContent='Examine';examine.addEventListener('click',()=>{addChat(def.examine,'game');menu.style.display='none';});menu.appendChild(examine);
-const drop=document.createElement('div');drop.className='ctx-option';drop.textContent='Drop';drop.addEventListener('click',()=>{removeInventoryItem(idx);addChat('You drop the '+def.name+'.','game');menu.style.display='none';});menu.appendChild(drop);
-const rect=document.getElementById('game-wrapper').getBoundingClientRect();
-menu.style.left=Math.min(e.clientX-rect.left,W-140)+'px';menu.style.top=Math.min(e.clientY-rect.top,H-100)+'px';menu.style.display='block';
-}
-
-// ---- SKILLING ----
-function startSkilling(action,objRef){player.skillingAction=action;player.skillingTicks=0;player.skillingObj=objRef;player.path=[];player.inCombat=false;player.combatTarget=null;}
-function processSkilling(){
-if(!player.skillingAction)return;player.skillingTicks++;
-const action=player.skillingAction;
-if(action==='chop_tree'){
-if(player.skillingTicks>=4){player.skillingTicks=0;
-if(Math.random()<0.6){if(addInventoryItem({id:'logs',qty:1})){addXP('woodcutting',25);addChat('You get some logs.','game');playPickup();}
-if(player.skillingObj){player.skillingObj.alive=false;player.skillingObj.respawnAt=tickCount+50+Math.floor(Math.random()*30);clipFlags[tIdx(player.skillingObj.tile.x,player.skillingObj.tile.y)]=0;}player.skillingAction=null;}}
-}else if(action==='fish'){
-if(player.skillingTicks>=5){player.skillingTicks=0;if(Math.random()<0.5){if(addInventoryItem({id:'raw_shrimps',qty:1})){addXP('fishing',10);addChat('You catch some shrimps.','game');playPickup();}}if(player.inventory.length>=28)player.skillingAction=null;}
-}else if(action==='mine'){
-if(player.skillingTicks>=5){player.skillingTicks=0;if(Math.random()<0.5){if(addInventoryItem({id:'copper_ore',qty:1})){addXP('mining',18);addChat('You mine some copper ore.','game');playPickup();}if(player.skillingObj){player.skillingObj.alive=false;player.skillingObj.respawnAt=tickCount+40+Math.floor(Math.random()*20);clipFlags[tIdx(player.skillingObj.tile.x,player.skillingObj.tile.y)]=0;}player.skillingAction=null;}}
-}else if(action==='cook'){
-if(player.skillingTicks>=3){player.skillingTicks=0;
-const rawIdx=player.inventory.findIndex(i=>i.id==='raw_chicken'||i.id==='raw_beef'||i.id==='raw_shrimps');
-if(rawIdx>=0){const raw=player.inventory[rawIdx];const burnChance=Math.max(0,(50-player.skills.cooking.level)/100);const cookedMap={raw_chicken:'cooked_chicken',raw_beef:'cooked_meat',raw_shrimps:'cooked_shrimps'};removeInventoryItem(rawIdx);if(Math.random()<burnChance)addChat('You accidentally burn the food.','game');else{const cookedId=cookedMap[raw.id]||'cooked_meat';addInventoryItem({id:cookedId,qty:1});addXP('cooking',30);addChat('You cook the food successfully.','game');}}player.skillingAction=null;}
-}
-}
-
-// ---- GAME TICK ----
-function gameTick(){
-tickCount++;
-if(player.path.length>0&&!player.inCombat){
-const next=player.path[0];
-if(isWalkable(next.x,next.y)){
-player.tile={...next};player.path.shift();
-if(player.isRunning&&player.runEnergy>0&&player.path.length>0){
-player.runEnergy=Math.max(0,player.runEnergy-0.6);
-const next2=player.path[0];
-if(next2&&isWalkable(next2.x,next2.y)){player.tile={...next2};player.path.shift();}
-}
-playFootstep();
-}else{player.path=[];}
-}
-if(!player.isRunning||player.path.length===0)player.runEnergy=Math.min(100,player.runEnergy+0.3);
-if(tickCount%15===0&&player.currentHp<player.maxHp&&!player.inCombat){player.currentHp=Math.min(player.maxHp,player.currentHp+1);updateOrbs();}
-if(player.inCombat&&player.combatTarget!==null){
-const mon=monsterInstances[player.combatTarget];
-if(!mon||!mon.alive){player.inCombat=false;player.combatTarget=null;}
-else{
-const dist=Math.abs(player.tile.x-mon.currentTile.x)+Math.abs(player.tile.y-mon.currentTile.y);
-if(dist>1){const p=findPath(player.tile.x,player.tile.y,mon.currentTile.x,mon.currentTile.y);if(p.length>0){player.tile={...p[0]};if(p.length>1&&player.isRunning)player.tile={...p[1]};}else{player.inCombat=false;player.combatTarget=null;}}
-else{player.attackCooldown--;if(player.attackCooldown<=0){playerAttackMonster(mon);player.attackCooldown=4;}mon.atkCooldown--;if(mon.atkCooldown<=0&&mon.alive){monsterAttackPlayer(mon);mon.atkCooldown=mon.atkSpeed;}}
-}
-}
-monsterInstances.forEach(mon=>{
-if(!mon.alive){if(tickCount>=mon.respawnAt){mon.alive=true;mon.currentHp=mon.hp;mon.currentTile={...mon.spawnTile};mon.lerpX=mon.spawnTile.x;mon.lerpY=mon.spawnTile.y;}return;}
-if(mon.aggressive&&mon.aggroRange>0&&!player.inCombat){const dist=Math.abs(player.tile.x-mon.currentTile.x)+Math.abs(player.tile.y-mon.currentTile.y);if(dist<=mon.aggroRange){player.inCombat=true;player.combatTarget=mon.idx;player.path=[];player.skillingAction=null;player.attackCooldown=1;mon.atkCooldown=1;addChat('The '+mon.name+' attacks you!','combat');}}
-if(!mon.target){mon.wanderTimer--;if(mon.wanderTimer<=0){mon.wanderTimer=8+Math.floor(Math.random()*10);const dx=Math.floor(Math.random()*3)-1,dy=Math.floor(Math.random()*3)-1;const nx=mon.currentTile.x+dx,ny=mon.currentTile.y+dy;if(isWalkable(nx,ny)&&Math.abs(nx-mon.spawnTile.x)<5&&Math.abs(ny-mon.spawnTile.y)<5)mon.currentTile={x:nx,y:ny};}}
-});
-npcInstances.forEach(npc=>{
-if(npc.wander>0){npc.wanderTimer--;if(npc.wanderTimer<=0){npc.wanderTimer=10+Math.floor(Math.random()*15);const dx=Math.floor(Math.random()*3)-1,dy=Math.floor(Math.random()*3)-1;const nx=npc.currentTile.x+dx,ny=npc.currentTile.y+dy;if(isWalkable(nx,ny)&&Math.abs(nx-npc.homeTile.x)<=npc.wander&&Math.abs(ny-npc.homeTile.y)<=npc.wander)npc.currentTile={x:nx,y:ny};}}
-});
-processSkilling();
-worldObjects.forEach(obj=>{
-if((obj.type==='tree'||obj.type==='rock')&&!obj.alive&&tickCount>=obj.respawnAt){obj.alive=true;clipFlags[tIdx(obj.tile.x,obj.tile.y)]=1;}
-if(obj.type==='ground_item'&&obj.taken&&tickCount>=obj.respawnAt){obj.taken=false;}
-});
-groundItems.forEach(gi=>{if(gi.taken&&tickCount>=gi.respawnAt){gi.taken=false;}});
-updateOrbs();
-}
-
-// ---- OBJECT CLICK HANDLER ----
-function handleObjectClick(obj){
-const dist=Math.abs(player.tile.x-obj.tile.x)+Math.abs(player.tile.y-obj.tile.y);
-if(dist>2){
-player.path=findPath(player.tile.x,player.tile.y,obj.tile.x,obj.tile.y);player.skillingAction=null;
-const objRef=obj;const ci=setInterval(()=>{const d2=Math.abs(player.tile.x-objRef.tile.x)+Math.abs(player.tile.y-objRef.tile.y);if(d2<=2){clearInterval(ci);handleObjectInteraction(objRef);}if(player.path.length===0)clearInterval(ci);},300);
-return;
-}
-handleObjectInteraction(obj);
-}
-function handleObjectInteraction(obj){
-if(obj.type==='tree'&&obj.alive){addChat('You begin chopping the tree...','game');startSkilling('chop_tree',obj);}
-else if(obj.type==='rock'&&obj.alive){addChat('You begin mining the rock...','game');startSkilling('mine',obj);}
-else if(obj.type==='fish'){addChat('You begin fishing...','game');startSkilling('fish',obj);}
-else if(obj.type==='range'){const rawIdx=player.inventory.findIndex(i=>i.id==='raw_chicken'||i.id==='raw_beef'||i.id==='raw_shrimps');if(rawIdx>=0){addChat('You begin cooking...','game');startSkilling('cook',obj);}else addChat('You need raw food to cook.','game');}
-else if(obj.type==='coffin'){if(player.quests.restless_spirit==='in_progress'&&hasItem('ghost_skull')&&!player.questFlags.skullReturned){const idx=player.inventory.findIndex(i=>i.id==='ghost_skull');if(idx>=0){removeInventoryItem(idx);player.questFlags.skullReturned=true;player.quests.restless_spirit='complete';addXP('prayer',1125);player.gold+=50;addChat('Quest complete: The Restless Spirit! +1125 Prayer XP','quest');playLevelUp();updateQuestPoints();}}else addChat('An old stone coffin.','game');}
-else if(obj.type==='ground_item'&&!obj.taken){if(addInventoryItem({id:obj.itemId,qty:obj.qty})){obj.taken=true;obj.respawnAt=tickCount+200;addChat('You pick up: '+ITEMS[obj.itemId].name,'item');playPickup();if(obj.itemId==='ghost_skull')player.questFlags.skullFound=true;}}
-else if(obj.type==='dairy'){if(player.quests.feast_assistant==='in_progress'&&!player.questFlags.milkDone){addInventoryItem({id:'bucket_milk',qty:1});player.questFlags.milkDone=true;addChat('You milk the cow into a bucket.','item');playPickup();checkFeastQuest();}else addChat('A dairy cow.','game');}
-}
-function pickupGroundItem(gi){
-const def=ITEMS[gi.id];if(!def)return;
-if(gi.id==='coins'){player.gold+=gi.qty;addChat('You pick up '+gi.qty+' coins.','item');}
-else{if(!addInventoryItem({id:gi.id,qty:gi.qty}))return;}
-gi.taken=true;gi.respawnAt=tickCount+gi.respawn;playPickup();
-}
-
-// ---- INPUT: Click detection (iso) ----
-canvas.addEventListener('mousemove',(e)=>{
-const rect=canvas.getBoundingClientRect();
-const scaleX=W/rect.width,scaleY=H/rect.height;
-const mx=(e.clientX-rect.left)*scaleX,my=(e.clientY-rect.top)*scaleY;
-const t=screenToTile(mx-camX,my-camY-TILE_H/2);
-if(t.x>=0&&t.x<MAP&&t.y>=0&&t.y<MAP)hoverTile=t;else hoverTile=null;
-});
-
-canvas.addEventListener('mousedown',(e)=>{
-initAudio();
-document.getElementById('context-menu').style.display='none';
-if(e.button===2){handleRightClick(e);return;}
-if(bank.isOpen||currentDialog)return;
-const rect=canvas.getBoundingClientRect();
-const scaleX=W/rect.width,scaleY=H/rect.height;
-const mx=(e.clientX-rect.left)*scaleX,my=(e.clientY-rect.top)*scaleY;
-
-// Check NPCs
-for(const npc of npcInstances){
-const ns=tileToScreen(npc.lerpX,npc.lerpY);
-const nsx=ns.x+camX,nsy=ns.y+camY;
-if(Math.abs(mx-nsx)<18&&Math.abs(my-(nsy-6))<28){
-player.path=findPath(player.tile.x,player.tile.y,npc.currentTile.x,npc.currentTile.y);
-player.skillingAction=null;
-const nRef=npc;
-setTimeout(()=>{if(Math.abs(player.tile.x-nRef.currentTile.x)<=1&&Math.abs(player.tile.y-nRef.currentTile.y)<=1)openDialog(nRef.id);},800);
-return;
-}
-}
-// Check Monsters
-for(const mon of monsterInstances){
-if(!mon.alive)continue;
-const ms=tileToScreen(mon.lerpX,mon.lerpY);
-const msx=ms.x+camX,msy=ms.y+camY;
-if(Math.abs(mx-msx)<18&&Math.abs(my-(msy-2))<28){
-player.inCombat=true;player.combatTarget=mon.idx;player.path=[];player.skillingAction=null;
-player.attackCooldown=1;mon.atkCooldown=mon.atkSpeed;addChat('You attack the '+mon.name+'.','combat');
-return;
-}
-}
-// Check world objects
-for(const obj of worldObjects){
-if(obj.type==='tree'&&!obj.alive)continue;
-if(obj.type==='rock'&&!obj.alive)continue;
-if(obj.type==='ground_item'&&obj.taken)continue;
-const os=tileToScreen(obj.tile.x,obj.tile.y);
-const osx=os.x+camX,osy=os.y+camY;
-if(Math.abs(mx-osx)<20&&my>osy-30&&my<osy+TILE_H){
-handleObjectClick(obj);return;
-}
-}
-// Check ground items
-for(const gi of groundItems){
-if(gi.taken)continue;
-const gs=tileToScreen(gi.tile.x,gi.tile.y);
-const gsx=gs.x+camX,gsy=gs.y+camY+TILE_H*0.5;
-if(Math.abs(mx-gsx)<12&&Math.abs(my-gsy)<12){
-player.path=findPath(player.tile.x,player.tile.y,gi.tile.x,gi.tile.y);
-player.skillingAction=null;
-const giRef=gi;
-setTimeout(()=>{if(player.tile.x===giRef.tile.x&&player.tile.y===giRef.tile.y)pickupGroundItem(giRef);},600);
-return;
-}
-}
-// Walk to tile
-const t=screenToTile(mx-camX,my-camY-TILE_H/2);
-if(t.x>=0&&t.x<MAP&&t.y>=0&&t.y<MAP){
-player.path=findPath(player.tile.x,player.tile.y,t.x,t.y);
-player.inCombat=false;player.combatTarget=null;player.skillingAction=null;closeDialog();
-}
-});
-
-function handleRightClick(e){
-e.preventDefault();
-const rect=canvas.getBoundingClientRect();
-const scaleX=W/rect.width,scaleY=H/rect.height;
-const mx=(e.clientX-rect.left)*scaleX,my=(e.clientY-rect.top)*scaleY;
-for(const npc of npcInstances){
-const ns=tileToScreen(npc.lerpX,npc.lerpY);const nsx=ns.x+camX,nsy=ns.y+camY;
-if(Math.abs(mx-nsx)<18&&Math.abs(my-(nsy-6))<28){showEntityContextMenu(e,'npc',npc);return;}
-}
-for(const mon of monsterInstances){
-if(!mon.alive)continue;const ms=tileToScreen(mon.lerpX,mon.lerpY);const msx=ms.x+camX,msy=ms.y+camY;
-if(Math.abs(mx-msx)<18&&Math.abs(my-(msy-2))<28){showEntityContextMenu(e,'monster',mon);return;}
-}
-}
-function showEntityContextMenu(e,type,entity){
-const menu=document.getElementById('context-menu');menu.innerHTML='';
-const header=document.createElement('div');header.className='ctx-option';
-header.textContent=entity.name+(entity.level?' (Lv '+entity.level+')':'');menu.appendChild(header);
-if(type==='npc'){const talk=document.createElement('div');talk.className='ctx-option';talk.textContent='Talk-to '+entity.name;talk.addEventListener('click',()=>{openDialog(entity.id);menu.style.display='none';});menu.appendChild(talk);}
-if(type==='monster'||(type==='npc'&&entity.level>0)){const atk=document.createElement('div');atk.className='ctx-option';atk.textContent='Attack '+entity.name;atk.addEventListener('click',()=>{if(type==='monster'){player.inCombat=true;player.combatTarget=entity.idx;player.path=[];player.skillingAction=null;player.attackCooldown=1;entity.atkCooldown=entity.atkSpeed;addChat('You attack '+entity.name+'.','combat');}menu.style.display='none';});menu.appendChild(atk);}
-const examine=document.createElement('div');examine.className='ctx-option';examine.textContent='Examine';examine.addEventListener('click',()=>{addChat(entity.name+(entity.level?' - Combat level '+entity.level:' - A friendly NPC'),'game');menu.style.display='none';});menu.appendChild(examine);
-const wr=document.getElementById('game-wrapper').getBoundingClientRect();
-menu.style.left=Math.min(e.clientX-wr.left,W-140)+'px';menu.style.top=Math.min(e.clientY-wr.top,H-100)+'px';menu.style.display='block';
-}
-
-canvas.addEventListener('contextmenu',(e)=>e.preventDefault());
-document.addEventListener('click',(e)=>{if(!e.target.closest('#context-menu'))document.getElementById('context-menu').style.display='none';});
-
-// Keyboard
-document.addEventListener('keydown',(e)=>{
-if(e.key==='Escape'){closeDialog();closeBank();document.getElementById('context-menu').style.display='none';}
-if(e.key==='Enter'){const input=document.getElementById('chat-input');if(document.activeElement===input&&input.value.trim()){addChat(input.value,'player');input.value='';}else{input.focus();}}
-if(e.key==='Shift')player.isRunning=!player.isRunning;
-const fkeys={F1:'combat',F2:'skills',F3:'quests',F4:'inventory',F5:'equipment'};
-if(fkeys[e.key]){e.preventDefault();activePanel=fkeys[e.key];document.querySelectorAll('.panel-tab').forEach(t=>t.classList.toggle('active',t.dataset.panel===activePanel));renderPanel();}
+window.addEventListener("keydown",e=>{
+  const k=e.key.toLowerCase();
+  if(k==="arrowup")setDestination(player.x,player.y-1);
+  if(k==="arrowdown")setDestination(player.x,player.y+1);
+  if(k==="arrowleft")setDestination(player.x-1,player.y);
+  if(k==="arrowright")setDestination(player.x+1,player.y);
+  if(k===" ")player.combatTarget?player.combatTarget=null:hoverEntity&&startCombat(hoverEntity);
 });
 
-// ---- PANEL TAB CLICKS ----
-document.querySelectorAll('.panel-tab').forEach(tab=>{tab.addEventListener('click',()=>{activePanel=tab.dataset.panel;document.querySelectorAll('.panel-tab').forEach(t=>t.classList.toggle('active',t===tab));renderPanel();});});
-document.querySelectorAll('.chat-tab').forEach(tab=>{tab.addEventListener('click',()=>{chatFilter=tab.dataset.ct;document.querySelectorAll('.chat-tab').forEach(t=>t.classList.toggle('active',t===tab));});});
-document.getElementById('bank-close').addEventListener('click',closeBank);
-document.getElementById('deposit-all-btn').addEventListener('click',depositAll);
-document.getElementById('run-orb').addEventListener('click',()=>{player.isRunning=!player.isRunning;addChat('Running: '+(player.isRunning?'ON':'OFF'),'game');});
+/* =========================================================
+   COMBAT LOOP / UI
+========================================================= */
+setInterval(combatTick,WORLD.combatTickMs);
 
-// ---- MINIMAP ----
-const minimapCanvas=document.getElementById('minimap');
-const mCtx=minimapCanvas.getContext('2d');
-let lastMinimapTile={x:-1,y:-1};
-function renderMinimap(){
-if(player.tile.x===lastMinimapTile.x&&player.tile.y===lastMinimapTile.y)return;
-lastMinimapTile={...player.tile};
-mCtx.fillStyle='#0a1a0a';mCtx.fillRect(0,0,152,152);
-const scale=2.5;const ox=76-player.tile.x*scale,oy=76-player.tile.y*scale;
-for(let y=0;y<MAP;y++)for(let x=0;x<MAP;x++){
-const px=ox+x*scale,py=oy+y*scale;
-if(px<-3||px>155||py<-3||py>155)continue;
-mCtx.fillStyle=MINIMAP_COLORS[tileMap[tIdx(x,y)]];mCtx.fillRect(px,py,scale,scale);
+function locName(){
+  for(const k of Object.keys(LANDMARKS)){
+    const l=LANDMARKS[k];
+    if(within(player.x,player.y,l))return l.name;
+  }
+  return "Kingdom of Misthalin";
 }
-mCtx.fillStyle='#ffff00';npcInstances.forEach(n=>{const px=ox+n.currentTile.x*scale,py=oy+n.currentTile.y*scale;mCtx.fillRect(px,py,3,3);});
-mCtx.fillStyle='#ff3333';monsterInstances.forEach(m=>{if(m.alive){const px=ox+m.currentTile.x*scale,py=oy+m.currentTile.y*scale;mCtx.fillRect(px,py,2,2);}});
-mCtx.fillStyle='#ffffff';mCtx.fillRect(76-1,76-1,3,3);
+function updateHud(){
+  locPill.textContent=locName();
+  targetPill.textContent=player.combatTarget?(getEntity(player.combatTarget)?.name||"No target"):(hoverEntity?hoverEntity.name:"No target");
+  hpOrb.textContent=`HP ${player.hp}/${player.maxHp}`;
+  runOrb.textContent=`Run ${Math.floor(player.run)}`;
 }
-minimapCanvas.addEventListener('click',(e)=>{
-const rect=minimapCanvas.getBoundingClientRect();const mx=e.clientX-rect.left,my=e.clientY-rect.top;
-const scale=2.5;const tx=Math.round(player.tile.x+(mx-76)/scale),ty=Math.round(player.tile.y+(my-76)/scale);
-if(tx>=0&&tx<MAP&&ty>=0&&ty<MAP){player.path=findPath(player.tile.x,player.tile.y,tx,ty);player.inCombat=false;player.combatTarget=null;player.skillingAction=null;}
-});
-
-// ---- SAVE / LOAD ----
-function saveGame(){
-const save={v:2,tile:player.tile,skills:player.skills,currentHp:player.currentHp,maxHp:player.maxHp,
-prayer:player.prayer,maxPrayer:player.maxPrayer,runEnergy:player.runEnergy,
-inventory:player.inventory,equipment:player.equipment,
-bank:bank.items,gold:player.gold,quests:player.quests,questFlags:player.questFlags,
-deathCount:player.deathCount,attackStyle:player.attackStyle,ts:Date.now()};
-try{localStorage.setItem('irondale_save_v2',JSON.stringify(save));}catch(e){}
-const si=document.getElementById('save-indicator');si.style.opacity='1';setTimeout(()=>si.style.opacity='0',1500);
+function updatePanel(){
+  document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===state.tab));
+  if(state.tab==="combat"){
+    panel.innerHTML=`<div class="title">Combat</div>
+      <div class="row"><span>Weapon</span><strong>${player.weapon}</strong></div>
+      <div class="row"><span>Target</span><strong>${player.combatTarget?(getEntity(player.combatTarget)?.name||"-"):"-"}</strong></div>
+      <button id="stopCombat" style="width:100%">Stop combat</button>`;
+    document.getElementById("stopCombat").onclick=()=>{player.combatTarget=null;};
+  } else if(state.tab==="map"){
+    panel.innerHTML=`<div class="title">Misthalin Atlas</div>
+      ${Object.values(LANDMARKS).map(l=>`<button data-x="${l.x+l.w/2}" data-y="${l.y+l.h/2}" style="width:100%;margin:2px 0">${l.name}</button>`).join("")}`;
+    panel.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>setDestination(+b.dataset.x|0,+b.dataset.y|0));
+  } else if(state.tab==="inv"){
+    panel.innerHTML=`<div class="title">Inventory</div><div class="gridInv">${
+      Array.from({length:28},(_,i)=>state.inv[i]).map((it,i)=>`<div class="slot" data-i="${i}">${it?it.name:""}${it&&it.qty>1?`<span class="qty">${it.qty}</span>`:""}</div>`).join("")
+    }</div>`;
+    panel.querySelectorAll(".slot").forEach(s=>s.onclick=()=>{const it=state.inv[+s.dataset.i];if(it&&it.name==="Bread"){player.hp=Math.min(player.maxHp,player.hp+5);it.qty--;if(it.qty<=0)state.inv.splice(+s.dataset.i,1);log("You eat the bread.","loot");updatePanel();}});
+  } else if(state.tab==="equip"){
+    panel.innerHTML=`<div class="title">Equipment</div><div class="row"><span>Weapon</span><strong>${player.weapon}</strong></div>`;
+  } else {
+    panel.innerHTML=`<div class="title">Settings</div>
+      <button id="audioBtn" style="width:100%">Audio: ${state.audio?"ON":"OFF"}</button>
+      <button id="musicBtn" style="width:100%;margin-top:4px">Music: ${state.music?"ON":"OFF"}</button>
+      <button id="boxBtn" style="width:100%;margin-top:4px">Hover boxes: ${state.renderBoxes?"ON":"OFF"}</button>
+      <button id="resetBtn" style="width:100%;margin-top:4px">Reset position</button>
+      <p style="color:var(--muted)">All living characters use angular geometry. Trees, props, buildings, and NPCs are culled outside render distance.</p>`;
+    document.getElementById("audioBtn").onclick=()=>{state.audio=!state.audio;updatePanel();};
+    document.getElementById("musicBtn").onclick=()=>{state.music=!state.music;if(!state.music&&AudioSys.musicTimer)clearInterval(AudioSys.musicTimer);else initAudio();updatePanel();};
+    document.getElementById("boxBtn").onclick=()=>{state.renderBoxes=!state.renderBoxes;updatePanel();};
+    document.getElementById("resetBtn").onclick=()=>{Object.assign(player,{x:382,y:572,rx:382,ry:572,hp:10,combatTarget:null});path=[];};
+  }
 }
-function loadGame(){
-try{const raw=localStorage.getItem('irondale_save_v2');if(!raw)return false;
-const s=JSON.parse(raw);
-player.tile={...s.tile};player.skills={...player.skills,...s.skills};
-player.currentHp=s.currentHp;player.maxHp=s.maxHp;
-player.prayer=s.prayer||1;player.maxPrayer=s.maxPrayer||1;player.runEnergy=s.runEnergy||100;
-player.inventory=s.inventory||[];player.equipment=s.equipment||player.equipment;
-bank.items=s.bank||[];player.gold=s.gold||0;
-player.quests={...player.quests,...(s.quests||{})};player.questFlags={...player.questFlags,...(s.questFlags||{})};
-player.deathCount=s.deathCount||0;player.attackStyle=s.attackStyle||'accurate';
-player.lerpX=player.tile.x;player.lerpY=player.tile.y;
-document.getElementById('death-count').textContent=player.deathCount;
-updateOrbs();updateStatsPanel();updateQuestPoints();
-return true;}catch(e){return false;}
-}
-setInterval(saveGame,30000);
-window.addEventListener('beforeunload',saveGame);
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{state.tab=b.dataset.tab;updatePanel();});
+document.getElementById("btnTalk").onclick=()=>{if(hoverEntity&&!hoverEntity.hostile)log(hoverEntity.name+": Hello there.");else log("There is no one nearby to talk to.");};
+document.getElementById("btnAttack").onclick=()=>{if(hoverEntity&&hoverEntity.hostile)startCombat(hoverEntity);else log("Hover a hostile NPC first.");};
+document.getElementById("btnUse").onclick=()=>log("You look for something to use.");
+document.getElementById("btnSearch").onclick=()=>log("You search around "+locName()+".");
+document.getElementById("btnBank").onclick=()=>{state.tab="inv";updatePanel();log("Banking interface placeholder opened.");};
+document.getElementById("btnSave").onclick=()=>log("This prototype uses runtime state only.");
 
-// ---- FEAST QUEST TURN-IN ----
-const origOpenDialog=openDialog;
-function patchedOpenDialog(npcId,nodeIdx){
-nodeIdx=nodeIdx||0;
-if(npcId==='cook'&&player.quests.feast_assistant==='in_progress'){
-if(hasItem('bucket_milk')&&hasItem('egg')&&hasItem('pot_flour')){
-const mi=player.inventory.findIndex(i=>i.id==='bucket_milk');if(mi>=0)removeInventoryItem(mi);
-const ei=player.inventory.findIndex(i=>i.id==='egg');if(ei>=0)removeInventoryItem(ei);
-const fi=player.inventory.findIndex(i=>i.id==='pot_flour');if(fi>=0)removeInventoryItem(fi);
-player.quests.feast_assistant='complete';addXP('cooking',300);player.gold+=50;
-addChat("Quest complete: The Duke's Feast! +300 Cooking XP, +50gp",'quest');playLevelUp();updateQuestPoints();
-const panel=document.getElementById('dialog-panel');
-document.getElementById('dialog-name').textContent='Gareth the Cook';
-document.getElementById('dialog-text').textContent="You've done it! The feast is saved! Here's your reward.";
-document.getElementById('dialog-options').innerHTML='';
-const dd=document.createElement('div');dd.className='dialog-option';dd.textContent='Farewell.';
-dd.addEventListener('click',closeDialog);document.getElementById('dialog-options').appendChild(dd);
-panel.style.display='block';currentDialog={npcId:'cook',nodeIdx:0};return;
-}
-}
-if(npcId==='farmer'&&player.quests.feast_assistant==='in_progress'&&!player.questFlags.eggDone){
-addInventoryItem({id:'egg',qty:1});player.questFlags.eggDone=true;
-addChat('Fred gives you an egg!','item');playPickup();checkFeastQuest();
-}
-origOpenDialog(npcId,nodeIdx);
-}
-openDialog=patchedOpenDialog;
-
-// ---- MAIN RENDER LOOP (Canvas 2D Isometric) ----
-let renderTick=0;
-
-function updateCamera(){
-const ps=tileToScreen(player.lerpX,player.lerpY);
-camTargetX=W/2-ps.x;camTargetY=H/2-ps.y-80;
-camX+=(camTargetX-camX)*0.12;camY+=(camTargetY-camY)*0.12;
-}
-
-function render(){
-requestAnimationFrame(render);
-renderTick++;
-
-// Lerp positions
-player.lerpX+=(player.tile.x-player.lerpX)*0.15;
-player.lerpY+=(player.tile.y-player.lerpY)*0.15;
-npcInstances.forEach(n=>{n.lerpX+=(n.currentTile.x-n.lerpX)*0.1;n.lerpY+=(n.currentTile.y-n.lerpY)*0.1;});
-monsterInstances.forEach(m=>{if(m.alive){m.lerpX+=(m.currentTile.x-m.lerpX)*0.1;m.lerpY+=(m.currentTile.y-m.lerpY)*0.1;}});
-
-updateCamera();
-
-ctx.fillStyle='#0a0a05';ctx.fillRect(0,0,W,H);
-
-// Determine visible range
-const centerTile=screenToTile(W/2-camX,H/2-camY);
-const viewRange=18;
-const minX=Math.max(0,centerTile.x-viewRange),maxX=Math.min(MAP-1,centerTile.x+viewRange);
-const minY=Math.max(0,centerTile.y-viewRange),maxY=Math.min(MAP-1,centerTile.y+viewRange);
-
-// Build draw list
-const drawList=[];
-
-// Tiles
-for(let gx=minX;gx<=maxX;gx++){for(let gy=minY;gy<=maxY;gy++){
-const t=tileMap[tIdx(gx,gy)];
-const s=tileToScreen(gx,gy);
-const sx=s.x+camX,sy=s.y+camY;
-if(sx<-TILE_W||sx>W+TILE_W||sy<-80||sy>H+60)continue;
-drawList.push({sortKey:gx+gy,type:'tile',gx,gy,sx,sy,tileType:t});
-}}
-
-// World objects
-worldObjects.forEach(obj=>{
-if(obj.type==='tree'&&!obj.alive)return;
-if(obj.type==='rock'&&!obj.alive)return;
-if(obj.type==='ground_item'&&obj.taken)return;
-const gx=obj.tile.x,gy=obj.tile.y;
-if(gx<minX-2||gx>maxX+2||gy<minY-2||gy>maxY+2)return;
-const s=tileToScreen(gx,gy);
-drawList.push({sortKey:gx+gy+0.5,type:'object',obj,sx:s.x+camX,sy:s.y+camY});
-});
-
-// Ground items
-groundItems.forEach(gi=>{
-if(gi.taken)return;
-const s=tileToScreen(gi.tile.x,gi.tile.y);
-drawList.push({sortKey:gi.tile.x+gi.tile.y+0.3,type:'groundItem',gi,sx:s.x+camX,sy:s.y+camY});
-});
-
-// NPCs
-npcInstances.forEach(npc=>{
-const s=tileToScreen(npc.lerpX,npc.lerpY);
-drawList.push({sortKey:npc.lerpX+npc.lerpY+0.6,type:'npc',npc,sx:s.x+camX,sy:s.y+camY});
-});
-
-// Monsters
-monsterInstances.forEach(mon=>{
-if(!mon.alive)return;
-const s=tileToScreen(mon.lerpX,mon.lerpY);
-drawList.push({sortKey:mon.lerpX+mon.lerpY+0.6,type:'monster',mon,sx:s.x+camX,sy:s.y+camY});
-});
-
-// Player
-const ps=tileToScreen(player.lerpX,player.lerpY);
-drawList.push({sortKey:player.lerpX+player.lerpY+0.7,type:'player',sx:ps.x+camX,sy:ps.y+camY});
-
-drawList.sort((a,b)=>a.sortKey-b.sortKey);
-
-// Draw
-for(const item of drawList){
-switch(item.type){
-case 'tile':{
-const col=ISO_TILE_COLORS[item.tileType]||ISO_TILE_COLORS[0];
-if(item.tileType===TILE_TYPES.WATER){
-const bright=0.3+Math.sin(renderTick*0.04+item.gx*0.3)*0.1;
-const r=Math.floor(26*bright),g=Math.floor(74*bright),b2=Math.floor(138*bright);
-const wTop='rgb('+r+','+g+','+b2+')';
-drawIsoTile(ctx,item.sx,item.sy,wTop,col.left,col.right,false);
-}else if(col.raised){
-drawIsoWall(ctx,item.sx,item.sy,col.top,col.left,col.right,col.boxH||28);
-}else{
-drawIsoTile(ctx,item.sx,item.sy,col.top,col.left,col.right,false);
-}
-if(hoverTile&&hoverTile.x===item.gx&&hoverTile.y===item.gy){
-ctx.save();ctx.globalAlpha=0.25;drawIsoTile(ctx,item.sx,item.sy,'#ffffff','#cccccc','#dddddd',false);ctx.restore();
-}
-break;
-}
-case 'object':{
-const o=item.obj;
-if(o.type==='tree')drawTree2D(ctx,item.sx,item.sy-4);
-else if(o.type==='rock')drawRock2D(ctx,item.sx,item.sy-4);
-else if(o.type==='fish')drawFish2D(ctx,item.sx,item.sy-4,renderTick);
-else if(o.type==='range')drawRange2D(ctx,item.sx,item.sy);
-else if(o.type==='coffin')drawCoffin2D(ctx,item.sx,item.sy);
-else if(o.type==='ground_item')drawGroundItemDot(ctx,item.sx,item.sy,ITEMS[o.itemId]?ITEMS[o.itemId].color:'#ddd');
-else if(o.type==='dairy')drawDairy2D(ctx,item.sx,item.sy);
-break;
-}
-case 'groundItem':{
-const def=ITEMS[item.gi.id];
-ctx.fillStyle=def?def.color:'#00ffcc';ctx.beginPath();ctx.arc(item.sx,item.sy+TILE_H*0.5,5,0,Math.PI*2);ctx.fill();
-ctx.fillStyle='#00ffff';ctx.font='9px monospace';ctx.textAlign='center';
-ctx.fillText(def?def.name.slice(0,6):'?',item.sx,item.sy+TILE_H*0.5-8);
-break;
-}
-case 'npc':{
-const n=item.npc;
-drawHumanoid2D(ctx,item.sx,item.sy,n.color,'#e8b89a',n.name,null,n.level);
-break;
-}
-case 'monster':{
-const m=item.mon;const hpFrac=m.currentHp/m.hp;
-if(m.id==='chicken'){drawChicken2D(ctx,item.sx,item.sy);
-}else if(m.id==='cow'){drawCow2D(ctx,item.sx,item.sy);
-}else{drawHumanoid2D(ctx,item.sx,item.sy,m.color,'#c8a888',null,hpFrac<1?hpFrac:null);}
-if(hpFrac<1){const bw=28;ctx.fillStyle='#440000';ctx.fillRect(item.sx-bw/2,item.sy-28,bw,4);ctx.fillStyle=hpFrac>0.5?'#00cc00':hpFrac>0.25?'#cccc00':'#cc0000';ctx.fillRect(item.sx-bw/2,item.sy-28,bw*hpFrac,4);}
-ctx.font='10px monospace';ctx.textAlign='center';ctx.fillStyle='#ff6644';ctx.fillText(m.name+(m.level?' (Lv'+m.level+')':''),item.sx,item.sy-32);
-break;
-}
-case 'player':drawPlayer2D(ctx,item.sx,item.sy);break;
-}
-}
-
-drawHitsplats();
-drawXPDrops();
-}
-
-// ---- MINIMAP INTERVAL ----
-setInterval(renderMinimap,500);
-// ---- GAME TICK INTERVAL ----
-setInterval(gameTick,TICK_MS);
-
-// ---- LOADING SEQUENCE ----
-const loadBar=document.getElementById('load-bar');
-const loadStatus=document.getElementById('load-status');
-const loadSteps=['Initializing world...','Building Irondale...','Spawning NPCs...','Forging weapons...','Ready!'];
-let loadStep=0;
-function advanceLoading(){
-if(loadStep<loadSteps.length){
-loadBar.style.width=(loadStep+1)/loadSteps.length*100+'%';
-loadStatus.textContent=loadSteps[loadStep];loadStep++;
-if(loadStep<loadSteps.length)setTimeout(advanceLoading,350);
-else{setTimeout(()=>{
-document.getElementById('loading-screen').style.display='none';
-const loaded=loadGame();
-if(loaded)addChat('Welcome back to Irondale, adventurer!','game');
-else{addChat('Welcome to Irondale! Talk to the Town Guide for help.','game');addChat('Right-click entities for options. Left-click to move/interact.','game');}
-renderPanel();renderMinimap();updateOrbs();updateQuestPoints();
-},400);}
-}
-}
-setTimeout(advanceLoading,200);
-
-// Start render loop
-render();
-
+/* =========================================================
+   BOOT
+========================================================= */
+buildWorld();
+buildEntities();
+updatePanel();
+log("Welcome to the Misthalin atlas build.","system");
+log("Click the world or minimap to walk. Hover NPCs to see names. Click hostile NPCs to auto-attack on combat ticks.","system");
+log("Audio starts after first click and uses original generated MIDI-like tracks.","system");
+resize();
+requestAnimationFrame(drawFrame);
 })();
 </script>
 </body>
