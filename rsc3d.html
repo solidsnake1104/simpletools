@@ -12,6 +12,8 @@ body{background:#000;overflow:hidden;font-family:'Segoe UI',monospace;user-selec
 #game-canvas{display:block;width:765px;height:503px;}
 #hud{position:absolute;top:0;left:0;width:765px;height:503px;pointer-events:none;overflow:hidden;}
 #loading-screen{position:absolute;inset:0;background:#0a0500;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loader-spinner { width:32px;height:32px;border:3px solid #3a2a1a;border-top-color:#c5a028;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px; }
 #loading-screen h1{color:#c5a028;font-family:Georgia,serif;font-size:48px;text-shadow:0 0 20px #c5a028,0 0 40px #8a6a10;letter-spacing:4px;}
 #loading-screen .sub{color:#8a6a3a;font-size:14px;margin:8px 0 24px;font-style:italic;}
 #load-bar-outer{width:300px;height:20px;border:1px solid #5a4a2a;background:#0a0500;border-radius:2px;}
@@ -120,36 +122,36 @@ footer{position:fixed;bottom:2px;right:4px;color:#3a2a1a;font-size:9px;font-fami
 <div data-id="2" id="game-wrapper">
 <canvas data-id="3" id="game-canvas" width="765" height="503"></canvas>
 <div data-id="4" id="hud">
-<div data-id="5" id="loading-screen"><h1 data-id="6">IRONDALE</h1><p data-id="7" class="sub">A Medieval Fantasy Adventure</p><div data-id="8" id="load-bar-outer"><div data-id="9" id="load-bar"></div></div><p data-id="10" id="load-status">Initializing world...</p></div>
-<div data-id="11" id="top-bar"><span data-id="12" class="title">⚔ Irondale</span><span data-id="13">Total: <span data-id="14" class="val" id="total-level">15</span></span><span data-id="15">QP: <span data-id="16" class="val" id="quest-points">0</span></span><span data-id="17">Deaths: <span data-id="18" class="val" id="death-count">0</span></span></div>
-<div data-id="19" id="minimap-wrap"><canvas data-id="20" id="minimap" width="152" height="152"></canvas></div>
-<div data-id="21" class="data-orb" id="hp-orb"><span data-id="22" class="orb-icon">❤</span><span data-id="23" class="orb-val" id="hp-val">10/10</span></div>
-<div data-id="24" class="data-orb" id="prayer-orb"><span data-id="25" class="orb-icon">✙</span><span data-id="26" class="orb-val" id="prayer-val">1/1</span></div>
-<div data-id="27" class="data-orb" id="run-orb"><span data-id="28" class="orb-icon">🏃</span><span data-id="29" class="orb-val" id="run-val">100%</span></div>
-<div data-id="30" id="chatbox">
-<div data-id="31" id="chat-tabs"><div data-id="32" class="chat-tab active" data-ct="all">All</div><div data-id="33" class="chat-tab" data-ct="game">Game</div><div data-id="34" class="chat-tab" data-ct="combat">Combat</div></div>
-<div data-id="35" id="chat-messages"></div>
-<div data-id="36" id="chat-input-bar"><input data-id="37" id="chat-input" type="text" placeholder="Press Enter to chat..." maxlength="80"></div>
+<div data-id="5" id="loading-screen"><div data-id="6" class="loader-spinner"></div><h1 data-id="7">IRONDALE</h1><p data-id="8" class="sub">A Medieval Fantasy Adventure</p><div data-id="9" id="load-bar-outer"><div data-id="10" id="load-bar"></div></div><p data-id="11" id="load-status">Initializing world...</p></div>
+<div data-id="12" id="top-bar"><span data-id="13" class="title">⚔ Irondale</span><span data-id="14">Total: <span data-id="15" class="val" id="total-level">15</span></span><span data-id="16">QP: <span data-id="17" class="val" id="quest-points">0</span></span><span data-id="18">Deaths: <span data-id="19" class="val" id="death-count">0</span></span></div>
+<div data-id="20" id="minimap-wrap"><canvas data-id="21" id="minimap" width="152" height="152"></canvas></div>
+<div data-id="22" class="data-orb" id="hp-orb"><span data-id="23" class="orb-icon">❤</span><span data-id="24" class="orb-val" id="hp-val">10/10</span></div>
+<div data-id="25" class="data-orb" id="prayer-orb"><span data-id="26" class="orb-icon">✙</span><span data-id="27" class="orb-val" id="prayer-val">1/1</span></div>
+<div data-id="28" class="data-orb" id="run-orb"><span data-id="29" class="orb-icon">🏃</span><span data-id="30" class="orb-val" id="run-val">100%</span></div>
+<div data-id="31" id="chatbox">
+<div data-id="32" id="chat-tabs"><div data-id="33" class="chat-tab active" data-ct="all">All</div><div data-id="34" class="chat-tab" data-ct="game">Game</div><div data-id="35" class="chat-tab" data-ct="combat">Combat</div></div>
+<div data-id="36" id="chat-messages"></div>
+<div data-id="37" id="chat-input-bar"><input data-id="38" id="chat-input" type="text" placeholder="Press Enter to chat..." maxlength="80"></div>
 </div>
-<div data-id="38" id="right-panel">
-<div data-id="39" id="panel-tabs">
-<div data-id="40" class="panel-tab" data-panel="combat" title="Combat">⚔</div>
-<div data-id="41" class="panel-tab active" data-panel="skills" title="Skills">📊</div>
-<div data-id="42" class="panel-tab" data-panel="quests" title="Quests">📜</div>
-<div data-id="43" class="panel-tab" data-panel="inventory" title="Inventory">🎒</div>
-<div data-id="44" class="panel-tab" data-panel="equipment" title="Equipment">🛡</div>
+<div data-id="39" id="right-panel">
+<div data-id="40" id="panel-tabs">
+<div data-id="41" class="panel-tab" data-panel="combat" title="Combat">⚔</div>
+<div data-id="42" class="panel-tab active" data-panel="skills" title="Skills">📊</div>
+<div data-id="43" class="panel-tab" data-panel="quests" title="Quests">📜</div>
+<div data-id="44" class="panel-tab" data-panel="inventory" title="Inventory">🎒</div>
+<div data-id="45" class="panel-tab" data-panel="equipment" title="Equipment">🛡</div>
 </div>
-<div data-id="45" id="panel-content"></div>
+<div data-id="46" id="panel-content"></div>
 </div>
-<div data-id="46" id="dialog-panel"><div data-id="47" id="dialog-name"></div><div data-id="48" id="dialog-text"></div><div data-id="49" id="dialog-options"></div></div>
-<div data-id="50" id="context-menu"></div>
-<div data-id="51" id="level-up-popup"><h2 data-id="52" id="lvlup-title"></h2><p data-id="53" id="lvlup-desc"></p></div>
-<div data-id="54" id="bank-modal"><div data-id="55" id="bank-inner"><div data-id="56" id="bank-header"><span data-id="57">⚔ Irondale Bank</span><div data-id="58" id="bank-close">✕</div></div><div data-id="59" id="bank-items"></div><div data-id="60" id="bank-actions"><div data-id="61" class="bank-btn" id="deposit-all-btn">Deposit All</div></div><div data-id="62" id="bank-inv"><div data-id="63" id="bank-inv-label">Inventory</div><div data-id="64" id="bank-inv-grid"></div></div></div></div>
-<div data-id="65" id="save-indicator">Game saved.</div>
-<div data-id="66" id="tooltip"></div>
+<div data-id="47" id="dialog-panel"><div data-id="48" id="dialog-name"></div><div data-id="49" id="dialog-text"></div><div data-id="50" id="dialog-options"></div></div>
+<div data-id="51" id="context-menu"></div>
+<div data-id="52" id="level-up-popup"><h2 data-id="53" id="lvlup-title"></h2><p data-id="54" id="lvlup-desc"></p></div>
+<div data-id="55" id="bank-modal"><div data-id="56" id="bank-inner"><div data-id="57" id="bank-header"><span data-id="58">⚔ Irondale Bank</span><div data-id="59" id="bank-close">✕</div></div><div data-id="60" id="bank-items"></div><div data-id="61" id="bank-actions"><div data-id="62" class="bank-btn" id="deposit-all-btn">Deposit All</div></div><div data-id="63" id="bank-inv"><div data-id="64" id="bank-inv-label">Inventory</div><div data-id="65" id="bank-inv-grid"></div></div></div></div>
+<div data-id="66" id="save-indicator">Game saved.</div>
+<div data-id="67" id="tooltip"></div>
 </div>
 </div>
-<footer data-id="67">Made by Copilot</footer>
+<footer data-id="68">Made by Copilot</footer>
 <script>
 (function(){
 "use strict";
@@ -197,13 +199,6 @@ respawnTile:{x:30,y:42},deathCount:0,skillingAction:null,skillingTicks:0
 // ---- XP SYSTEM ----
 function xpForLevel(lvl){let p=0;for(let l=1;l<lvl;l++)p+=Math.floor(l+300*Math.pow(2,l/7));return Math.floor(p/4);}
 function levelFromXP(xp){for(let l=98;l>=1;l--)if(xp>=xpForLevel(l+1))return l+1;return 1;}
-function addXP(skill,amount){
-amount=Math.floor(amount);if(amount<=0)return;
-player.skills[skill].xp+=amount;
-const nl=levelFromXP(player.skills[skill].xp);
-if(nl>player.skills[skill].level){player.skills[skill].level=nl;showLevelUp(skill,nl);if(skill==='hitpoints'){player.maxHp=nl;player.currentHp=Math.min(player.currentHp+1,player.maxHp);}playLevelUp();}
-updateStatsPanel();showXPDrop(skill,amount);
-}
 function getTotalLevel(){let t=0;for(let s in player.skills)t+=player.skills[s].level;return t;}
 
 // ---- MAP ----
@@ -218,92 +213,66 @@ function getTile(x,y){if(x<0||x>=MAP||y<0||y>=MAP)return TILE_TYPES.BLOCKED;retu
 function isWalkable(x,y){if(x<0||x>=MAP||y<0||y>=MAP)return false;return clipFlags[tIdx(x,y)]===0;}
 
 function buildMap(){
-// Fill grass
 for(let x=0;x<MAP;x++)for(let y=0;y<MAP;y++)setTile(x,y,TILE_TYPES.GRASS);
-// River
 for(let x=0;x<MAP;x++)for(let y=10;y<=12;y++)setTile(x,y,TILE_TYPES.WATER);
-// Bridge
 for(let y=10;y<=12;y++)for(let x=29;x<=31;x++)setTile(x,y,TILE_TYPES.STONE);
-// Castle walls
 for(let x=24;x<=36;x++){setTile(x,22,TILE_TYPES.WALL);setTile(x,34,TILE_TYPES.WALL);}
 for(let y=22;y<=34;y++){setTile(24,y,TILE_TYPES.WALL);setTile(36,y,TILE_TYPES.WALL);}
-// Castle courtyard
 for(let x=25;x<=35;x++)for(let y=23;y<=33;y++)setTile(x,y,TILE_TYPES.STONE);
-// Castle keep walls
 for(let x=28;x<=32;x++){setTile(x,25,TILE_TYPES.WALL);setTile(x,29,TILE_TYPES.WALL);}
 for(let y=25;y<=29;y++){setTile(28,y,TILE_TYPES.WALL);setTile(32,y,TILE_TYPES.WALL);}
-// Keep interior
 for(let x=29;x<=31;x++)for(let y=26;y<=28;y++)setTile(x,y,TILE_TYPES.FLOOR);
-// Keep doors
 setTile(30,25,TILE_TYPES.DOOR);setTile(30,29,TILE_TYPES.DOOR);
-// Castle gate (south)
 setTile(29,34,TILE_TYPES.STONE);setTile(30,34,TILE_TYPES.STONE);setTile(31,34,TILE_TYPES.STONE);
-// Main road N-S
 for(let y=34;y<=55;y++){setTile(29,y,TILE_TYPES.STONE);setTile(30,y,TILE_TYPES.STONE);setTile(31,y,TILE_TYPES.STONE);}
-// E-W road
 for(let x=20;x<=40;x++){setTile(x,43,TILE_TYPES.STONE);setTile(x,44,TILE_TYPES.STONE);}
-// Town buildings (walls with floor inside)
 const buildings=[{x:22,y:40,w:5,h:4},{x:34,y:40,w:5,h:4},{x:23,y:46,w:4,h:4},{x:34,y:46,w:5,h:4},{x:22,y:51,w:4,h:3}];
 buildings.forEach(b=>{
 for(let bx=b.x;bx<b.x+b.w;bx++)for(let by=b.y;by<b.y+b.h;by++){
 if(bx===b.x||bx===b.x+b.w-1||by===b.y||by===b.y+b.h-1)setTile(bx,by,TILE_TYPES.WALL);
 else setTile(bx,by,TILE_TYPES.FLOOR);
 }
-// Door at front center
 setTile(b.x+Math.floor(b.w/2),b.y+b.h-1,TILE_TYPES.DOOR);
 });
-// Farm fence
 for(let x=40;x<=50;x++){setTile(x,40,TILE_TYPES.WALL);setTile(x,50,TILE_TYPES.WALL);}
 for(let y=40;y<=50;y++){setTile(40,y,TILE_TYPES.WALL);setTile(50,y,TILE_TYPES.WALL);}
 setTile(45,50,TILE_TYPES.DOOR);setTile(40,45,TILE_TYPES.DOOR);
 for(let x=41;x<=49;x++)for(let y=41;y<=49;y++)setTile(x,y,TILE_TYPES.GRASS);
-// Swamp
 for(let x=5;x<=18;x++)for(let y=48;y<=58;y++){if(Math.random()<0.7)setTile(x,y,TILE_TYPES.SWAMP);}
-// Sand path east
 for(let x=37;x<=55;x++){setTile(x,35,TILE_TYPES.SAND);setTile(x,36,TILE_TYPES.SAND);}
-// Swamp item spawn (ghost skull)
 setTile(10,52,TILE_TYPES.SWAMP);
-// Coffin area near church
 setTile(25,48,TILE_TYPES.STONE);
 }
 buildMap();
 
-// ---- WORLD OBJECTS ----
+// ---- WORLD OBJECTS (data only) ----
 const worldObjects=[];
-// Trees
 const treePositions=[];
 for(let i=0;i<35;i++){
 let tx,ty;do{tx=Math.floor(Math.random()*MAP);ty=Math.floor(Math.random()*10);}while(!isWalkable(tx,ty)||treePositions.some(p=>Math.abs(p[0]-tx)<2&&Math.abs(p[1]-ty)<2));
 treePositions.push([tx,ty]);worldObjects.push({type:'tree',tile:{x:tx,y:ty},alive:true,respawnAt:0});
 clipFlags[tIdx(tx,ty)]=1;
 }
-// More trees around map
 for(let i=0;i<20;i++){
 let tx,ty;do{tx=2+Math.floor(Math.random()*15);ty=14+Math.floor(Math.random()*20);}while(!isWalkable(tx,ty));
 treePositions.push([tx,ty]);worldObjects.push({type:'tree',tile:{x:tx,y:ty},alive:true,respawnAt:0});
 clipFlags[tIdx(tx,ty)]=1;
 }
-// Rocks (mineable)
 const rockPositions=[[5,6],[7,4],[12,7],[14,5],[8,8]];
 rockPositions.forEach(([rx,ry])=>{worldObjects.push({type:'rock',tile:{x:rx,y:ry},alive:true,respawnAt:0});clipFlags[tIdx(rx,ry)]=1;});
-// Fishing spots
 [[28,10],[32,10],[25,11]].forEach(([fx,fy])=>worldObjects.push({type:'fish',tile:{x:fx,y:fy}}));
-// Range (cooking) - in Cook's building
 worldObjects.push({type:'range',tile:{x:23,y:41}});
-// Coffin for quest
 worldObjects.push({type:'coffin',tile:{x:25,y:48}});
-// Ghost skull spawn
 worldObjects.push({type:'ground_item',tile:{x:10,y:52},itemId:'ghost_skull',qty:1,taken:false,respawnAt:0});
-// Dairy cow interaction point
 worldObjects.push({type:'dairy',tile:{x:45,y:45}});
 
-// ---- GROUND ITEMS ----
+// ---- GROUND ITEMS (data only) ----
 const groundItems=[
 {id:'bronze_sword',tile:{x:26,y:27},qty:1,respawn:80,taken:false,respawnAt:0},
 {id:'coins',tile:{x:33,y:26},qty:15,respawn:60,taken:false,respawnAt:0},
 ];
 
-// ---- NPCs ----
+// ---- NPCs (data only) ----
 const NPCS=[
 {id:'edgar',name:'Edgar the Servant',tile:{x:30,y:26},color:'#8a7a6a',level:0,wander:3,aggressive:false,
 dialog:[{text:"I've worked in this castle for many years, traveller.",opts:[{t:"How long?",next:1},{t:"Goodbye.",next:null}]},{text:"Oh, longer than I can remember! The Duke keeps me busy.",opts:[{t:"Farewell.",next:null}]}]},
@@ -328,9 +297,8 @@ dialog:[{text:"Welcome to Irondale Bank! Would you like to access your bank?",op
 {id:'scholar',name:'Scholar Elara',tile:{x:42,y:36},color:'#6a3a8a',level:0,wander:0,aggressive:false,
 dialog:[{text:"Greetings. I study the arcane arts here. Do you bring something for me?",opts:[{t:"I have notes.",next:'DELIVER_NOTES'},{t:"Just looking.",next:null}]}]},
 ];
-const npcInstances=[];
 
-// ---- MONSTERS ----
+// ---- MONSTERS (data only) ----
 const MONSTER_DEFS=[
 {id:'goblin',name:'Goblin',color:'#4a6a2a',level:2,hp:7,maxHit:1,atkSpeed:4,xpPerDmg:4,spawnArea:[20,37,35,55],count:4,aggressive:false,aggroRange:0,drops:[{id:'coins',qty:[1,5],rate:0.8},{id:'bones',qty:1,rate:1.0}]},
 {id:'goblin_warrior',name:'Goblin Warrior',color:'#3a5a1a',level:5,hp:15,maxHit:2,atkSpeed:4,xpPerDmg:4,spawnArea:[20,37,35,55],count:2,aggressive:true,aggroRange:4,drops:[{id:'coins',qty:[3,15],rate:0.8},{id:'bones',qty:1,rate:1.0},{id:'bronze_sword',qty:1,rate:0.1}]},
@@ -338,7 +306,20 @@ const MONSTER_DEFS=[
 {id:'cow',name:'Cow',color:'#d4c8b4',level:2,hp:8,maxHit:1,atkSpeed:5,xpPerDmg:4,spawnArea:[41,41,49,49],count:3,aggressive:false,aggroRange:0,drops:[{id:'raw_beef',qty:1,rate:1.0},{id:'cowhide',qty:1,rate:1.0}]},
 {id:'rat',name:'Giant Rat',color:'#7a6a5a',level:3,hp:6,maxHit:1,atkSpeed:4,xpPerDmg:4,spawnArea:[5,48,18,58],count:3,aggressive:true,aggroRange:3,drops:[{id:'bones',qty:1,rate:1.0}]},
 ];
+
+const npcInstances=[];
 const monsterInstances=[];
+
+// ---- WRAP ALL THREE.JS AND GAME BOOT IN WINDOW LOAD ----
+window.addEventListener('load', function initGame() {
+
+// Guard: ensure Three.js loaded from CDN
+if (typeof THREE === 'undefined') {
+  document.getElementById('load-status').innerHTML = 'Three.js failed to load (CDN unavailable).<br><br><button id="retry-btn-cdn" style="padding:8px 20px;background:#c5a028;color:#000;border:none;cursor:pointer;font-size:14px;border-radius:3px;">↺ Retry</button>';
+  var retryBtnCdn = document.getElementById('retry-btn-cdn');
+  if (retryBtnCdn) retryBtnCdn.addEventListener('click', function(){ location.reload(); });
+  return;
+}
 
 // ---- THREE.JS SETUP ----
 const canvas=document.getElementById('game-canvas');
@@ -346,9 +327,23 @@ let renderer,scene,camera,d=18;
 try{
 renderer=new THREE.WebGLRenderer({canvas,antialias:true});
 renderer.setSize(W,H);
-renderer.setPixelRatio(1);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setClearColor(0x1a2a1a);
-}catch(e){document.getElementById('load-status').textContent='Failed to init 3D. Refresh.';throw e;}
+} catch(e) {
+  // First failure: try again without antialias
+  try {
+    renderer = new THREE.WebGLRenderer({canvas, antialias:false, powerPreference:'default'});
+    renderer.setSize(W,H);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x1a2a1a);
+  } catch(e2) {
+    var ls = document.getElementById('load-status');
+    ls.innerHTML = 'WebGL unavailable: ' + (e2.message||e) + '<br><br><button id="retry-btn-webgl" style="padding:8px 20px;background:#c5a028;color:#000;border:none;cursor:pointer;font-size:14px;border-radius:3px;">↺ Retry</button><br><small style="color:#888;margin-top:8px;display:block;">If this persists, try Chrome or enable hardware acceleration in browser settings.</small>';
+    var retryBtnWebgl = document.getElementById('retry-btn-webgl');
+    if (retryBtnWebgl) retryBtnWebgl.addEventListener('click', function(){ location.reload(); });
+    return; // graceful exit — do NOT throw
+  }
+}
 
 scene=new THREE.Scene();
 scene.fog=new THREE.FogExp2(0x1a2a1a,0.012);
@@ -365,17 +360,14 @@ const hemLight=new THREE.HemisphereLight(0x8888cc,0x443322,0.5);scene.add(hemLig
 const tileMeshes=[];
 const tileGroup=new THREE.Group();scene.add(tileGroup);
 
-// Use instanced mesh per tile type for performance
 const tileGeo=new THREE.BoxGeometry(1,0.1,1);
 const tileMats={};
 TILE_COLORS.forEach((c,i)=>{tileMats[i]=new THREE.MeshLambertMaterial({color:new THREE.Color(c)});});
 
-// Wall geometry
 const wallGeo=new THREE.BoxGeometry(1,1,1);
 const wallMat=new THREE.MeshLambertMaterial({color:0x5c4a3a});
 
 const dummy=new THREE.Object3D();
-// Count tiles by type
 const typeCounts=new Array(9).fill(0);
 for(let i=0;i<MAP*MAP;i++)typeCounts[tileMap[i]]++;
 
@@ -399,7 +391,6 @@ scene.add(im);
 instancedMeshes[t]=im;
 }
 
-// Water animation - store water tile positions
 const waterTiles=[];
 for(let y=0;y<MAP;y++)for(let x=0;x<MAP;x++)if(tileMap[tIdx(x,y)]===TILE_TYPES.WATER)waterTiles.push({x,y});
 
@@ -427,7 +418,8 @@ function createFishSpot(x,y){
 const m=new THREE.Mesh(new THREE.SphereGeometry(0.2,8,6),new THREE.MeshLambertMaterial({color:0x44aaff,transparent:true,opacity:0.6}));
 m.position.set(x,0.15,y);return m;
 }
-function createHumanoid(color,scale=1){
+function createHumanoid(color,scale){
+scale=scale||1;
 const g=new THREE.Group();
 const body=new THREE.Mesh(new THREE.BoxGeometry(0.35,0.45,0.25),new THREE.MeshLambertMaterial({color}));
 body.position.y=0.65;g.add(body);
@@ -536,7 +528,6 @@ monsterInstances.push(inst);
 // ---- A* PATHFINDING ----
 function findPath(sx,sy,ex,ey){
 if(!isWalkable(ex,ey)){
-// Find nearest walkable tile
 let best=null,bestD=Infinity;
 for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++){
 const nx=ex+dx,ny=ey+dy;
@@ -569,7 +560,6 @@ for(const[ddx,ddy]of dirs){
 const nx=cur.x+ddx,ny=cur.y+ddy;
 const nk=k(nx,ny);
 if(closed.has(nk)||!isWalkable(nx,ny))continue;
-// Check monster/npc blocking (skip)
 const ng=(gS[ck]||0)+1;
 if(gS[nk]===undefined||ng<gS[nk]){
 gS[nk]=ng;fS[nk]=ng+h(nx,ny);par[nk]=ck;
@@ -591,7 +581,8 @@ if(player.inventory.length>=28){addChat('Your inventory is full.','game');return
 player.inventory.push({id:item.id,qty:item.qty||1});
 updateInventoryPanel();return true;
 }
-function removeInventoryItem(idx,qty=1){
+function removeInventoryItem(idx,qty){
+qty=qty||1;
 const item=player.inventory[idx];if(!item)return;
 item.qty-=qty;
 if(item.qty<=0)player.inventory.splice(idx,1);
@@ -599,6 +590,15 @@ updateInventoryPanel();
 }
 function hasItem(id){return player.inventory.some(i=>i.id===id);}
 function countItem(id){const i=player.inventory.find(x=>x.id===id);return i?i.qty:0;}
+
+// ---- XP helpers that need UI ----
+function addXP(skill,amount){
+amount=Math.floor(amount);if(amount<=0)return;
+player.skills[skill].xp+=amount;
+const nl=levelFromXP(player.skills[skill].xp);
+if(nl>player.skills[skill].level){player.skills[skill].level=nl;showLevelUp(skill,nl);if(skill==='hitpoints'){player.maxHp=nl;player.currentHp=Math.min(player.currentHp+1,player.maxHp);}playLevelUp();}
+updateStatsPanel();showXPDrop(skill,amount);
+}
 
 // ---- COMBAT ----
 function getEffectiveLevel(base,skill){
@@ -640,7 +640,6 @@ if(dmg===0){showHitsplat(mon.mesh,0,true);return;}
 mon.currentHp=Math.max(0,mon.currentHp-dmg);
 showHitsplat(mon.mesh,dmg,false);
 playSwordSwing();
-// Grant XP
 if(player.attackStyle==='accurate')addXP('attack',dmg*4);
 else if(player.attackStyle==='aggressive')addXP('strength',dmg*4);
 else if(player.attackStyle==='defensive')addXP('defence',dmg*4);
@@ -667,7 +666,6 @@ function killMonster(mon){
 mon.alive=false;mon.mesh.visible=false;
 mon.respawnAt=tickCount+50+Math.floor(Math.random()*30);
 addChat('You defeated the '+mon.name+'!','combat');
-// Drops
 mon.drops.forEach(drop=>{
 if(Math.random()<drop.rate){
 const qty=Array.isArray(drop.qty)?drop.qty[0]+Math.floor(Math.random()*(drop.qty[1]-drop.qty[0]+1)):drop.qty;
@@ -680,7 +678,6 @@ player.inCombat=false;player.combatTarget=null;
 function playerDeath(){
 addChat('Oh dear, you are dead!','game');
 player.inCombat=false;player.combatTarget=null;player.path=[];player.skillingAction=null;
-// Keep 3 most valuable
 const sorted=[...player.inventory].sort((a,b)=>(ITEMS[b.id]?.value||0)-(ITEMS[a.id]?.value||0));
 player.inventory=sorted.slice(0,3);
 player.tile={...player.respawnTile};
@@ -781,7 +778,8 @@ osc.connect(gain);gain.connect(audioCtx.destination);osc.start();osc.stop(audioC
 
 // ---- CHATBOX ----
 let chatFilter='all';
-function addChat(text,type='game'){
+function addChat(text,type){
+type=type||'game';
 const msgs=document.getElementById('chat-messages');
 const div=document.createElement('div');
 div.className='chat-msg chat-'+type;
@@ -792,7 +790,8 @@ msgs.scrollTop=msgs.scrollHeight;
 
 // ---- DIALOG ----
 let currentDialog=null;
-function openDialog(npcId,nodeIdx=0){
+function openDialog(npcId,nodeIdx){
+nodeIdx=nodeIdx||0;
 const npc=NPCS.find(n=>n.id===npcId);if(!npc)return;
 const node=npc.dialog[nodeIdx];if(!node)return;
 currentDialog={npcId,nodeIdx};
@@ -809,11 +808,9 @@ d.addEventListener('click',()=>handleDialogOption(npcId,opt));
 opts.appendChild(d);
 });
 panel.style.display='block';
-// Quest start
 if(npc.questStart&&player.quests[npc.questStart]==='not_started'){
 player.quests[npc.questStart]='in_progress';
 addChat('Quest started: '+getQuestName(npc.questStart),'quest');
-// Give items if needed
 if(npc.questStart==='arcane_mystery'){
 addInventoryItem({id:'research_notes',qty:1});
 player.questFlags.notesReceived=true;
@@ -870,7 +867,6 @@ return names[id]||id;
 }
 function checkFeastQuest(){
 if(player.questFlags.milkDone&&player.questFlags.eggDone&&player.questFlags.flourDone){
-// Check if has all items in inventory
 if(hasItem('bucket_milk')&&hasItem('egg')&&hasItem('pot_flour')){
 addChat('You have all the ingredients! Talk to Gareth the Cook.','quest');
 }
@@ -895,7 +891,6 @@ document.getElementById('bank-modal').style.display='none';
 }
 function depositItem(invIdx){
 const item=player.inventory[invIdx];if(!item)return;
-const def=ITEMS[item.id];
 const existing=bank.items.find(b=>b.id===item.id);
 if(existing){existing.qty+=item.qty;}
 else{bank.items.push({id:item.id,qty:item.qty});}
@@ -933,9 +928,7 @@ if(item.qty>1){const sc=document.createElement('span');sc.className='stack-count
 slot.addEventListener('click',()=>withdrawItem(i));
 grid.appendChild(slot);
 });
-// Fill empty slots
 for(let i=bank.items.length;i<40;i++){const slot=document.createElement('div');slot.className='bank-slot';grid.appendChild(slot);}
-// Bank inventory
 const invGrid=document.getElementById('bank-inv-grid');invGrid.innerHTML='';
 player.inventory.forEach((item,i)=>{
 const def=ITEMS[item.id];
@@ -994,11 +987,9 @@ row.title=s+': '+xp+' XP ('+pct+'% to next)';
 row.appendChild(icon);row.appendChild(name);row.appendChild(lvl);
 c.appendChild(row);
 });
-// Total
 const total=document.createElement('div');total.className='skill-row';total.style.borderTop='1px solid #3a2a1a';
 total.innerHTML='<span class="sk-icon">Σ</span><span class="sk-name" style="color:#c5a028">Total</span><span class="sk-lvl" style="color:#c5a028">'+getTotalLevel()+'</span>';
 c.appendChild(total);
-// Gold
 const gold=document.createElement('div');gold.className='skill-row';
 gold.innerHTML='<span class="sk-icon">💰</span><span class="sk-name" style="color:#ffd700">Gold</span><span class="sk-lvl" style="color:#ffd700">'+player.gold+'</span>';
 c.appendChild(gold);
@@ -1054,7 +1045,6 @@ btn.addEventListener('click',()=>{player.attackStyle=s;renderPanel();addChat('At
 div.appendChild(btn);
 });
 c.appendChild(div);
-// Stats display
 const stats=document.createElement('div');stats.style.cssText='padding:6px;font-size:10px;font-family:monospace;color:#ff981f;';
 stats.innerHTML='<div>Atk Bonus: +'+getEquipBonus('atk')+'</div><div>Str Bonus: +'+getEquipBonus('str')+'</div><div>Def Bonus: +'+getEquipBonus('def')+'</div><div>Max Hit: '+calcMaxHit()+'</div>';
 c.appendChild(stats);
@@ -1093,7 +1083,6 @@ document.getElementById('run-val').textContent=Math.floor(player.runEnergy)+'%';
 function useInventoryItem(idx){
 const item=player.inventory[idx];if(!item)return;
 const def=ITEMS[item.id];if(!def)return;
-// Equippable?
 if(def.type==='weapon'){
 const old=player.equipment.weapon;
 player.equipment.weapon=item.id;
@@ -1102,7 +1091,6 @@ if(old)addInventoryItem({id:old,qty:1});
 addChat('You equip the '+def.name+'.','item');
 renderPanel();return;
 }
-// Food
 if(def.heals){
 if(player.currentHp>=player.maxHp){addChat('You are already at full health.','game');return;}
 player.currentHp=Math.min(player.maxHp,player.currentHp+def.heals);
@@ -1110,12 +1098,10 @@ removeInventoryItem(idx);
 addChat('You eat the '+def.name+'. It heals '+def.heals+'.','game');
 updateOrbs();return;
 }
-// Bones
 if(item.id==='bones'){
 removeInventoryItem(idx);
 addXP('prayer',5);addChat('You bury the bones.','game');return;
 }
-// Examine
 addChat(def.examine,'game');
 }
 function unequipItem(slot){
@@ -1138,7 +1124,6 @@ const eq=document.createElement('div');eq.className='ctx-option';eq.textContent=
 if(def.heals){
 const eat=document.createElement('div');eat.className='ctx-option';eat.textContent='Eat';eat.addEventListener('click',()=>{useInventoryItem(idx);menu.style.display='none';});menu.appendChild(eat);
 }
-// Cook on range
 if(item.id.startsWith('raw_')){
 const cook=document.createElement('div');cook.className='ctx-option';cook.textContent='Cook (use on range)';
 cook.addEventListener('click',()=>{addChat('Go to a range and click it to cook.','game');menu.style.display='none';});menu.appendChild(cook);
@@ -1169,7 +1154,6 @@ if(Math.random()<0.6){
 if(addInventoryItem({id:'logs',qty:1})){
 addXP('woodcutting',25);addChat('You get some logs.','game');playPickup();
 }
-// Tree respawn
 if(player.skillingObj){player.skillingObj.alive=false;if(player.skillingObj.mesh)player.skillingObj.mesh.visible=false;
 player.skillingObj.respawnAt=tickCount+50+Math.floor(Math.random()*30);
 const ti=tIdx(player.skillingObj.tile.x,player.skillingObj.tile.y);clipFlags[ti]=0;
@@ -1207,7 +1191,6 @@ player.skillingAction=null;
 else if(action==='cook'){
 if(player.skillingTicks>=3){
 player.skillingTicks=0;
-// Find raw food
 const rawIdx=player.inventory.findIndex(i=>i.id==='raw_chicken'||i.id==='raw_beef'||i.id==='raw_shrimps');
 if(rawIdx>=0){
 const raw=player.inventory[rawIdx];
@@ -1229,7 +1212,6 @@ player.skillingAction=null;
 // ---- GAME TICK ----
 function gameTick(){
 tickCount++;
-// Player movement
 if(player.path.length>0&&!player.inCombat){
 const next=player.path[0];
 if(isWalkable(next.x,next.y)){
@@ -1243,11 +1225,8 @@ playFootstep();
 checkTileInteractions();
 }else{player.path=[];}
 }
-// Run energy regen
 if(!player.isRunning||player.path.length===0){player.runEnergy=Math.min(100,player.runEnergy+0.3);}
-// HP regen
 if(tickCount%15===0&&player.currentHp<player.maxHp&&!player.inCombat){player.currentHp=Math.min(player.maxHp,player.currentHp+1);updateOrbs();}
-// Player combat
 if(player.inCombat&&player.combatTarget!==null){
 const mon=monsterInstances[player.combatTarget];
 if(!mon||!mon.alive){player.inCombat=false;player.combatTarget=null;}
@@ -1265,7 +1244,6 @@ if(mon.atkCooldown<=0&&mon.alive){monsterAttackPlayer(mon);mon.atkCooldown=mon.a
 }
 }
 }
-// Monster AI
 monsterInstances.forEach(mon=>{
 if(!mon.alive){
 if(tickCount>=mon.respawnAt){
@@ -1276,7 +1254,6 @@ mon.mesh.visible=true;
 }
 return;
 }
-// Aggro check
 if(mon.aggressive&&mon.aggroRange>0&&!player.inCombat){
 const dist=Math.abs(player.tile.x-mon.currentTile.x)+Math.abs(player.tile.y-mon.currentTile.y);
 if(dist<=mon.aggroRange){
@@ -1285,7 +1262,6 @@ player.attackCooldown=1;mon.atkCooldown=1;
 addChat('The '+mon.name+' attacks you!','combat');
 }
 }
-// Wander
 if(!mon.target){
 mon.wanderTimer--;
 if(mon.wanderTimer<=0){
@@ -1298,7 +1274,6 @@ mon.currentTile={x:nx,y:ny};
 }
 }
 });
-// NPC wander
 npcInstances.forEach(npc=>{
 if(npc.wander>0){
 npc.wanderTimer--;
@@ -1312,9 +1287,7 @@ npc.currentTile={x:nx,y:ny};
 }
 }
 });
-// Skilling
 processSkilling();
-// Object respawns
 worldObjects.forEach(obj=>{
 if((obj.type==='tree'||obj.type==='rock')&&!obj.alive&&tickCount>=obj.respawnAt){
 obj.alive=true;if(obj.mesh)obj.mesh.visible=true;
@@ -1324,7 +1297,6 @@ if(obj.type==='ground_item'&&obj.taken&&tickCount>=obj.respawnAt){
 obj.taken=false;if(obj.mesh)obj.mesh.visible=true;
 }
 });
-// Ground item respawns
 groundItems.forEach(gi=>{
 if(gi.taken&&tickCount>=gi.respawnAt){gi.taken=false;if(gi.mesh)gi.mesh.visible=true;}
 });
@@ -1333,24 +1305,12 @@ updateOrbs();
 
 // ---- TILE INTERACTIONS ----
 function checkTileInteractions(){
-// Ground items
-groundItems.forEach(gi=>{
-if(!gi.taken&&player.tile.x===gi.tile.x&&player.tile.y===gi.tile.y){
-// Don't auto-pickup, must click
-}
-});
-// Quest item pickups
-worldObjects.forEach(obj=>{
-if(obj.type==='ground_item'&&!obj.taken&&player.tile.x===obj.tile.x&&player.tile.y===obj.tile.y){
-// Must click
-}
-});
+// Reserved for future auto-pickup logic
 }
 
 // ---- INPUT ----
 const raycaster=new THREE.Raycaster();
 const mouse=new THREE.Vector2();
-let rightClickTarget=null;
 
 canvas.addEventListener('mousedown',(e)=>{
 initAudio();
@@ -1358,11 +1318,9 @@ const rect=canvas.getBoundingClientRect();
 mouse.x=((e.clientX-rect.left)/rect.width)*2-1;
 mouse.y=-((e.clientY-rect.top)/rect.height)*2+1;
 raycaster.setFromCamera(mouse,camera);
-// Close menus
 document.getElementById('context-menu').style.display='none';
 if(e.button===2){handleRightClick(e);return;}
 if(bank.isOpen||currentDialog)return;
-// Cast ray to find what we clicked
 const allMeshes=[];
 npcInstances.forEach(n=>allMeshes.push(n.mesh));
 monsterInstances.forEach(m=>{if(m.alive)allMeshes.push(m.mesh);});
@@ -1394,7 +1352,6 @@ addChat('You attack the '+mon.name+'.','combat');
 return;
 }
 }
-// Check world objects
 let clickedObj=null;
 const objHits=raycaster.intersectObjects(objectMeshes.map(o=>o.mesh).filter(m=>m&&m.visible),true);
 if(objHits.length>0){
@@ -1408,12 +1365,11 @@ if(clickedObj){
 handleObjectClick(clickedObj);
 return;
 }
-// Ground items
 for(const gi of groundItems){
 if(!gi.taken){
 const gp=new THREE.Vector3(gi.tile.x,0.1,gi.tile.y);
-const d=raycaster.ray.distanceToPoint(gp);
-if(d<0.6){
+const dd=raycaster.ray.distanceToPoint(gp);
+if(dd<0.6){
 player.path=findPath(player.tile.x,player.tile.y,gi.tile.x,gi.tile.y);
 player.skillingAction=null;
 const giRef=gi;
@@ -1426,7 +1382,6 @@ return;
 }
 }
 }
-// Walk to clicked tile
 const groundPlane=new THREE.Plane(new THREE.Vector3(0,1,0),0);
 const pt=new THREE.Vector3();
 raycaster.ray.intersectPlane(groundPlane,pt);
@@ -1466,7 +1421,6 @@ startSkilling('mine',obj);
 addChat('You begin fishing...','game');
 startSkilling('fish',obj);
 }else if(obj.type==='range'){
-// Cook
 const rawIdx=player.inventory.findIndex(i=>i.id==='raw_chicken'||i.id==='raw_beef'||i.id==='raw_shrimps');
 if(rawIdx>=0){addChat('You begin cooking...','game');startSkilling('cook',obj);}
 else addChat('You need raw food to cook.','game');
@@ -1488,7 +1442,6 @@ playPickup();
 if(obj.itemId==='ghost_skull')player.questFlags.skullFound=true;
 }
 }else if(obj.type==='dairy'){
-// Milk
 if(player.quests.feast_assistant==='in_progress'&&!player.questFlags.milkDone){
 addInventoryItem({id:'bucket_milk',qty:1});
 player.questFlags.milkDone=true;
@@ -1566,7 +1519,6 @@ if(e.key==='Enter'){
 const input=document.getElementById('chat-input');
 if(document.activeElement===input&&input.value.trim()){
 addChat(input.value,'player');
-// Quest checks
 if(player.quests.feast_assistant==='in_progress'){
 if(hasItem('bucket_milk')&&hasItem('egg')&&hasItem('pot_flour')){
 // Return to cook
@@ -1576,10 +1528,8 @@ input.value='';
 }else{input.focus();}
 }
 if(e.key==='Shift')player.isRunning=!player.isRunning;
-// F keys for tabs
 const fkeys={F1:'combat',F2:'skills',F3:'quests',F4:'inventory',F5:'equipment'};
 if(fkeys[e.key]){e.preventDefault();activePanel=fkeys[e.key];document.querySelectorAll('.panel-tab').forEach(t=>t.classList.toggle('active',t.dataset.panel===activePanel));renderPanel();}
-// Zoom
 });
 
 // Scroll zoom
@@ -1606,18 +1556,14 @@ if(px<-3||px>155||py<-3||py>155)continue;
 mCtx.fillStyle=TILE_COLORS[tileMap[tIdx(x,y)]];
 mCtx.fillRect(px,py,scale,scale);
 }
-// NPCs
 mCtx.fillStyle='#ffff00';
 npcInstances.forEach(n=>{const px=ox+n.currentTile.x*scale,py=oy+n.currentTile.y*scale;mCtx.fillRect(px,py,3,3);});
-// Monsters
 mCtx.fillStyle='#ff3333';
 monsterInstances.forEach(m=>{if(m.alive){const px=ox+m.currentTile.x*scale,py=oy+m.currentTile.y*scale;mCtx.fillRect(px,py,2,2);}});
-// Player
 mCtx.fillStyle='#ffffff';
 mCtx.fillRect(76-1,76-1,3,3);
 }
 
-// Minimap click
 minimapCanvas.addEventListener('click',(e)=>{
 const rect=minimapCanvas.getBoundingClientRect();
 const mx=e.clientX-rect.left,my=e.clientY-rect.top;
@@ -1692,12 +1638,6 @@ return true;
 setInterval(saveGame,30000);
 window.addEventListener('beforeunload',saveGame);
 
-// ---- QUEST: FEAST ----
-// Check for quest turn-in when talking to cook
-const origCookDialog=NPCS.find(n=>n.id==='cook').dialog;
-// Egg from farmer or chickens
-// We handle quest items through existing pickup/dialog systems
-
 // ---- RENDER LOOP ----
 const clock=new THREE.Clock();
 let animFrame=0;
@@ -1705,22 +1645,17 @@ function animate(){
 requestAnimationFrame(animate);
 const dt=clock.getDelta();
 animFrame++;
-// Lerp player mesh to tile
 const targetPos=new THREE.Vector3(player.tile.x,0,player.tile.y);
 playerMesh.position.lerp(targetPos,0.15);
-// Camera follow
 const camTarget=new THREE.Vector3(player.tile.x+30,40,player.tile.y+30);
 camera.position.lerp(camTarget,0.08);
 camera.lookAt(player.tile.x,0,player.tile.y);
-// NPC mesh lerp
 npcInstances.forEach(npc=>{
 npc.mesh.position.lerp(new THREE.Vector3(npc.currentTile.x,0,npc.currentTile.y),0.1);
 });
-// Monster mesh lerp
 monsterInstances.forEach(mon=>{
 if(mon.alive)mon.mesh.position.lerp(new THREE.Vector3(mon.currentTile.x,0,mon.currentTile.y),0.1);
 });
-// Water shimmer
 if(animFrame%3===0&&instancedMeshes[TILE_TYPES.WATER]){
 const wm=instancedMeshes[TILE_TYPES.WATER];
 const c=new THREE.Color();
@@ -1728,18 +1663,9 @@ const bright=0.5+Math.sin(animFrame*0.05)*0.15;
 c.setHSL(0.58,0.7,bright*0.3);
 wm.material.color=c;
 }
-// Fish spot animation
 worldObjects.filter(o=>o.type==='fish').forEach(o=>{
 if(o.mesh)o.mesh.material.opacity=0.3+Math.sin(animFrame*0.08)*0.4;
 });
-// Render HP bars for combat target
-if(player.inCombat&&player.combatTarget!==null){
-const mon=monsterInstances[player.combatTarget];
-if(mon&&mon.alive){
-const pos=worldToScreen(mon.mesh.position);
-// We could render HP but let's keep it clean
-}
-}
 renderer.render(scene,camera);
 }
 
@@ -1763,7 +1689,6 @@ if(loadStep<loadSteps.length)setTimeout(advanceLoading,400);
 else{
 setTimeout(()=>{
 document.getElementById('loading-screen').style.display='none';
-// Try load save
 const loaded=loadGame();
 if(loaded)addChat('Welcome back to Irondale, adventurer!','game');
 else{
@@ -1781,16 +1706,11 @@ setTimeout(advanceLoading,300);
 animate();
 
 // ---- FEAST QUEST TURN-IN ----
-// Override cook dialog when player has all items
-const cookNPC=NPCS.find(n=>n.id==='cook');
-const origDialog=cookNPC.dialog;
-// We intercept via the dialog system - check on talk
 const origOpenDialog=openDialog;
-// Patch: check quest status during dialog
-function patchedOpenDialog(npcId,nodeIdx=0){
+function patchedOpenDialog(npcId,nodeIdx){
+nodeIdx=nodeIdx||0;
 if(npcId==='cook'&&player.quests.feast_assistant==='in_progress'){
 if(hasItem('bucket_milk')&&hasItem('egg')&&hasItem('pot_flour')){
-// Complete quest
 const mi=player.inventory.findIndex(i=>i.id==='bucket_milk');if(mi>=0)removeInventoryItem(mi);
 const ei=player.inventory.findIndex(i=>i.id==='egg');if(ei>=0)removeInventoryItem(ei);
 const fi=player.inventory.findIndex(i=>i.id==='pot_flour');if(fi>=0)removeInventoryItem(fi);
@@ -1802,15 +1722,14 @@ const panel=document.getElementById('dialog-panel');
 document.getElementById('dialog-name').textContent='Gareth the Cook';
 document.getElementById('dialog-text').textContent="You've done it! The feast is saved! Here's your reward.";
 document.getElementById('dialog-options').innerHTML='';
-const d=document.createElement('div');d.className='dialog-option';d.textContent='Farewell.';
-d.addEventListener('click',closeDialog);
-document.getElementById('dialog-options').appendChild(d);
+const dd=document.createElement('div');dd.className='dialog-option';dd.textContent='Farewell.';
+dd.addEventListener('click',closeDialog);
+document.getElementById('dialog-options').appendChild(dd);
 panel.style.display='block';
 currentDialog={npcId:'cook',nodeIdx:0};
 return;
 }
 }
-// Farmer gives egg
 if(npcId==='farmer'&&player.quests.feast_assistant==='in_progress'&&!player.questFlags.eggDone){
 addInventoryItem({id:'egg',qty:1});
 player.questFlags.eggDone=true;
@@ -1819,9 +1738,9 @@ playPickup();checkFeastQuest();
 }
 origOpenDialog(npcId,nodeIdx);
 }
-// Replace
-window._openDialog=openDialog;
 openDialog=patchedOpenDialog;
+
+}); // end window.addEventListener('load', ...)
 
 })();
 </script>
