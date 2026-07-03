@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Lumbridge Adventures</title>
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body { background:#222; color:#e8d8a0; font-family:'Courier New',monospace; display:flex; justify-content:center; padding:10px; }
+#game { display:flex; gap:10px; }
+canvas { background:#3a5f2a; border:3px solid #8a6d3b; cursor:pointer; }
+#sidebar { width:250px; display:flex; flex-direction:column; gap:8px; }
+.panel { background:#1b1b1b; border:2px solid #8a6d3b; padding:8px; border-radius:4px; }
+h2 { color:#ffcc33; font-size:13px; border-bottom:1px solid #8a6d3b; margin-bottom:5px; }
+.stat { display:flex; justify-content:space-between; font-size:12px; margin:1px 0; }
+.bar { height:9px; background:#400; border:1px solid #000; margin:2px 0 4px; }
+.bar > span { display:block; height:100%; background:#c00; }
+#log { height:120px; overflow-y:auto; font-size:11px; line-height:1.4; }
+#inv .slot { display:inline-block; width:70px; height:20px; border:1px solid #8a6d3b; margin:2px; font-size:10px; text-align:center; line-height:18px; }
+#options button { display:block; width:100%; margin-top:4px; padding:4px; text-align:left; background:#5a4522; color:#e8d8a0; border:1px solid #8a6d3b; cursor:pointer; font-family:inherit; font-size:11px; }
+#options button:hover { background:#7a5d32; }
+</style>
+</head>
+<body>
+<div id="game">
+  <canvas id="view" width="800" height="640"></canvas>
+  <div id="sidebar">
+    <div class="panel"><h2>Stats</h2>
+      <div class="stat"><span>Hitpoints</span><span id="hpText">10 / 10</span></div>
+      <div class="bar"><span id="hpBar"></span></div>
+      <div class="stat"><span>Attack</span><span id="atkLvl">1</span></div>
+      <div class="stat"><span>Strength</span><span id="strLvl">1</span></div>
+      <div class="stat"><span>Defence</span><span id="defLvl">1</span></div>
+      <div class="stat"><span>Cooking</span><span id="cookLvl">1</span></div>
+      <div class="stat"><span>Quest Points</span><span id="qpVal">0</span></div>
+    </div>
+    <div class="panel"><h2>Inventory</h2><div id="inv"></div></div>
+    <div class="panel"><h2>Cook's Assistant</h2><div id="questText" style="font-size:11px;line-height:1.4">Not started.</div></div>
+    <div class="panel" id="dialoguePanel" style="display:none">
+      <h2 id="speaker">NPC</h2>
+      <div id="npcText" style="font-size:11px;line-height:1.4;margin-bottom:5px"></div>
+      <div id="options"></div>
+    </div>
+    <div class="panel"><h2>Game Log</h2><div id="log"></div></div>
+  </div>
+</div>
+<script>
+// ===== Lumbridge Adventures: a RuneScape Classic inspired browser RPG =====
+const TILE = 32, COLS = 25, ROWS = 20;
+const canvas = document.getElementById('view');
+const ctx = canvas.getContext('2d');
+
+// ---------- MAP ----------
+// tile codes: 0 grass, 1 water, 2 path, 3 wall, 4 floor, 5 bridge, 6 tree, 8 range
+function buildMap() {
+  const m = [];
+  for (let y = 0; y < ROWS; y++) m.push(new Array(COLS).fill(0));
+  // River Lum along the east edge
+  for (let y = 0; y < ROWS; y++) for (let x = 22; x < COLS; x++) m[y][x] = 1;
+  // A wooden bridge across the river
+  for (let x = 22; x < COLS; x++) m[9][x] = 5;
+  // Scattered trees
+  [[12,2],[13,3],[18,4],[19,5],[3,15],[6,16],[20,12]].forEach(([x,y]) => m[y][x] = 6);
+  // Lumbridge Castle: walls on rows 1 and 7, cols 1..8
+  for (let x = 1; x <= 8; x++) { m[1][x] = 3; m[7][x] = 3; }
+  for (let y = 1; y <= 7; y++) { m[y][1] = 3; m[y][8] = 3; }
+  // Castle interior floor
+  for (let y = 2; y <= 6; y++) for (let x = 2; x <= 7; x++) m[y][x] = 4;
+  // Kitchen cooking range
+  m[3][7] = 8;
+  // Castle doorway + path leading south
+  m[7][4] = 2;
+  for (let y = 8; y <= 12; y++) m[y][4] = 2;
+  return m;
+}
+const map = buildMap();
+const walkable = c => c === 0 || c === 2 || c === 4 || c === 5 || c === 8;
+
+// ---------- ENTITIES ----------
+const player = {
+  x: 4, y: 11,
+  hp: 10, maxhp: 10,
+  atk: 1, str: 1, def: 1, cook: 1,
+  atkXp: 0, strXp: 0, defXp: 0, cookXp: 0,
+  qp: 0, inv: ['Bronze sword'],
+  path: [], mode: 'walk', target: null
+};
+
+const npcs = [
+  { id:'cook', name:'Cook',         x:6,  y:2,  color:'#ffffff', letter:'C' },
+  { id:'duke', name:'Duke Horacio', x:3,  y:5,  color:'#c080e0', letter:'D' },
+  { id:'hans', name:'Hans',         x:11, y:10, color:'#66bb66', letter:'H' }
+];
+
+const resources = [
+  { name:'Chicken',   x:14, y:3,  gives:'Egg' },
+  { name:'Dairy cow', x:17, y:6,  gives:'Bucket of milk' },
+  { name:'Flour bin', x:12, y:13, gives:'Pot of flour' }
+];
+
+let goblins = [];
+function spawnGoblins() {
+  goblins = [[15,14],[17,15],[14,16]].map(([x,y]) => ({ x, y, hp:5, maxhp:5, alive:true, respawn:0 }));
+}
+spawnGoblins();
+// ---------- HELPERS ----------
+function log(msg, color) {
+  const box = document.getElementById('log');
+  const d = document.createElement('div');
+  d.textContent = msg;
+  if (color) d.style.color = color;
+  box.appendChild(d);
+  box.scrollTop = box.scrollHeight;
+}
+const rand = n => Math.floor(Math.random() * n);
+const dist = (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+function occupied(x, y) {
+  if (npcs.some(n => n.x === x && n.y === y)) return true;
+  if (goblins.some(g => g.alive && g.x === x && g.y === y)) return true;
+  return false;
+}
+
+// ---------- PATHFINDING (breadth-first search) ----------
+function findPath(sx, sy, tx, ty) {
+  if (sx === tx && sy === ty) return [];
+  const q = [[sx, sy]];
+  const prev = {};
+  prev[sx + ',' + sy] = null;
+  while (q.length) {
+    const [cx, cy] = q.shift();
+    for (const [dx, dy] of [[0,-1],[0,1],[-1,0],[1,0]]) {
+      const nx = cx + dx, ny = cy + dy, key = nx + ',' + ny;
+      if (nx < 0 || ny < 0 || nx >= COLS || ny >= ROWS) continue;
+      if (key in prev) continue;
+      const blockedByEntity = occupied(nx, ny) && !(nx === tx && ny === ty);
+      if (!walkable(map[ny][nx]) || blockedByEntity) continue;
+      prev[key] = [cx, cy];
+      if (nx === tx && ny === ty) {
+        const path = []; let cur = [nx, ny];
+        while (cur) { path.push({ x:cur[0], y:cur[1] }); cur = prev[cur[0] + ',' + cur[1]]; }
+        path.reverse(); path.shift();
+        return path;
+      }
+      q.push([nx, ny]);
+    }
+  }
+  return null;
+}
+function adjacentWalkable(tx, ty) {
+  const opts = [[tx,ty-1],[tx,ty+1],[tx-1,ty],[tx+1,ty]]
+    .filter(([x,y]) => x >= 0 && y >= 0 && x < COLS && y < ROWS && walkable(map[y][x]) && !occupied(x,y));
+  if (!opts.length) return null;
+  opts.sort((a,b) => (Math.abs(a[0]-player.x)+Math.abs(a[1]-player.y)) - (Math.abs(b[0]-player.x)+Math.abs(b[1]-player.y)));
+  return { x:opts[0][0], y:opts[0][1] };
+}
+// ---------- INPUT ----------
+canvas.addEventListener('click', e => {
+  const r = canvas.getBoundingClientRect();
+  const tx = Math.floor((e.clientX - r.left) / TILE);
+  const ty = Math.floor((e.clientY - r.top) / TILE);
+  if (tx < 0 || ty < 0 || tx >= COLS || ty >= ROWS) return;
+
+  const gob = goblins.find(g => g.alive && g.x === tx && g.y === ty);
+  if (gob) { approach(tx, ty, 'attack', gob); return; }
+
+  const npc = npcs.find(n => n.x === tx && n.y === ty);
+  if (npc) { approach(tx, ty, 'talk', npc); return; }
+
+  const res = resources.find(o => o.x === tx && o.y === ty);
+  if (res) { approach(tx, ty, 'gather', res); return; }
+
+  player.mode = 'walk'; player.target = null;
+  const p = findPath(player.x, player.y, tx, ty);
+  if (p && p.length) player.path = p;
+  else log('You cannot walk there.');
+});
+
+function approach(tx, ty, mode, obj) {
+  player.mode = mode; player.target = obj;
+  if (dist(player, { x:tx, y:ty }) <= 1) { player.path = []; return; }
+  const spot = adjacentWalkable(tx, ty);
+  if (!spot) { log('You cannot reach that.'); player.mode = 'walk'; return; }
+  const p = findPath(player.x, player.y, spot.x, spot.y);
+  if (p) player.path = p;
+  else { log('You cannot reach that.'); player.mode = 'walk'; }
+}
+
+document.addEventListener('keydown', e => {
+  const moves = { ArrowUp:[0,-1], ArrowDown:[0,1], ArrowLeft:[-1,0], ArrowRight:[1,0],
+                  w:[0,-1], s:[0,1], a:[-1,0], d:[1,0] };
+  const mv = moves[e.key]; if (!mv) return;
+  const nx = player.x + mv[0], ny = player.y + mv[1];
+  if (nx < 0 || ny < 0 || nx >= COLS || ny >= ROWS) return;
+  const gob = goblins.find(g => g.alive && g.x === nx && g.y === ny);
+  if (gob) { player.mode = 'attack'; player.target = gob; return; }
+  if (walkable(map[ny][nx]) && !occupied(nx, ny)) { player.x = nx; player.y = ny; player.path = []; player.mode = 'walk'; }
+});
+// ---------- COMBAT ----------
+function maxHit(lvl) { return 1 + Math.floor(lvl * 0.6); }
+function giveXp(skill, amt) {
+  player[skill + 'Xp'] += amt;
+  const lvl = 1 + Math.floor(player[skill + 'Xp'] / 40);
+  if (lvl > player[skill]) { player[skill] = lvl; log('You advance a ' + skill + ' level! Now ' + lvl + '.', '#ffcc33'); }
+  if (skill === 'str' || skill === 'def') player.maxhp = 10 + Math.floor((player.str + player.def) / 2);
+}
+function playerAttack(g) {
+  const dmg = rand(maxHit(player.str) + 1);
+  g.hp -= dmg;
+  log(dmg > 0 ? 'You hit the goblin for ' + dmg + '.' : 'You miss the goblin.');
+  giveXp('atk', 4); giveXp('str', 4);
+  if (g.hp <= 0) {
+    g.alive = false; g.respawn = 20;
+    log('You have defeated the goblin!', '#88ff88');
+    giveXp('def', 3);
+    if (Math.random() < 0.5) addItem('Coins');
+    player.mode = 'walk'; player.target = null;
+  }
+}
+function goblinAttack(g) {
+  const dmg = rand(3);
+  player.hp -= dmg;
+  log(dmg > 0 ? 'The goblin hits you for ' + dmg + '.' : 'The goblin misses.', '#ff9999');
+  giveXp('def', 1);
+  if (player.hp <= 0) die();
+}
+function die() {
+  log('Oh dear, you are dead!', '#ff4444');
+  player.hp = player.maxhp; player.x = 4; player.y = 11;
+  player.path = []; player.mode = 'walk'; player.target = null;
+}
+
+// ---------- INVENTORY ----------
+function addItem(it) { player.inv.push(it); log('You get: ' + it + '.'); renderInv(); }
+function hasItem(it) { return player.inv.includes(it); }
+function removeItem(it) { const i = player.inv.indexOf(it); if (i >= 0) player.inv.splice(i, 1); renderInv(); }
+function renderInv() {
+  const box = document.getElementById('inv'); box.innerHTML = '';
+  player.inv.forEach(it => { const s = document.createElement('span'); s.className = 'slot'; s.textContent = it; box.appendChild(s); });
+}
+// ---------- NPC DIALOGUE & QUEST ----------
+let quest = 0; // 0 not started, 1 in progress, 2 finished
+const dPanel = document.getElementById('dialoguePanel');
+
+function talk(npc) {
+  if (npc.id === 'cook') return cookDialogue();
+  if (npc.id === 'duke') return showDialogue('Duke Horacio',
+    "Welcome to my castle, adventurer. My cook is in a terrible panic about my birthday cake.",
+    [{ t:'(Leave)', f:closeDialogue }]);
+  if (npc.id === 'hans') return showDialogue('Hans',
+    "Hello there! I've worked here for years. Mind the goblins east of the river.",
+    [{ t:'(Leave)', f:closeDialogue }]);
+}
+function showDialogue(who, text, opts) {
+  dPanel.style.display = 'block';
+  document.getElementById('speaker').textContent = who;
+  document.getElementById('npcText').textContent = text;
+  const box = document.getElementById('options'); box.innerHTML = '';
+  opts.forEach(o => { const b = document.createElement('button'); b.textContent = o.t; b.onclick = o.f; box.appendChild(b); });
+}
+function closeDialogue() { dPanel.style.display = 'none'; }
+
+function cookDialogue() {
+  if (quest === 0) {
+    showDialogue('Cook',
+      "The Duke's birthday is today and I've forgotten the cake ingredients! Please, will you help me?",
+      [{ t:'Yes, I will help you.', f:acceptQuest },
+       { t:"I can't right now.", f:closeDialogue }]);
+  } else if (quest === 1) {
+    const need = [];
+    if (!hasItem('Egg')) need.push('an egg');
+    if (!hasItem('Bucket of milk')) need.push('a bucket of milk');
+    if (!hasItem('Pot of flour')) need.push('a pot of flour');
+    if (need.length === 0) {
+      showDialogue('Cook', "You have everything! Hand it over and I'll start baking.",
+        [{ t:'Give the ingredients.', f:completeQuest }]);
+    } else {
+      showDialogue('Cook', 'You still need to bring me ' + need.join(', ') + '. Hurry!',
+        [{ t:'(Leave)', f:closeDialogue }]);
+    }
+  } else {
+    showDialogue('Cook', "Thank you again! The Duke loved his cake.", [{ t:'(Leave)', f:closeDialogue }]);
+  }
+}
+function acceptQuest() {
+  quest = 1;
+  updateQuest('Bring the Cook: an Egg, a Bucket of milk, and a Pot of flour. Search the chicken, the dairy cow and the flour bin around Lumbridge.');
+  log('Quest started: Cook\'s Assistant.', '#ffcc33');
+  cookDialogue();
+}
+function completeQuest() {
+  removeItem('Egg'); removeItem('Bucket of milk'); removeItem('Pot of flour');
+  quest = 2;
+  player.qp += 1; document.getElementById('qpVal').textContent = player.qp;
+  giveXp('cook', 300);
+  addItem('Cooking gauntlets');
+  updateQuest('Complete! You helped the Cook bake the Duke\'s birthday cake.');
+  log('Congratulations! Quest complete: Cook\'s Assistant (+1 Quest Point).', '#88ff88');
+  showDialogue('Cook', "You've saved the day! Take these Cooking gauntlets as a reward.", [{ t:'(Leave)', f:closeDialogue }]);
+}
+function updateQuest(t) { document.getElementById('questText').textContent = t; }
+
+function gather(res) {
+  if (hasItem(res.gives)) { log('You already have a ' + res.gives.toLowerCase() + '.'); return; }
+  addItem(res.gives);
+  if (res.name === 'Chicken') log('You take a fresh egg.');
+  else if (res.name === 'Dairy cow') log('You milk the cow into a bucket.');
+  else if (res.name === 'Flour bin') log('You grind wheat into a pot of flour.');
+}
+// ---------- GAME TICK ----------
+function interact() {
+  const t = player.target;
+  if (!t) return;
+  if (player.mode === 'talk' && dist(player, t) <= 1) { talk(t); player.mode = 'walk'; player.target = null; }
+  else if (player.mode === 'gather' && dist(player, t) <= 1) { gather(t); player.mode = 'walk'; player.target = null; }
+}
+function tick() {
+  // move player one step along the path
+  if (player.path && player.path.length) {
+    const step = player.path.shift();
+    if (!occupied(step.x, step.y)) { player.x = step.x; player.y = step.y; }
+    else player.path = [];
+  }
+  // resolve talk / gather on arrival
+  if ((player.mode === 'talk' || player.mode === 'gather') && (!player.path || !player.path.length)) interact();
+  // player combat
+  if (player.mode === 'attack' && player.target && player.target.alive) {
+    if (dist(player, player.target) <= 1 && !player.path.length) playerAttack(player.target);
+  } else if (player.mode === 'attack') {
+    player.mode = 'walk';
+  }
+  // goblin AI
+  goblins.forEach(g => {
+    if (!g.alive) { if (--g.respawn <= 0) { g.alive = true; g.hp = g.maxhp; } return; }
+    const d = dist(g, player);
+    if (d <= 1) goblinAttack(g);
+    else if (d <= 4) stepToward(g, player);
+  });
+  drawHUD();
+}
+function stepToward(g, tgt) {
+  const dx = Math.sign(tgt.x - g.x), dy = Math.sign(tgt.y - g.y);
+  const tries = Math.abs(tgt.x - g.x) > Math.abs(tgt.y - g.y) ? [[dx,0],[0,dy]] : [[0,dy],[dx,0]];
+  for (const [mx, my] of tries) {
+    const nx = g.x + mx, ny = g.y + my;
+    if (nx >= 0 && ny >= 0 && nx < COLS && ny < ROWS && walkable(map[ny][nx]) && !occupied(nx,ny) && !(nx === player.x && ny === player.y)) { g.x = nx; g.y = ny; return; }
+  }
+}
+// ---------- RENDER ----------
+const COLORS = { 0:'#4a7a30', 1:'#2a5aa0', 2:'#b89a5a', 3:'#6b6b6b', 4:'#8a7a55', 5:'#9a7a3a', 6:'#2f5020', 8:'#333' };
+function draw() {
+  for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+    ctx.fillStyle = COLORS[map[y][x]]; ctx.fillRect(x*TILE, y*TILE, TILE, TILE);
+    if (map[y][x] === 6) { ctx.fillStyle = '#1f3512'; ctx.beginPath(); ctx.arc(x*TILE+16, y*TILE+16, 12, 0, 7); ctx.fill(); }
+    if (map[y][x] === 8) { ctx.fillStyle = '#c0392b'; ctx.fillRect(x*TILE+6, y*TILE+6, 20, 20); }
+  }
+  resources.forEach(r => {
+    ctx.fillStyle = '#eeddaa'; ctx.fillRect(r.x*TILE+8, r.y*TILE+8, 16, 16);
+    ctx.fillStyle = '#000'; ctx.font = '9px monospace'; ctx.fillText(r.name[0], r.x*TILE+13, r.y*TILE+20);
+  });
+  npcs.forEach(n => {
+    drawFigure(n.x, n.y, n.color);
+    ctx.fillStyle = '#000'; ctx.font = '10px monospace'; ctx.fillText(n.letter, n.x*TILE+13, n.y*TILE+20);
+  });
+  goblins.forEach(g => {
+    if (!g.alive) return;
+    drawFigure(g.x, g.y, '#3a7a2a');
+    ctx.fillStyle = '#000'; ctx.fillRect(g.x*TILE+4, g.y*TILE+2, 24, 4);
+    ctx.fillStyle = '#0f0'; ctx.fillRect(g.x*TILE+4, g.y*TILE+2, 24*(g.hp/g.maxhp), 4);
+  });
+  drawFigure(player.x, player.y, '#ffd23f');
+}
+function drawFigure(x, y, color) {
+  ctx.fillStyle = color;
+  ctx.beginPath(); ctx.arc(x*TILE+16, y*TILE+12, 7, 0, 7); ctx.fill();
+  ctx.fillRect(x*TILE+11, y*TILE+16, 10, 12);
+}
+
+// ---------- HUD ----------
+function drawHUD() {
+  document.getElementById('hpText').textContent = Math.max(0, player.hp) + ' / ' + player.maxhp;
+  document.getElementById('hpBar').style.width = Math.max(0, player.hp / player.maxhp * 100) + '%';
+  document.getElementById('atkLvl').textContent = player.atk;
+  document.getElementById('strLvl').textContent = player.str;
+  document.getElementById('defLvl').textContent = player.def;
+  document.getElementById('cookLvl').textContent = player.cook;
+}
+
+// ---------- START ----------
+renderInv();
+drawHUD();
+updateQuest('Not started. Talk to the Cook in the Lumbridge Castle kitchen.');
+log('Welcome to Lumbridge! Click to move; click a goblin, NPC, or resource to interact.', '#ffcc33');
+setInterval(() => { tick(); draw(); }, 320);
+draw();
+</script>
+</body>
+</html>
