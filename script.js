@@ -266,6 +266,11 @@ document.addEventListener("DOMContentLoaded", () => {
   let selEl = null;
   let handleL = null;
   let handleR = null;
+  let startLabel = null;
+  let endLabel = null;
+  let playheadEl = null;
+  let playheadLabel = null;
+  let trimLoadingEl = null;
 // ---- Large-file (100MB+/multi-hour) trimming via FFmpeg.wasm ----
 // Avoids decoding the whole file to PCM (which needs GBs of RAM).
 const TRIM_LARGE_FILE_BYTES = 40 * 1024 * 1024; // ~40 MB threshold
@@ -337,6 +342,36 @@ async function trimLargeFileWithFFmpeg(file, start, end) {
   try { await ffmpeg.deleteFile(outputName); } catch (_) {}
   return new Blob([data.buffer], { type: "audio/mpeg" });
 }
+  function showTrimLoading(msg) {
+    if (!waveformEl) return;
+    if (!document.getElementById("trimSpinKeyframes")) {
+      const st = document.createElement("style");
+      st.id = "trimSpinKeyframes";
+      st.textContent = "@keyframes trimspin{to{transform:rotate(360deg)}}";
+      document.head.appendChild(st);
+    }
+    if (!trimLoadingEl) {
+      trimLoadingEl = document.createElement("div");
+      trimLoadingEl.style.cssText = "position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:0.6rem;background:rgba(10,12,20,0.72);border-radius:8px;z-index:6;color:#fff;font-size:0.95rem;";
+      const spinner = document.createElement("div");
+      spinner.style.cssText = "width:18px;height:18px;border:3px solid rgba(255,255,255,0.25);border-top-color:#7aaaff;border-radius:50%;animation:trimspin 0.8s linear infinite;";
+      const label = document.createElement("span");
+      label.className = "trim-loading-label";
+      trimLoadingEl.appendChild(spinner);
+      trimLoadingEl.appendChild(label);
+    }
+    const lbl = trimLoadingEl.querySelector(".trim-loading-label");
+    if (lbl) lbl.textContent = msg || "Loading…";
+    if (getComputedStyle(waveformEl).position === "static") {
+      waveformEl.style.position = "relative";
+    }
+    if (trimLoadingEl.parentNode !== waveformEl) waveformEl.appendChild(trimLoadingEl);
+    trimLoadingEl.style.display = "flex";
+  }
+
+  function hideTrimLoading() {
+    if (trimLoadingEl) trimLoadingEl.style.display = "none";
+  }
 
   function buildOverlay() {
     if (!waveformEl) return;
@@ -364,6 +399,27 @@ async function trimLargeFileWithFFmpeg(file, start, end) {
 
     overlayEl.appendChild(selEl);
     waveformEl.appendChild(overlayEl);
+    overlayEl.style.pointerEvents = "none";
+    selEl.style.pointerEvents = "auto";
+    handleL.style.pointerEvents = "auto";
+    handleR.style.pointerEvents = "auto";
+
+    startLabel = document.createElement("div");
+    startLabel.style.cssText = "position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:4px;background:rgba(20,24,36,0.92);color:#fff;font-size:11px;font-weight:600;padding:1px 5px;border-radius:4px;white-space:nowrap;pointer-events:none;";
+    handleL.appendChild(startLabel);
+
+    endLabel = document.createElement("div");
+    endLabel.style.cssText = "position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:4px;background:rgba(20,24,36,0.92);color:#fff;font-size:11px;font-weight:600;padding:1px 5px;border-radius:4px;white-space:nowrap;pointer-events:none;";
+    handleR.appendChild(endLabel);
+
+    playheadEl = document.createElement("div");
+    playheadEl.id = "trimPlayhead";
+    playheadEl.style.cssText = "position:absolute;top:0;bottom:0;width:2px;left:0;background:#ffcc00;box-shadow:0 0 6px rgba(255,204,0,0.9);pointer-events:none;z-index:4;display:none;";
+    playheadLabel = document.createElement("div");
+    playheadLabel.style.cssText = "position:absolute;top:-22px;left:50%;transform:translateX(-50%);background:#ffcc00;color:#1a1a1a;font-size:11px;font-weight:600;padding:1px 5px;border-radius:4px;white-space:nowrap;";
+    playheadLabel.textContent = "0:00.0";
+    playheadEl.appendChild(playheadLabel);
+    overlayEl.appendChild(playheadEl);
 
     initOverlayDrag();
   }
@@ -384,8 +440,26 @@ async function trimLargeFileWithFFmpeg(file, start, end) {
 
     selEl.style.left = leftPct + "%";
     selEl.style.width = Math.max(0, rightPct - leftPct) + "%";
+    selEl.style.width = Math.max(0, rightPct - leftPct) + "%";
+    if (startLabel) startLabel.textContent = formatTrimTime(Math.max(0, s));
+    if (endLabel) endLabel.textContent = formatTrimTime(Math.min(duration, e));
+
+  function formatTrimTime(t) {
+    if (!Number.isFinite(t) || t < 0) t = 0;
+    const m = Math.floor(t / 60);
+    const s = Math.floor(t % 60);
+    const d = Math.floor((t * 10) % 10);
+    return m + ":" + (s < 10 ? "0" : "") + s + "." + d;
   }
 
+  function renderPlayhead(currentTime) {
+    if (!playheadEl || !duration) return;
+    if (!Number.isFinite(currentTime)) currentTime = wavesurfer ? wavesurfer.getCurrentTime() : 0;
+    const pct = Math.max(0, Math.min(100, (currentTime / duration) * 100));
+    playheadEl.style.left = pct + "%";
+    playheadEl.style.display = "block";
+    if (playheadLabel) playheadLabel.textContent = formatTrimTime(currentTime);
+  }
   function initOverlayDrag() {
     let dragging = null;
     let dragStartX = 0;
@@ -522,6 +596,7 @@ async function trimLargeFileWithFFmpeg(file, start, end) {
   }
 
   async function handleAudioFile(file) {
+    showTrimLoading("Loading audio…");
     audioBlob = file;
     audioBuffer = null;
     duration = 0;
@@ -551,24 +626,26 @@ async function trimLargeFileWithFFmpeg(file, start, end) {
 
     // Large files: skip WaveSurfer (it decodes the whole file again).
     if (useFFmpegTrim) {
-      if (waveformEl) {
-        waveformEl.innerHTML = '<p style="padding:1rem;color:#9aa;font-size:0.9rem;">Large file loaded — waveform preview disabled to conserve memory. Set start/end times and trim.</p>';
-      }
       const tmp = document.createElement("audio");
       tmp.preload = "metadata";
       tmp.src = URL.createObjectURL(file);
       tmp.onloadedmetadata = () => {
         duration = Number.isFinite(tmp.duration) ? tmp.duration : 0;
+        hideTrimLoading();
+        if (waveformEl) {
+          waveformEl.innerHTML = '<p style="padding:1rem;color:#9aa;font-size:0.9rem;">Large file loaded (' + (file.size / 1048576).toFixed(0) + ' MB) — waveform preview disabled to conserve memory. Set the start/end times below and trim.</p>';
+        }
         if (startTimeEl) startTimeEl.value = "0.00";
         if (endTimeEl) endTimeEl.value = duration.toFixed(2);
         if (trimBtn) trimBtn.disabled = false;
         if (playbackControls) playbackControls.style.display = "none";
         URL.revokeObjectURL(tmp.src);
       };
-      tmp.onerror = () => { if (trimBtn) trimBtn.disabled = false; };
+      tmp.onerror = () => { hideTrimLoading(); if (trimBtn) trimBtn.disabled = false; };
       return;
     }
     if (!window.WaveSurfer || !waveformEl) {
+      hideTrimLoading();
       return;
     }
 
@@ -576,12 +653,16 @@ async function trimLargeFileWithFFmpeg(file, start, end) {
       container: "#waveform",
       waveColor: "#7aaaff",
       progressColor: "#4a6cff",
-      height: 120
+      height: 120,
+      cursorColor: "#ffcc00",
+      cursorWidth: 4
     });
 
     wavesurfer.loadBlob(file);
+    showTrimLoading("Loading waveform…");
 
     wavesurfer.on("ready", () => {
+      hideTrimLoading();
       duration = wavesurfer.getDuration();
 
       if (startTimeEl) startTimeEl.value = "0.00";
@@ -591,6 +672,7 @@ async function trimLargeFileWithFFmpeg(file, start, end) {
 
       buildOverlay();
       renderOverlay();
+      renderPlayhead(0);
     });
 
     wavesurfer.on("play", () => {
@@ -603,6 +685,13 @@ async function trimLargeFileWithFFmpeg(file, start, end) {
 
     wavesurfer.on("finish", () => {
       if (playPauseBtn) playPauseBtn.textContent = "▶ Play";
+    });
+    wavesurfer.on("timeupdate", (currentTime) => {
+      renderPlayhead(currentTime);
+    });
+
+    wavesurfer.on("interaction", (newTime) => {
+      renderPlayhead(newTime);
     });
   }
 
@@ -700,8 +789,10 @@ async function trimLargeFileWithFFmpeg(file, start, end) {
       if (useFFmpegTrim || !audioBuffer) {
         trimBtn.disabled = true;
         const prevLabel = trimBtn.textContent;
-        trimBtn.textContent = "Trimming…";
+        trimBtn.textContent = "Loading trimmer…";
         try {
+          await ensureTrimFFmpeg();
+          trimBtn.textContent = "Trimming…";
           const trimmedBlob = await trimLargeFileWithFFmpeg(audioBlob, s, e);
           const url = URL.createObjectURL(trimmedBlob);
           const a = document.createElement("a");
