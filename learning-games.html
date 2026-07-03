@@ -43,6 +43,7 @@ button{font-family:inherit;border:none;cursor:pointer;background:none;color:inhe
 .screen{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 .fade-in{animation:fadeIn .35s ease both;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes cardIn{from{opacity:0;transform:translateY(16px) scale(.94)}to{opacity:1;transform:translateY(0) scale(1)}}.stagger-in{animation:cardIn .5s cubic-bezier(.34,1.56,.64,1) both;}
 h1,h2,h3{font-family:var(--font-display);margin:0;}
 .visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}
 
@@ -98,7 +99,8 @@ h1,h2,h3{font-family:var(--font-display);margin:0;}
 ========================================================= */
 .scene{position:absolute;inset:0;}
 .scene-bg{position:absolute;inset:0;overflow:hidden;background:#8FE0D6;}
-.scene-bg-art{position:absolute;inset:0;z-index:0;}
+.scene-bg-art{position:absolute;inset:0;z-index:0;animation:bgDrift 20s ease-in-out infinite;}
+@keyframes bgDrift{0%{transform:translate(0,0) scale(1.08)}50%{transform:translate(-2.5%,1.5%) scale(1.12)}100%{transform:translate(0,0) scale(1.08)}}
 .scene-bg-art svg{position:absolute;inset:0;width:100%;height:100%;display:block;}
 .scene-deco{position:absolute;pointer-events:none;}
 .scene-topbar{
@@ -123,6 +125,7 @@ h1,h2,h3{font-family:var(--font-display);margin:0;}
   0%{transform:translate(0,0) rotate(0deg);opacity:1;}
   100%{transform:translate(var(--dx),var(--dy)) rotate(var(--rot));opacity:0;}
 }
+.fullscreen-confetti-layer{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:80;}
 
 .celebrate-overlay{
   position:absolute;inset:0;background:rgba(39,48,58,.55);backdrop-filter:blur(2px);
@@ -155,7 +158,8 @@ h1,h2,h3{font-family:var(--font-display);margin:0;}
   border:2px solid rgba(0,0,0,.08);flex-shrink:0;
 }
 .round-dot.done{background:var(--gold);border-color:#E0A93D;}
-.round-dot.active{background:var(--coral);border-color:#D9483A;transform:scale(1.25);}
+.round-dot.active{background:var(--coral);border-color:#D9483A;animation:dotBounce .9s ease-in-out infinite;}
+@keyframes dotBounce{0%,100%{transform:translateY(0) scale(1.2)}50%{transform:translateY(-7px) scale(1.35)}}
 
 .listen-panel{
   position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;
@@ -779,7 +783,8 @@ const LISTEN_ROUND_COUNT = 5;
 
 const app = document.getElementById('app');
 
-function render(){
+function render(){ if(document.startViewTransition){ document.startViewTransition(()=>renderNow()); } else { renderNow(); } }
+function renderNow(){
   if(state.view === 'home') return renderHome();
   if(state.view === 'listen') return renderListenGame();
   if(state.view === 'gate') return renderGate();
@@ -792,8 +797,8 @@ function render(){
    CHILD: HOME
 ========================================================= */
 function renderHome(){
-  const themeCards = Object.entries(THEMES).map(([key,t])=>`
-    <button class="theme-card ${t.cls}" onclick="goListenGame('${key}')">
+  const themeCards = Object.entries(THEMES).map(([key,t],i)=>`
+    <button class="theme-card ${t.cls} stagger-in" style="animation-delay:${i*80}ms" onclick="goListenGame('${key}')">
       <span class="icon">${t.icon}</span>${t.label}
     </button>
   `).join('');
@@ -876,6 +881,7 @@ function spawnConfetti(layer, x, y){
     setTimeout(()=>p.remove(), 1200);
   }
 }
+function haptic(pattern){ if('vibrate' in navigator){ try{ navigator.vibrate(pattern); }catch(e){} } } function spawnFullScreenConfetti(){ const layer=document.createElement('div'); layer.className='fullscreen-confetti-layer'; document.body.appendChild(layer); const colors=['#FF6B5B','#2BB6A3','#FFD166','#6C5CE7','#FF9F1C']; const W=window.innerWidth, H=window.innerHeight; for(let i=0;i<90;i++){ const p=document.createElement('div'); p.className='confetto'; p.style.left=Math.random()*W+'px'; p.style.top='-20px'; p.style.background=colors[i%colors.length]; p.style.setProperty('--dx',(Math.random()*100-50)+'px'); p.style.setProperty('--dy',(H+80)+'px'); p.style.setProperty('--rot',(Math.random()*720-360)+'deg'); p.style.animationDuration=(1.4+Math.random()*1.2)+'s'; p.style.animationDelay=(Math.random()*0.5)+'s'; layer.appendChild(p); } setTimeout(()=>layer.remove(),3400); }
 
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
@@ -1036,7 +1042,7 @@ function renderListenGame(){
     let extra = '';
     if(state.listenWrongPick === w) extra = ' wrong-pick';
     return `
-      <button class="choice-card${extra}" style="background:${color};" onclick="pickListenAnswer('${w}')" data-word="${w}">
+      <button class="choice-card${extra} stagger-in" style="background:${color};animation-delay:${i*90}ms" onclick="pickListenAnswer('${w}')" data-word="${w}">
         ${escapeHtml(w)}
       </button>
     `;
@@ -1083,6 +1089,7 @@ function pickListenAnswer(word){
   const cardEl = document.querySelector(`.choice-card[data-word="${cssEscape(word)}"]`);
 
   if(word === round.target){
+    haptic(35);
     state.listenWrongPick = null;
     state.listenResults[state.listenIndex] = 'correct';
     if(cardEl){
@@ -1103,6 +1110,7 @@ function pickListenAnswer(word){
     }, 750);
   } else {
     state.listenWrongPick = word;
+    haptic([0,50,40,50]);
     if(cardEl){
       cardEl.classList.remove('shake');
       void cardEl.offsetWidth;
@@ -1115,6 +1123,7 @@ function pickListenAnswer(word){
 function cssEscape(s){ return String(s).replace(/["\\]/g,'\\$&'); }
 
 function showListenComplete(){
+  spawnFullScreenConfetti(); haptic([0,60,40,60,40,120]);
   const overlay = document.createElement('div');
   overlay.className = 'celebrate-overlay fade-in';
   overlay.innerHTML = `
