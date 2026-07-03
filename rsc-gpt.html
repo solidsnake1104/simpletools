@@ -1,361 +1,61 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
-<meta name="theme-color" content="#3a2a16" />
-<title>Lumbridge Adventure - Browser RPG</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Misthalin WebGL RPG</title>
 <style>
-:root {
-  --panel:#2c2114;
-  --trim:#8b6a36;
-  --trim2:#c9a55c;
-  --text:#ead7a2;
-  --muted:#bba774;
-  --black:#080604;
-}
-
-* {
-  box-sizing:border-box;
-  -webkit-tap-highlight-color:transparent;
-  touch-action:manipulation;
-}
-
-html,
-body {
-  margin:0;
-  width:100%;
-  height:100%;
-  overflow:hidden;
-  background:var(--black);
-  color:var(--text);
-  font-family:Georgia,"Times New Roman",serif;
-}
-
-body {
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-#app {
-  width:100vw;
-  height:100dvh;
-  max-width:100vw;
-  max-height:100dvh;
-  background:linear-gradient(#25190d,#110c07);
-  display:grid;
-  grid-template-columns:minmax(0,1fr) clamp(164px,26vw,245px);
-  grid-template-rows:minmax(0,1fr) clamp(108px,23vh,160px);
-  gap:4px;
-  padding:
-    max(4px,env(safe-area-inset-top))
-    max(4px,env(safe-area-inset-right))
-    max(4px,env(safe-area-inset-bottom))
-    max(4px,env(safe-area-inset-left));
-}
-
-#gameWrap {
-  position:relative;
-  grid-column:1;
-  grid-row:1;
-  min-width:0;
-  min-height:0;
-  border:3px ridge var(--trim);
-  background:#000;
-  overflow:hidden;
-}
-
-canvas {
-  width:100%;
-  height:100%;
-  image-rendering:pixelated;
-  display:block;
-  background:#111;
-}
-
-#topOverlay {
-  pointer-events:none;
-  position:absolute;
-  left:8px;
-  top:8px;
-  display:flex;
-  gap:6px;
-  flex-wrap:wrap;
-  font-size:clamp(11px,1.6vw,14px);
-  text-shadow:1px 1px 0 #000;
-}
-
-.pill {
-  background:rgba(30,20,10,.78);
-  border:1px solid var(--trim);
-  padding:3px 7px;
-  border-radius:999px;
-}
-
-#walkMarker {
-  position:absolute;
-  width:22px;
-  height:22px;
-  pointer-events:none;
-  display:none;
-  transform:translate(-50%,-50%);
-  border:2px solid rgba(255,238,120,.95);
-  border-radius:50%;
-  box-shadow:
-    0 0 0 2px rgba(0,0,0,.65),
-    0 0 10px rgba(255,238,120,.85);
-  animation:walkPulse .65s ease-out infinite;
-}
-
-@keyframes walkPulse {
-  from {
-    opacity:1;
-    transform:translate(-50%,-50%) scale(.75);
-  }
-
-  to {
-    opacity:.25;
-    transform:translate(-50%,-50%) scale(1.35);
-  }
-}
-
-#side {
-  grid-column:2;
-  grid-row:1 / span 2;
-  min-width:0;
-  min-height:0;
-  border:3px ridge var(--trim);
-  background:var(--panel);
-  display:grid;
-  grid-template-rows:clamp(120px,28vh,190px) auto minmax(0,1fr);
-  overflow:hidden;
-}
-
-#miniCanvas {
-  border-bottom:2px groove var(--trim);
-  background:#111;
-}
-
-#tabs {
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:2px;
-  padding:3px;
-  background:#1c1309;
-}
-
-.tab {
-  min-height:30px;
-  border:2px outset var(--trim);
-  background:#493315;
-  color:var(--text);
-  font-weight:bold;
-  font-size:clamp(10px,1.7vw,13px);
-}
-
-.tab.active {
-  background:#74511e;
-  color:#fff2bd;
-}
-
-#panel {
-  overflow:auto;
-  padding:8px;
-  font-size:clamp(11px,1.6vw,14px);
-  line-height:1.35;
-}
-
-.sectionTitle {
-  color:var(--trim2);
-  border-bottom:1px solid var(--trim);
-  margin:0 0 6px;
-  padding-bottom:3px;
-  font-weight:bold;
-}
-
-.statLine,
-.invLine,
-.questLine {
-  display:flex;
-  justify-content:space-between;
-  gap:8px;
-  padding:2px 0;
-}
-
-.bar {
-  height:10px;
-  background:#120b06;
-  border:1px solid #6a4c23;
-  margin:3px 0 8px;
-}
-
-.bar > div {
-  height:100%;
-  background:linear-gradient(90deg,#842,#e54);
-}
-
-#chat {
-  grid-column:1;
-  grid-row:2;
-  min-width:0;
-  min-height:0;
-  border:3px ridge var(--trim);
-  background:#20150b;
-  display:grid;
-  grid-template-rows:minmax(0,1fr) auto;
-  overflow:hidden;
-}
-
-#messages {
-  overflow:auto;
-  padding:6px 8px;
-  font-size:clamp(11px,1.7vw,14px);
-  line-height:1.25;
-}
-
-.msg {
-  margin-bottom:3px;
-}
-
-.system { color:#d9c178; }
-.combat { color:#ff928a; }
-.quest { color:#ffe36e; }
-.loot { color:#9cff9c; }
-
-#actions {
-  display:grid;
-  grid-template-columns:repeat(5,1fr);
-  gap:3px;
-  padding:4px;
-  background:#140d07;
-}
-
-button {
-  cursor:pointer;
-  border:2px outset var(--trim);
-  background:#4a341a;
-  color:var(--text);
-  font-family:Georgia,"Times New Roman",serif;
-  font-weight:bold;
-  font-size:clamp(11px,1.7vw,14px);
-  min-height:34px;
-}
-
-button:active {
-  border-style:inset;
-  transform:translateY(1px);
-}
-
-#dialog {
-  position:absolute;
-  left:50%;
-  bottom:10px;
-  transform:translateX(-50%);
-  width:min(620px,calc(100% - 18px));
-  background:rgba(34,23,12,.96);
-  border:3px ridge var(--trim2);
-  padding:8px;
-  display:none;
-  box-shadow:0 0 0 2px #000;
-  font-size:clamp(12px,1.7vw,15px);
-}
-
-#dialogName {
-  color:#8fd3ff;
-  font-weight:bold;
-  margin-bottom:5px;
-}
-
-#dialogOptions {
-  display:grid;
-  gap:4px;
-  margin-top:7px;
-}
-
-#dialogOptions button {
-  text-align:left;
-  min-height:30px;
-  font-weight:normal;
-}
-
-#orientationHint {
-  display:none;
-  position:fixed;
-  inset:0;
-  z-index:99;
-  background:#120c06;
-  color:var(--text);
-  align-items:center;
-  justify-content:center;
-  text-align:center;
-  padding:22px;
-  font-size:20px;
-}
-
-@media (orientation:portrait) and (max-width:900px) {
-  #orientationHint {
-    display:flex;
-  }
-}
-
-@media (max-width:740px) and (orientation:landscape) {
-  #app {
-    grid-template-columns:minmax(0,1fr) 158px;
-    grid-template-rows:minmax(0,1fr) 105px;
-    gap:2px;
-    padding:2px;
-  }
-
-  #side {
-    grid-template-rows:96px auto minmax(0,1fr);
-  }
-
-  #panel {
-    padding:5px;
-  }
-
-  #actions {
-    grid-template-columns:repeat(5,1fr);
-    gap:2px;
-    padding:2px;
-  }
-
-  button {
-    min-height:28px;
-  }
-
-  #messages {
-    padding:4px 6px;
-  }
+:root{--panel:#2a1e12;--trim:#8b6a36;--trim2:#c9a55c;--text:#ecd8a0;--muted:#bca879}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050403;color:var(--text);font-family:Georgia,"Times New Roman",serif}
+#app{width:100vw;height:100dvh;display:grid;gap:4px;grid-template-columns:minmax(0,1fr) 280px;grid-template-rows:minmax(0,1fr) 150px;padding:4px;background:linear-gradient(#25180b,#080503)}
+#gameWrap{position:relative;grid-column:1;grid-row:1;min-width:0;min-height:0;border:3px ridge var(--trim);background:#000;overflow:hidden}
+canvas{display:block;width:100%;height:100%}
+#hudTop{position:absolute;left:8px;top:7px;z-index:3;pointer-events:none;text-shadow:1px 1px #000;font-size:14px;color:#fff1a8}
+#pills{position:absolute;left:8px;top:30px;display:flex;gap:6px;z-index:3;pointer-events:none;font-size:13px}
+.pill{background:rgba(20,12,6,.82);border:1px solid var(--trim);border-radius:999px;padding:3px 7px;text-shadow:1px 1px #000}
+#marker,#badMarker{position:absolute;width:24px;height:24px;display:none;z-index:4;pointer-events:none;transform:translate(-50%,-50%);border-radius:50%}
+#marker{border:2px solid #ffe660;box-shadow:0 0 0 2px #000,0 0 10px #ffe660}
+#badMarker{border:2px solid #ff5b5b;box-shadow:0 0 0 2px #000,0 0 10px #ff5b5b}
+#side{grid-column:2;grid-row:1 / span 2;border:3px ridge var(--trim);background:var(--panel);display:grid;grid-template-rows:150px auto minmax(0,1fr);overflow:hidden}
+#miniWrap{position:relative;background:#101010;border-bottom:2px groove var(--trim)}
+#mini{width:100%;height:100%;image-rendering:pixelated;cursor:pointer}
+#orbs{position:absolute;right:4px;top:4px;display:grid;gap:3px}
+.orb{width:48px;height:22px;border-radius:999px;border:2px ridge #6c522b;background:#191007;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold;text-shadow:1px 1px #000}
+.hp{color:#ff8a80}.pr{color:#a8d2ff}.run{color:#ffe27c}.sp{color:#9bff9b}
+#tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;padding:3px;background:#171008}
+.tab{min-height:28px;border:2px outset var(--trim);background:#493315;color:var(--text);font-weight:bold;font-size:12px}
+.tab.active{background:#76521f;color:#fff0b5}
+#panel{overflow:auto;padding:7px;font-size:13px;line-height:1.32}
+.title{color:var(--trim2);font-weight:bold;border-bottom:1px solid var(--trim);padding-bottom:3px;margin-bottom:6px}
+.row{display:flex;justify-content:space-between;gap:8px;padding:2px 0}
+.gridInv{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.slot{min-height:34px;background:#15100a;border:2px inset #6a4b21;display:flex;align-items:center;justify-content:center;text-align:center;font-size:10px;padding:2px;position:relative;color:#f2ddb1}
+.slot .qty{position:absolute;right:2px;bottom:0;color:#ffea70;font-size:10px;text-shadow:1px 1px #000}
+#chat{grid-column:1;grid-row:2;border:3px ridge var(--trim);background:#20150b;display:grid;grid-template-rows:minmax(0,1fr) auto;overflow:hidden}
+#messages{overflow:auto;padding:5px 8px;font-size:13px;line-height:1.25}
+.msg{margin-bottom:2px}.system{color:#d9c178}.combat{color:#ff928a}.quest{color:#ffe36e}.loot{color:#9cff9c}
+#actions{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;padding:4px;background:#140d07}
+button{border:2px outset var(--trim);background:#4a341a;color:var(--text);font-family:Georgia,"Times New Roman",serif;font-weight:bold;font-size:12px;min-height:31px;cursor:pointer}
+button:active{border-style:inset;transform:translateY(1px)}
+@media (max-width:760px) and (orientation:landscape){
+  #app{grid-template-columns:minmax(0,1fr) 170px;grid-template-rows:minmax(0,1fr) 105px;gap:2px;padding:2px}
+  #side{grid-template-rows:95px auto minmax(0,1fr)}
+  #panel{padding:5px}.tab{min-height:25px;font-size:10px}button{min-height:26px}
 }
 </style>
 </head>
-
 <body>
-<div id="orientationHint">
-  <div>
-    <strong>Landscape mode recommended</strong><br />
-    Rotate your iPhone for the full RPG interface.
-  </div>
-</div>
-
 <div id="app">
   <div id="gameWrap">
     <canvas id="game"></canvas>
-
-    <div id="topOverlay">
-      <div class="pill" id="locPill">Lumbridge</div>
+    <div id="hudTop">Walk here</div>
+    <div id="pills">
+      <div class="pill" id="locPill">Misthalin</div>
       <div class="pill" id="targetPill">No target</div>
     </div>
-
-    <div id="walkMarker"></div>
-
-    <div id="dialog">
-      <div id="dialogName"></div>
-      <div id="dialogText"></div>
-      <div id="dialogOptions"></div>
-    </div>
+    <div id="marker"></div>
+    <div id="badMarker"></div>
   </div>
 
   <div id="chat">
@@ -365,17 +65,32 @@ button:active {
       <button id="btnAttack">Attack</button>
       <button id="btnUse">Use</button>
       <button id="btnSearch">Search</button>
+      <button id="btnBank">Bank</button>
       <button id="btnSave">Save</button>
     </div>
   </div>
 
   <aside id="side">
-    <canvas id="miniCanvas"></canvas>
+    <div id="miniWrap">
+      <canvas id="mini"></canvas>
+      <div id="orbs">
+        <div class="orb hp" id="hpOrb">HP</div>
+        <div class="orb pr" id="prOrb">Pr</div>
+        <div class="orb run" id="runOrb">Run</div>
+        <div class="orb sp" id="spOrb">Spec</div>
+      </div>
+    </div>
     <div id="tabs">
-      <button class="tab active" data-tab="stats">Stats</button>
-      <button class="tab" data-tab="inv">Pack</button>
-      <button class="tab" data-tab="quest">Quest</button>
-      <button class="tab" data-tab="help">Help</button>
+      <button class="tab active" data-tab="combat">⚔</button>
+      <button class="tab" data-tab="skills">★</button>
+      <button class="tab" data-tab="quest">?</button>
+      <button class="tab" data-tab="inv">🎒</button>
+      <button class="tab" data-tab="equip">🛡</button>
+      <button class="tab" data-tab="prayer">✚</button>
+      <button class="tab" data-tab="magic">✦</button>
+      <button class="tab" data-tab="bank">▣</button>
+      <button class="tab" data-tab="settings">⚙</button>
+      <button class="tab" data-tab="music">♪</button>
     </div>
     <div id="panel"></div>
   </aside>
@@ -385,1648 +100,818 @@ button:active {
 (() => {
 "use strict";
 
-/******************************************************************
- * PWA BOOTSTRAP
- ******************************************************************/
-const manifest = {
-  name:"Lumbridge Adventure",
-  short_name:"Lumbridge",
-  start_url:".",
-  display:"standalone",
-  orientation:"landscape",
-  background_color:"#17120b",
-  theme_color:"#3a2a16",
-  icons:[]
-};
-
-const manifestBlob = new Blob([JSON.stringify(manifest)], {
-  type:"application/manifest+json"
-});
-
-const manifestUrl = URL.createObjectURL(manifestBlob);
-const manifestLink = document.createElement("link");
-manifestLink.rel = "manifest";
-manifestLink.href = manifestUrl;
-document.head.appendChild(manifestLink);
-
-if ("serviceWorker" in navigator) {
-  const swCode = `
-    const CACHE = "lumbridge-adventure-v2";
-    self.addEventListener("install", event => {
-      event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(["./"])));
-      self.skipWaiting();
-    });
-    self.addEventListener("activate", event => {
-      event.waitUntil(self.clients.claim());
-    });
-    self.addEventListener("fetch", event => {
-      event.respondWith(
-        caches.match(event.request).then(response => response || fetch(event.request))
-      );
-    });
-  `;
-
-  const swBlob = new Blob([swCode], { type:"text/javascript" });
-  const swUrl = URL.createObjectURL(swBlob);
-  navigator.serviceWorker.register(swUrl).catch(() => {});
-}
-
-/******************************************************************
- * CANVAS AND UI
- ******************************************************************/
+/* ===========================
+   DOM
+=========================== */
 const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
+const gl = canvas.getContext("webgl", { antialias:true });
+if(!gl){alert("WebGL unavailable.");return;}
 
-const mini = document.getElementById("miniCanvas");
+const mini = document.getElementById("mini");
 const mctx = mini.getContext("2d");
-
-const messages = document.getElementById("messages");
 const panel = document.getElementById("panel");
+const messages = document.getElementById("messages");
+const hudTop = document.getElementById("hudTop");
 const locPill = document.getElementById("locPill");
 const targetPill = document.getElementById("targetPill");
+const marker = document.getElementById("marker");
+const badMarker = document.getElementById("badMarker");
+const hpOrb = document.getElementById("hpOrb");
+const prOrb = document.getElementById("prOrb");
+const runOrb = document.getElementById("runOrb");
+const spOrb = document.getElementById("spOrb");
 
-const dialog = document.getElementById("dialog");
-const dialogName = document.getElementById("dialogName");
-const dialogText = document.getElementById("dialogText");
-const dialogOptions = document.getElementById("dialogOptions");
+/* ===========================
+   CONFIG
+=========================== */
+const W = 190;
+const H = 220;
+const STEP_MS = 115;
 
-const walkMarker = document.getElementById("walkMarker");
-
-const TILE = 32;
-const WORLD_W = 48;
-const WORLD_H = 34;
-
-const ENTITY_LERP = 0.22;
-const CAMERA_LERP = 0.16;
-const WALK_STEP_MS = 145;
-
-let currentCamera = {
-  x:0,
-  y:0,
-  viewW:0,
-  viewH:0
-};
-
-let camera = {
-  x:0,
-  y:0,
-  targetX:0,
-  targetY:0,
-  viewW:0,
-  viewH:0
-};
-
-let walkPath = [];
-let walkTimer = 0;
-
-function resize() {
-  const rect = canvas.parentElement.getBoundingClientRect();
-  canvas.width = Math.max(320, Math.floor(rect.width));
-  canvas.height = Math.max(180, Math.floor(rect.height));
-
-  const sideRect = mini.parentElement.getBoundingClientRect();
-  mini.width = Math.floor(sideRect.width);
-  mini.height = Math.max(80, Math.floor(sideRect.height * .28));
-}
-
-window.addEventListener("resize", resize);
-resize();
-
-/******************************************************************
- * WORLD DATA
- ******************************************************************/
 const T = {
-  grass:0,
-  path:1,
-  water:2,
-  wall:3,
-  floor:4,
-  field:5,
-  tree:6,
-  bridge:7,
-  wheat:8,
-  flower:9,
-  fence:10,
-  dirt:11,
-  stone:12
+  grass:0,path:1,water:2,bridge:3,dirt:4,wheat:5,swamp:6,stone:7,floor:8,sand:9,wall:10,door:11
 };
 
-const tileColor = {
-  [T.grass]:"#3b8b3b",
-  [T.path]:"#a7793b",
-  [T.water]:"#286db5",
-  [T.wall]:"#786449",
-  [T.floor]:"#9e8052",
-  [T.field]:"#71572c",
-  [T.tree]:"#236b2d",
-  [T.bridge]:"#8a5d2e",
-  [T.wheat]:"#c5a849",
-  [T.flower]:"#4b964b",
-  [T.fence]:"#76512a",
-  [T.dirt]:"#7b5830",
-  [T.stone]:"#777777"
+const COL = {
+  grass:[0.22,0.55,0.22,1],
+  path:[0.63,0.42,0.20,1],
+  water:[0.10,0.35,0.70,1],
+  bridge:[0.50,0.28,0.12,1],
+  dirt:[0.42,0.27,0.13,1],
+  wheat:[0.78,0.62,0.25,1],
+  swamp:[0.18,0.34,0.22,1],
+  stone:[0.48,0.48,0.48,1],
+  floor:[0.42,0.40,0.37,1],
+  sand:[0.70,0.58,0.32,1],
+  wall:[0.44,0.43,0.40,1],
+  door:[0.38,0.20,0.09,1],
+  wood:[0.38,0.20,0.09,1],
+  black:[0.04,0.035,0.03,1],
+  white:[0.90,0.86,0.75,1],
+  blue:[0.15,0.38,0.85,1],
+  goblin:[0.30,0.65,0.25,1],
+  chicken:[1.00,0.92,0.60,1],
+  cow:[0.92,0.90,0.82,1],
+  rat:[0.45,0.40,0.35,1],
+  spider:[0.08,0.07,0.06,1],
+  sheep:[0.92,0.90,0.82,1],
+  ghost:[0.62,0.85,1.00,0.75]
 };
 
-const solidTiles = new Set([T.water, T.wall, T.tree, T.fence]);
-
-const map = Array.from({ length:WORLD_H }, () =>
-  Array.from({ length:WORLD_W }, () => T.grass)
-);
-
-function rect(x, y, w, h, t) {
-  for (let yy = y; yy < y + h; yy++) {
-    for (let xx = x; xx < x + w; xx++) {
-      if (xx >= 0 && yy >= 0 && xx < WORLD_W && yy < WORLD_H) {
-        map[yy][xx] = t;
-      }
-    }
-  }
-}
-
-function borderRect(x, y, w, h, wall, floor) {
-  rect(x, y, w, h, floor);
-
-  for (let xx = x; xx < x + w; xx++) {
-    map[y][xx] = wall;
-    map[y + h - 1][xx] = wall;
-  }
-
-  for (let yy = y; yy < y + h; yy++) {
-    map[yy][x] = wall;
-    map[yy][x + w - 1] = wall;
-  }
-}
-
-function buildMap() {
-  for (let y = 0; y < WORLD_H; y++) {
-    const rx = 32 + Math.floor(Math.sin(y * .45) * 2);
-    for (let w = 0; w < 4; w++) {
-      map[y][rx + w] = T.water;
-    }
-  }
-
-  rect(0, 15, WORLD_W, 3, T.path);
-  rect(20, 0, 3, WORLD_H, T.path);
-  rect(8, 8, 25, 2, T.path);
-  rect(7, 23, 26, 2, T.path);
-  rect(32, 15, 5, 3, T.bridge);
-
-  borderRect(15, 5, 13, 10, T.wall, T.floor);
-  rect(20, 14, 3, 1, T.path);
-  rect(19, 9, 5, 3, T.stone);
-
-  borderRect(9, 19, 9, 8, T.wall, T.floor);
-  rect(13, 19, 2, 1, T.path);
-
-  borderRect(4, 10, 7, 6, T.wall, T.floor);
-  rect(7, 15, 2, 1, T.path);
-
-  borderRect(25, 20, 7, 7, T.wall, T.floor);
-  rect(27, 20, 2, 1, T.path);
-
-  rect(2, 25, 12, 7, T.field);
-  for (let y = 26; y < 31; y++) {
-    for (let x = 3; x < 13; x++) {
-      if ((x + y) % 2 === 0) map[y][x] = T.wheat;
-    }
-  }
-
-  borderRect(15, 26, 6, 6, T.wall, T.floor);
-  rect(17, 26, 2, 1, T.path);
-
-  rect(1, 18, 7, 5, T.dirt);
-  for (let x = 1; x < 8; x++) {
-    map[18][x] = T.fence;
-    map[22][x] = T.fence;
-  }
-  for (let y = 18; y < 23; y++) {
-    map[y][1] = T.fence;
-    map[y][7] = T.fence;
-  }
-  map[20][7] = T.dirt;
-
-  rect(36, 4, 9, 12, T.dirt);
-
-  for (let y = 1; y < WORLD_H; y += 2) {
-    for (let x = 35; x < WORLD_W; x += 3) {
-      if (Math.random() < .55 && map[y][x] !== T.water) {
-        map[y][x] = T.tree;
-      }
-    }
-  }
-
-  for (let i = 0; i < 150; i++) {
-    const x = Math.floor(Math.random() * WORLD_W);
-    const y = Math.floor(Math.random() * WORLD_H);
-    if (map[y][x] === T.grass && Math.random() < .42) {
-      map[y][x] = T.tree;
-    }
-  }
-
-  for (let i = 0; i < 80; i++) {
-    const x = Math.floor(Math.random() * WORLD_W);
-    const y = Math.floor(Math.random() * WORLD_H);
-    if (map[y][x] === T.grass) {
-      map[y][x] = T.flower;
-    }
-  }
-
-  // Re-clear important town structures.
-  rect(3, 7, 30, 22, T.grass);
-  rect(0, 15, WORLD_W, 3, T.path);
-  rect(20, 0, 3, WORLD_H, T.path);
-  rect(8, 8, 25, 2, T.path);
-  rect(7, 23, 26, 2, T.path);
-  rect(32, 15, 5, 3, T.bridge);
-
-  borderRect(15, 5, 13, 10, T.wall, T.floor);
-  rect(20, 14, 3, 1, T.path);
-  rect(19, 9, 5, 3, T.stone);
-
-  borderRect(9, 19, 9, 8, T.wall, T.floor);
-  rect(13, 19, 2, 1, T.path);
-
-  borderRect(4, 10, 7, 6, T.wall, T.floor);
-  rect(7, 15, 2, 1, T.path);
-
-  borderRect(25, 20, 7, 7, T.wall, T.floor);
-  rect(27, 20, 2, 1, T.path);
-
-  rect(2, 25, 12, 7, T.field);
-  for (let y = 26; y < 31; y++) {
-    for (let x = 3; x < 13; x++) {
-      if ((x + y) % 2 === 0) map[y][x] = T.wheat;
-    }
-  }
-
-  borderRect(15, 26, 6, 6, T.wall, T.floor);
-  rect(17, 26, 2, 1, T.path);
-
-  rect(1, 18, 7, 5, T.dirt);
-  for (let x = 1; x < 8; x++) {
-    map[18][x] = T.fence;
-    map[22][x] = T.fence;
-  }
-  for (let y = 18; y < 23; y++) {
-    map[y][1] = T.fence;
-    map[y][7] = T.fence;
-  }
-  map[20][7] = T.dirt;
-}
-
-buildMap();
-
-function locationName(x, y) {
-  if (x >= 15 && x <= 27 && y >= 5 && y <= 14) return "Lumbridge Castle";
-  if (x >= 9 && x <= 17 && y >= 19 && y <= 26) return "Lumbridge Castle Kitchen";
-  if (x >= 2 && x <= 20 && y >= 25) return "Lumbridge Farm";
-  if (x >= 35 && y <= 17) return "Goblin Woods";
-  if (x >= 25 && x <= 31 && y >= 20 && y <= 26) return "Lumbridge Church";
-  if (x >= 4 && x <= 10 && y >= 10 && y <= 15) return "Lumbridge General Store";
-  if (x >= 31 && x <= 37) return "River Lum";
-  return "Lumbridge";
-}
-
-/******************************************************************
- * GAME STATE
- ******************************************************************/
-const defaultState = {
-  player:{
-    x:21,
-    y:16,
-    renderX:21,
-    renderY:16,
-    hp:20,
-    maxHp:20,
-    attack:1,
-    strength:1,
-    defence:1,
-    cooking:1,
-    xp:0,
-    coins:8,
-    facing:"down"
-  },
-  inventory:{
-    "Bronze sword":1,
-    "Bread":1
-  },
-  quest:{
-    started:false,
-    hasFlour:false,
-    hasEgg:false,
-    hasMilk:false,
-    complete:false,
-    rewardClaimed:false
-  },
-  kills:0,
-  invincible:false,
-  tab:"stats"
+const MAT = {
+  stoneA:[0.43,0.42,0.39,1],
+  stoneB:[0.57,0.56,0.52,1],
+  plankA:[0.38,0.20,0.09,1],
+  plankB:[0.50,0.28,0.13,1],
+  leather:[0.22,0.12,0.055,1],
+  boot:[0.12,0.07,0.035,1],
+  bronze:[0.58,0.33,0.13,1],
+  iron:[0.56,0.56,0.60,1]
 };
 
-let state = loadState() || structuredClone(defaultState);
-let entities = [];
+const GFX = {
+  grassTufts:3,
+  wheatTufts:7,
+  pebbles:3,
+  ripples:3,
+  wallBricks:true
+};
 
-if (state.player.renderX === undefined) state.player.renderX = state.player.x;
-if (state.player.renderY === undefined) state.player.renderY = state.player.y;
-if (state.invincible === undefined) state.invincible = false;
+function shade(c,f){return [Math.min(1,c[0]*f),Math.min(1,c[1]*f),Math.min(1,c[2]*f),c[3]];}
+function hash2(x,y,s=0){const n=Math.sin(x*127.1+y*311.7+s*74.7)*43758.5453123;return n-Math.floor(n);}
+function textureColor(base,x,y,seed=0,str=0.14){const f=1+(hash2(x,y,seed)-.5)*str;return [Math.max(0,Math.min(1,base[0]*f)),Math.max(0,Math.min(1,base[1]*f)),Math.max(0,Math.min(1,base[2]*f)),base[3]];}
 
-function saveState() {
-  localStorage.setItem("lumbridge-save", JSON.stringify(state));
-  log("Game saved.", "system");
+/* ===========================
+   WEBGL
+=========================== */
+const vs=`attribute vec3 p;uniform mat4 mvp;void main(){gl_Position=mvp*vec4(p,1.0);}`;
+const fs=`precision mediump float;uniform vec4 color;void main(){gl_FragColor=color;}`;
+function shader(t,s){const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(sh));return sh;}
+const prog=gl.createProgram();
+gl.attachShader(prog,shader(gl.VERTEX_SHADER,vs));
+gl.attachShader(prog,shader(gl.FRAGMENT_SHADER,fs));
+gl.linkProgram(prog);
+gl.useProgram(prog);
+const locP=gl.getAttribLocation(prog,"p");
+const locMVP=gl.getUniformLocation(prog,"mvp");
+const locColor=gl.getUniformLocation(prog,"color");
+const meshes={};
+
+function createMesh(name,verts){
+  const b=gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER,b);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(verts),gl.STATIC_DRAW);
+  meshes[name]={buffer:b,count:verts.length/3};
 }
 
-function loadState() {
-  try {
-    const raw = localStorage.getItem("lumbridge-save");
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
+function createCube(){
+  createMesh("cube",[
+    -.5,-.5,-.5,.5,-.5,-.5,.5,.5,-.5,-.5,-.5,-.5,.5,.5,-.5,-.5,.5,-.5,
+    -.5,-.5,.5,.5,.5,.5,.5,-.5,.5,-.5,-.5,.5,-.5,.5,.5,.5,.5,.5,
+    -.5,-.5,-.5,-.5,-.5,.5,.5,-.5,.5,-.5,-.5,-.5,.5,-.5,.5,.5,-.5,-.5,
+    .5,-.5,-.5,.5,-.5,.5,.5,.5,.5,.5,-.5,-.5,.5,.5,.5,.5,.5,-.5,
+    .5,.5,-.5,.5,.5,.5,-.5,.5,.5,.5,.5,-.5,-.5,.5,.5,-.5,.5,-.5,
+    -.5,.5,-.5,-.5,.5,.5,-.5,-.5,.5,-.5,.5,-.5,-.5,-.5,.5,-.5,-.5,-.5
+  ]);
+}
+function createPyramid(){
+  createMesh("pyramid",[
+    -.5,-.5,0,.5,-.5,0,.5,.5,0,-.5,-.5,0,.5,.5,0,-.5,.5,0,
+    -.5,-.5,0,.5,-.5,0,0,0,.8,.5,-.5,0,.5,.5,0,0,0,.8,
+    .5,.5,0,-.5,.5,0,0,0,.8,-.5,.5,0,-.5,-.5,0,0,0,.8
+  ]);
+}
+function createRingBodyMesh(name,rings,seg=8){
+  const v=[];
+  const pt=(r,i)=>{const a=i/seg*Math.PI*2;return [Math.cos(a)*r.rx,Math.sin(a)*r.ry+(r.yOffset||0),r.z];};
+  for(let r=0;r<rings.length-1;r++)for(let i=0;i<seg;i++){
+    const j=(i+1)%seg,a=pt(rings[r],i),b=pt(rings[r],j),c=pt(rings[r+1],j),d=pt(rings[r+1],i);
+    v.push(...a,...b,...c,...a,...c,...d);
+  }
+  const bot=rings[0],top=rings[rings.length-1],bc=[0,bot.yOffset||0,bot.z],tc=[0,top.yOffset||0,top.z];
+  for(let i=0;i<seg;i++){const j=(i+1)%seg;v.push(...bc,...pt(bot,j),...pt(bot,i));v.push(...tc,...pt(top,i),...pt(top,j));}
+  createMesh(name,v);
+}
+function createTapered(name,seg=8,br=.5,tr=.35){
+  const v=[];
+  for(let i=0;i<seg;i++){
+    const a0=i/seg*Math.PI*2,a1=(i+1)/seg*Math.PI*2;
+    const b0=[Math.cos(a0)*br,Math.sin(a0)*br,-.5],b1=[Math.cos(a1)*br,Math.sin(a1)*br,-.5];
+    const t0=[Math.cos(a0)*tr,Math.sin(a0)*tr,.5],t1=[Math.cos(a1)*tr,Math.sin(a1)*tr,.5];
+    v.push(...b0,...b1,...t1,...b0,...t1,...t0,0,0,-.5,...b1,...b0,0,0,.5,...t0,...t1);
+  }
+  createMesh(name,v);
+}
+function createBoot(){
+  createMesh("rs2Boot",[
+    -.35,-.60,-.25,.35,-.60,-.25,.30,.30,-.25,-.35,-.60,-.25,.30,.30,-.25,-.30,.30,-.25,
+    -.25,-.45,.20,.25,-.45,.20,.20,.18,.05,-.25,-.45,.20,.20,.18,.05,-.20,.18,.05,
+    -.35,-.60,-.25,-.25,-.45,.20,.25,-.45,.20,-.35,-.60,-.25,.25,-.45,.20,.35,-.60,-.25,
+    -.30,.30,-.25,.30,.30,-.25,.20,.18,.05,-.30,.30,-.25,.20,.18,.05,-.20,.18,.05,
+    -.35,-.60,-.25,-.30,.30,-.25,-.20,.18,.05,-.35,-.60,-.25,-.20,.18,.05,-.25,-.45,.20,
+    .35,-.60,-.25,.25,-.45,.20,.20,.18,.05,.35,-.60,-.25,.20,.18,.05,.30,.30,-.25
+  ]);
+}
+function createTriPrism(){
+  createMesh("triPrism",[
+    -.5,-.5,.5,.5,-.5,.5,0,-.5,-.5,-.5,.5,.5,0,.5,-.5,.5,.5,.5,
+    -.5,-.5,.5,-.5,.5,.5,.5,.5,.5,-.5,-.5,.5,.5,.5,.5,.5,-.5,.5,
+    -.5,-.5,.5,0,-.5,-.5,0,.5,-.5,-.5,-.5,.5,0,.5,-.5,-.5,.5,.5,
+    .5,-.5,.5,.5,.5,.5,0,.5,-.5,.5,-.5,.5,0,.5,-.5,0,-.5,-.5
+  ]);
+}
+
+createCube();createPyramid();
+createRingBodyMesh("rs2Head",[{z:-.50,rx:.22,ry:.20},{z:-.25,rx:.42,ry:.32},{z:.15,rx:.46,ry:.34},{z:.40,rx:.34,ry:.28},{z:.50,rx:.18,ry:.16}],8);
+createRingBodyMesh("rs2Torso",[{z:-.50,rx:.36,ry:.28},{z:-.20,rx:.42,ry:.31},{z:.35,rx:.58,ry:.39},{z:.50,rx:.66,ry:.42}],8);
+createTapered("rs2UpperArm",8,.34,.42);createTapered("rs2Forearm",8,.30,.24);createTapered("rs2Leg",8,.42,.30);createTapered("rs2LowerLeg",8,.30,.23);
+createBoot();createTriPrism();
+createRingBodyMesh("angAnimalBody",[{z:-.5,rx:.34,ry:.26},{z:-.2,rx:.58,ry:.36},{z:.18,rx:.62,ry:.38},{z:.5,rx:.30,ry:.24}],8);
+createRingBodyMesh("angAnimalHead",[{z:-.4,rx:.24,ry:.20},{z:-.12,rx:.40,ry:.30},{z:.22,rx:.38,ry:.28},{z:.4,rx:.20,ry:.18}],8);
+createRingBodyMesh("angBirdBody",[{z:-.38,rx:.26,ry:.22},{z:-.08,rx:.42,ry:.32},{z:.24,rx:.36,ry:.28},{z:.40,rx:.16,ry:.14}],7);
+createRingBodyMesh("angSpiderBody",[{z:-.24,rx:.40,ry:.32},{z:0,rx:.62,ry:.46},{z:.22,rx:.42,ry:.32}],8);
+createRingBodyMesh("angWoolClump",[{z:-.25,rx:.25,ry:.20},{z:0,rx:.40,ry:.32},{z:.25,rx:.22,ry:.18}],7);
+
+gl.enable(gl.DEPTH_TEST);
+gl.enable(gl.CULL_FACE);
+gl.clearColor(.52,.70,.95,1);
+
+/* ===========================
+   MATRIX
+=========================== */
+function identity(){return [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];}
+function multiply(a,b){const o=Array(16);for(let c=0;c<4;c++)for(let r=0;r<4;r++)o[c*4+r]=a[r]*b[c*4]+a[4+r]*b[c*4+1]+a[8+r]*b[c*4+2]+a[12+r]*b[c*4+3];return o;}
+function modelMatrix(x,y,z,sx,sy,sz,rz=0){const c=Math.cos(rz),s=Math.sin(rz);return [c*sx,s*sx,0,0,-s*sy,c*sy,0,0,0,0,sz,0,x,y,z,1];}
+function perspective(fovy,aspect,near,far){const f=1/Math.tan(fovy/2),nf=1/(near-far);return [f/aspect,0,0,0,0,f,0,0,0,0,(far+near)*nf,-1,0,0,2*far*near*nf,0];}
+function normalize(v){const l=Math.hypot(v[0],v[1],v[2])||1;return [v[0]/l,v[1]/l,v[2]/l];}
+function cross(a,b){return [a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];}
+function dot(a,b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];}
+function lookAt(eye,target,up){const z=normalize([eye[0]-target[0],eye[1]-target[1],eye[2]-target[2]]),x=normalize(cross(up,z)),y=cross(z,x);return [x[0],y[0],z[0],0,x[1],y[1],z[1],0,x[2],y[2],z[2],0,-dot(x,eye),-dot(y,eye),-dot(z,eye),1];}
+function invert(m){
+  const o=[],b00=m[0]*m[5]-m[1]*m[4],b01=m[0]*m[6]-m[2]*m[4],b02=m[0]*m[7]-m[3]*m[4],b03=m[1]*m[6]-m[2]*m[5],b04=m[1]*m[7]-m[3]*m[5],b05=m[2]*m[7]-m[3]*m[6],b06=m[8]*m[13]-m[9]*m[12],b07=m[8]*m[14]-m[10]*m[12],b08=m[8]*m[15]-m[11]*m[12],b09=m[9]*m[14]-m[10]*m[13],b10=m[9]*m[15]-m[11]*m[13],b11=m[10]*m[15]-m[11]*m[14];
+  let det=b00*b11-b01*b10+b02*b09+b03*b08-b04*b07+b05*b06;if(!det)return identity();det=1/det;
+  o[0]=(m[5]*b11-m[6]*b10+m[7]*b09)*det;o[1]=(-m[1]*b11+m[2]*b10-m[3]*b09)*det;o[2]=(m[13]*b05-m[14]*b04+m[15]*b03)*det;o[3]=(-m[9]*b05+m[10]*b04-m[11]*b03)*det;
+  o[4]=(-m[4]*b11+m[6]*b08-m[7]*b07)*det;o[5]=(m[0]*b11-m[2]*b08+m[3]*b07)*det;o[6]=(-m[12]*b05+m[14]*b02-m[15]*b01)*det;o[7]=(m[8]*b05-m[10]*b02+m[11]*b01)*det;
+  o[8]=(m[4]*b10-m[5]*b08+m[7]*b06)*det;o[9]=(-m[0]*b10+m[1]*b08-m[3]*b06)*det;o[10]=(m[12]*b04-m[13]*b02+m[15]*b00)*det;o[11]=(-m[8]*b04+m[9]*b02-m[11]*b00)*det;
+  o[12]=(-m[4]*b09+m[5]*b07-m[6]*b06)*det;o[13]=(m[0]*b09-m[1]*b07+m[2]*b06)*det;o[14]=(-m[12]*b03+m[13]*b01-m[14]*b00)*det;o[15]=(m[8]*b03-m[9]*b01+m[10]*b00)*det;
+  return o;
+}
+function transform(m,v){const x=v[0],y=v[1],z=v[2],w=v[3];return [m[0]*x+m[4]*y+m[8]*z+m[12]*w,m[1]*x+m[5]*y+m[9]*z+m[13]*w,m[2]*x+m[6]*y+m[10]*z+m[14]*w,m[3]*x+m[7]*y+m[11]*z+m[15]*w];}
+
+/* ===========================
+   DRAW
+=========================== */
+let VP=identity(),invVP=identity();
+function drawMesh(name,x,y,z,sx,sy,sz,color,rz=0){
+  const m=meshes[name]; if(!m)return;
+  gl.bindBuffer(gl.ARRAY_BUFFER,m.buffer);
+  gl.enableVertexAttribArray(locP);
+  gl.vertexAttribPointer(locP,3,gl.FLOAT,false,0,0);
+  gl.uniformMatrix4fv(locMVP,false,new Float32Array(multiply(VP,modelMatrix(x,y,z,sx,sy,sz,rz))));
+  gl.uniform4fv(locColor,new Float32Array(color));
+  gl.drawArrays(gl.TRIANGLES,0,m.count);
+}
+const cube=(...a)=>drawMesh("cube",...a),pyramid=(...a)=>drawMesh("pyramid",...a);
+const rs2Head=(...a)=>drawMesh("rs2Head",...a),rs2Torso=(...a)=>drawMesh("rs2Torso",...a),rs2UpperArm=(...a)=>drawMesh("rs2UpperArm",...a),rs2Forearm=(...a)=>drawMesh("rs2Forearm",...a),rs2Leg=(...a)=>drawMesh("rs2Leg",...a),rs2LowerLeg=(...a)=>drawMesh("rs2LowerLeg",...a),rs2Boot=(...a)=>drawMesh("rs2Boot",...a),tri=(...a)=>drawMesh("triPrism",...a);
+const angBody=(...a)=>drawMesh("angAnimalBody",...a),angHead=(...a)=>drawMesh("angAnimalHead",...a),angBird=(...a)=>drawMesh("angBirdBody",...a),angSpider=(...a)=>drawMesh("angSpiderBody",...a),angWool=(...a)=>drawMesh("angWoolClump",...a);
+
+/* ===========================
+   MAP DATA
+=========================== */
+const map=Array.from({length:H},()=>Array(W).fill(T.grass));
+const solid=Array.from({length:H},()=>Array(W).fill(false));
+const objects=[],entities=[],ground=[];
+
+function heightAt(x,y){if(x>=61&&x<66&&y>96)return-.22;if(y>202)return-.10;return Math.sin(x*.12)*.06+Math.cos(y*.11)*.05;}
+function rect(x,y,w,h,t,block=false){for(let yy=y;yy<y+h;yy++)for(let xx=x;xx<x+w;xx++)if(xx>=0&&yy>=0&&xx<W&&yy<H){map[yy][xx]=t;solid[yy][xx]=!!block;}}
+function setSolidRect(x,y,w,h,block=true){for(let yy=y;yy<y+h;yy++)for(let xx=x;xx<x+w;xx++)if(xx>=0&&yy>=0&&xx<W&&yy<H)solid[yy][xx]=block;}
+function addObject(id,name,x,y,type,w=1,h=1,block=true,plane=0){objects.push({id,name,x,y,type,w,h,block,plane});if(block&&plane===0)setSolidRect(x,y,w,h,true);}
+function addGround(name,x,y,qty=1,plane=0){ground.push({name,x,y,rx:x,ry:y,qty,plane});}
+function addEntity(kind,id,name,x,y,opt={}){entities.push({kind,id,name,x,y,rx:x,ry:y,dir:"down",hp:opt.hp??999,maxHp:opt.hp??999,role:opt.role||"",color:opt.color||COL.white,plane:opt.plane||0,aggressive:!!opt.aggressive,str:opt.str||1,home:{x,y,r:opt.r||6},cool:80+Math.floor(Math.random()*160)});}
+
+function addBuilding(id,name,x,y,w,h,type="building",doorTiles=[]){
+  rect(x,y,w,h,T.floor,false);
+  addObject(id,name,x,y,type,w,h,false,0);
+  // Walls are actual solid tile data; only listed door tiles are cleared.
+  for(let xx=x;xx<x+w;xx++){map[y][xx]=T.wall;solid[y][xx]=true;map[y+h-1][xx]=T.wall;solid[y+h-1][xx]=true;}
+  for(let yy=y;yy<y+h;yy++){map[yy][x]=T.wall;solid[yy][x]=true;map[yy][x+w-1]=T.wall;solid[yy][x+w-1]=true;}
+  for(const [dx,dy] of doorTiles){
+    const tx=x+dx,ty=y+dy;
+    if(tx>=0&&ty>=0&&tx<W&&ty<H){map[ty][tx]=T.door;solid[ty][tx]=false;}
   }
 }
 
-function resetState() {
-  state = structuredClone(defaultState);
-  localStorage.removeItem("lumbridge-save");
-  spawnEntities();
-  initializeCamera();
-  log("New game started.", "system");
-  updateUI();
+function buildWorld(){
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){map[y][x]=T.grass;solid[y][x]=false;}
+
+  // River Lum.
+  for(let y=96;y<H;y++)for(let x=61;x<66;x++){map[y][x]=T.water;solid[y][x]=true;}
+  rect(55,157,17,4,T.bridge,false);
+
+  // Main roads.
+  rect(0,158,120,3,T.path,false);
+  rect(47,110,4,70,T.path,false);
+  rect(47,82,38,4,T.path,false);
+  rect(82,48,4,38,T.path,false);
+  rect(82,48,46,4,T.path,false);
+  rect(104,30,4,24,T.path,false);
+  rect(67,29,44,4,T.path,false);
+  rect(70,19,4,16,T.path,false);
+
+  // Lumbridge castle as walls + door openings.
+  rect(37,143,24,24,T.floor,false);
+  addBuilding("castle","Lumbridge Castle",36,142,26,26,"castle",[[13,25],[13,0],[18,8],[4,12]]);
+  addObject("stairsUp","Castle staircase",54,150,"stairsUp",1,1,false);
+  addObject("stairsDown","Castle staircase",54,150,"stairsDown",1,1,false,1);
+  addObject("bank","Bank booth",48,148,"bank",2,1,true,1);
+
+  addBuilding("kitchen","Castle kitchen",27,161,12,10,"building",[[6,0],[11,5]]);
+  addObject("range","Range",31,166,"range",1,1,true);
+
+  addBuilding("general","Lumbridge General Store",22,134,11,10,"building",[[5,9]]);
+  addObject("storeCounter","General store counter",27,139,"store",2,1,true);
+
+  addBuilding("bobShop","Bob's Brilliant Axes",22,170,11,10,"building",[[5,0]]);
+  addObject("bobCounter","Bob's counter",27,175,"axeShop",2,1,true);
+
+  addBuilding("church","Lumbridge Church",42,180,11,12,"building",[[5,0]]);
+  addObject("altar","Altar",47,186,"altar",1,1,true);
+
+  rect(55,181,14,10,T.dirt,false);
+  for(let i=0;i<14;i++)addObject("grave"+i,"Grave",56+(i%7)*2,182+Math.floor(i/7)*4,"grave",1,1,true);
+  addObject("coffin","Coffin",66,188,"coffin",1,1,true);
+
+  rect(13,124,20,10,T.wheat,false);
+  rect(9,146,16,9,T.dirt,false);
+  addObject("coopN","Chicken coop fence",8,145,"fence",17,1,true);
+  addObject("coopS","Chicken coop fence",8,155,"fence",17,1,true);
+  rect(8,165,20,11,T.dirt,false);
+  addObject("cowFenceN","Cow field fence",8,165,"fence",20,1,true);
+  addObject("cowFenceS","Cow field fence",8,176,"fence",20,1,true);
+  addObject("dairy","Dairy cow",15,171,"dairyCow",1,1,false);
+  rect(8,113,19,9,T.dirt,false);
+  addObject("sheepFenceN","Sheep field fence",8,113,"fence",19,1,true);
+  addObject("sheepFenceS","Sheep field fence",8,122,"fence",19,1,true);
+
+  addBuilding("mill","Mill Lane Mill",14,103,11,12,"building",[[5,11]]);
+  addObject("hopper","Mill hopper",17,108,"hopper",1,1,true);
+  addObject("controls","Mill controls",21,108,"millControls",1,1,true);
+  addObject("flour","Flour bin",18,113,"flourBin",1,1,true);
+
+  rect(78,142,18,15,T.dirt,false);
+  addBuilding("gobHouse","Goblin house",83,144,8,7,"building",[[4,6]]);
+
+  rect(54,202,44,12,T.swamp,false);
+  rect(92,196,13,8,T.stone,false);
+  addObject("copper","Copper rock",96,200,"rockCopper",1,1,true);
+  addObject("tin","Tin rock",100,200,"rockTin",1,1,true);
+  addObject("fish1","Fishing spot",60,153,"fish",1,1,false);
+  addObject("fish2","Fishing spot",66,170,"fish",1,1,false);
+
+  addBuilding("championsGuild","Champions' Guild",38,100,20,14,"building",[[10,13]]);
+  rect(45,88,12,8,T.dirt,false);
+  addObject("darkWizardCircle","Dark wizard stone circle",48,91,"grave",1,1,false);
+
+  // Varrock walls are solid except gates.
+  rect(79,27,62,45,T.floor,false);
+  addBuilding("varrockWalls","Varrock city walls",78,26,64,47,"citywall",[[29,46],[30,46],[31,46],[0,22],[0,23],[63,22],[63,23]]);
+  rect(104,69,6,6,T.path,false);
+  rect(78,47,6,6,T.path,false);
+  rect(136,47,6,6,T.path,false);
+
+  rect(102,48,12,10,T.stone,false);
+  addObject("varrockFountain","Varrock fountain",108,53,"altar",1,1,false);
+  addBuilding("palace","Varrock Palace",95,28,26,15,"castle",[[13,14]]);
+  addBuilding("westBank","Varrock west bank",81,42,12,10,"building",[[6,9]]);
+  addObject("westBankBooth","Varrock west bank booth",86,46,"bank",2,1,true);
+  addBuilding("eastBank","Varrock east bank",122,44,12,10,"building",[[6,9]]);
+  addObject("eastBankBooth","Varrock east bank booth",127,48,"bank",2,1,true);
+  addBuilding("museum","Varrock Museum",123,57,14,12,"building",[[7,11]]);
+  addBuilding("staffShop","Aubury's Rune Shop",89,55,11,10,"building",[[5,9]]);
+  addObject("staffCounter","Rune shop counter",94,60,"store",2,1,true);
+  addBuilding("clothesShop","Thessalia's Fine Clothes",112,57,11,10,"building",[[5,9]]);
+
+  // Grand Exchange.
+  rect(55,8,33,27,T.stone,false);
+  addBuilding("grandExchange","Grand Exchange",54,7,35,29,"ge",[[17,28],[17,0],[0,14],[34,14]]);
+  addObject("geBooth1","Grand Exchange booth",63,20,"bank",2,1,true);
+  addObject("geBooth2","Grand Exchange booth",79,20,"bank",2,1,true);
+  for(let a=0;a<16;a++){const ang=a/16*Math.PI*2,gx=Math.round(71+Math.cos(ang)*11),gy=Math.round(21+Math.sin(ang)*8);rect(gx,gy,1,1,T.path,false);}
+
+  // Trees.
+  for(let i=0;i<260;i++){
+    const x=Math.floor(Math.random()*W),y=Math.floor(Math.random()*H);
+    const nearCity=(x>34&&x<72&&y>136&&y<194)||(x>75&&x<145&&y>24&&y<78)||(x>50&&x<92&&y>4&&y<40);
+    if(map[y][x]===T.grass&&!nearCity&&Math.random()<.5)addObject("tree"+i,"Tree",x,y,"tree",1,1,true);
+  }
 }
+buildWorld();
 
-/******************************************************************
- * ENTITIES
- ******************************************************************/
-function npc(id, name, x, y, color, role) {
-  return {
-    kind:"npc",
-    id,
-    name,
-    x,
-    y,
-    renderX:x,
-    renderY:y,
-    hp:999,
-    maxHp:999,
-    color,
-    role,
-    solid:false,
-    moveCooldown:randomInt(40, 180)
-  };
+/* ===========================
+   STATE
+=========================== */
+const skillNames=["Attack","Strength","Defence","Hitpoints","Prayer","Magic","Cooking","Fishing","Woodcutting","Mining","Smithing","Crafting","Firemaking","Farming"];
+const defaultState={
+  player:{x:48,y:164,rx:48,ry:164,dir:"down",hp:10,maxHp:10,prayer:10,maxPrayer:10,run:100,spec:100,style:"Accurate",auto:true},
+  skills:Object.fromEntries(skillNames.map(s=>[s,{level:s==="Hitpoints"?10:1,xp:0}])),
+  inv:[{name:"Bronze sword",qty:1},{name:"Bread",qty:1},{name:"Empty pot",qty:1},{name:"Bucket",qty:1}],
+  equip:{weapon:null,head:null,body:null,legs:null,shield:null,hands:null,feet:null,cape:null,neck:null,ring:null,ammo:null},
+  bank:[{name:"Coins",qty:25}],coins:10,tab:"combat",runEnabled:false,invincible:false,roofs:true
+};
+let state=load()||structuredClone(defaultState);
+if(!state.player.dir)state.player.dir="down";
+if(state.player.rx===undefined){state.player.rx=state.player.x;state.player.ry=state.player.y;}
+
+/* ===========================
+   ENTITIES
+=========================== */
+function spawnEntities(){
+  entities.length=0;ground.length=0;
+  addEntity("npc","cook","Cook",31,166,{role:"cook",color:COL.white});
+  addEntity("npc","duke","Duke Horacio",47,149,{role:"duke",color:[.85,.65,.25,1],plane:1});
+  addEntity("npc","guide","Lumbridge Guide",49,161,{role:"guide",color:COL.blue});
+  addEntity("npc","father","Father Aereck",47,186,{role:"priest",color:[.82,.86,1,1]});
+  addEntity("npc","shop","Shop keeper",27,139,{role:"shop",color:[.95,.75,.25,1]});
+  addEntity("npc","bob","Bob",27,175,{role:"bob",color:[.72,.43,.20,1]});
+  addEntity("npc","banker","Banker",49,148,{role:"banker",color:COL.blue,plane:1});
+  addEntity("npc","fred","Fred the Farmer",17,118,{role:"fred",color:[.80,.52,.25,1]});
+  addEntity("npc","millie","Millie Miller",19,109,{role:"miller"});
+  addEntity("npc","ghost","Restless ghost",66,188,{role:"ghost",color:COL.ghost});
+
+  addEntity("npc","king","King Roald",108,35,{role:"duke",color:[.75,.55,.20,1]});
+  addEntity("npc","aubury","Aubury",94,60,{role:"shop",color:[.50,.30,.80,1]});
+  addEntity("npc","thessalia","Thessalia",116,61,{role:"shop",color:[.80,.25,.60,1]});
+  addEntity("npc","varrockWestBanker","Banker",87,46,{role:"banker",color:COL.blue});
+  addEntity("npc","varrockEastBanker","Banker",128,48,{role:"banker",color:COL.blue});
+  for(let i=0;i<8;i++)addEntity("npc","varrockGuard"+i,"Varrock guard",100+Math.floor(Math.random()*17),45+Math.floor(Math.random()*22),{role:"guard",color:[.55,.55,.62,1]});
+  addEntity("npc","geTutor","Grand Exchange Tutor",71,17,{role:"guide",color:[.90,.75,.30,1]});
+  for(let i=0;i<6;i++)addEntity("npc","geClerk"+i,"Grand Exchange clerk",63+i*3,22+(i%2),{role:"banker",color:COL.blue});
+
+  for(let i=0;i<12;i++)addEntity("monster","gob"+i,"Goblin",78+Math.floor(Math.random()*19),142+Math.floor(Math.random()*17),{hp:8,aggressive:true,color:COL.goblin,str:2});
+  for(let i=0;i<8;i++)addEntity("monster","chick"+i,"Chicken",10+Math.floor(Math.random()*15),147+Math.floor(Math.random()*8),{hp:3,color:COL.chicken});
+  for(let i=0;i<7;i++)addEntity("monster","cow"+i,"Cow",10+Math.floor(Math.random()*18),167+Math.floor(Math.random()*9),{hp:6,color:COL.cow});
+  for(let i=0;i<8;i++)addEntity("monster","rat"+i,"Rat",56+Math.floor(Math.random()*40),202+Math.floor(Math.random()*13),{hp:4,color:COL.rat});
+  for(let i=0;i<6;i++)addEntity("monster","spider"+i,"Giant spider",38+Math.floor(Math.random()*19),144+Math.floor(Math.random()*23),{hp:5,color:COL.spider});
+  for(let i=0;i<8;i++)addEntity("npc","sheep"+i,"Sheep",10+Math.floor(Math.random()*16),115+Math.floor(Math.random()*7),{role:"sheep",color:COL.sheep});
+  for(let i=0;i<4;i++)addEntity("monster","darkWizard"+i,"Dark wizard",47+Math.floor(Math.random()*10),88+Math.floor(Math.random()*9),{hp:12,aggressive:true,color:[.10,.05,.18,1],str:3});
+
+  addGround("Egg",13,149);addGround("Egg",21,151);addGround("Shears",15,124);addGround("Bronze dagger",86,149);addGround("Bones",60,184);addGround("Bucket",30,165);addGround("Empty pot",32,166);
 }
-
-function goblin(id, x, y) {
-  return {
-    kind:"goblin",
-    id,
-    name:"Goblin",
-    x,
-    y,
-    renderX:x,
-    renderY:y,
-    hp:8,
-    maxHp:8,
-    color:"#5da84a",
-    attack:2,
-    respawn:0,
-    solid:true,
-    moveCooldown:randomInt(20, 80)
-  };
-}
-
-function item(id, name, x, y, color, questItem = false) {
-  return {
-    kind:"item",
-    id,
-    name,
-    x,
-    y,
-    renderX:x,
-    renderY:y,
-    color,
-    questItem,
-    solid:false
-  };
-}
-
-function spawnEntities() {
-  entities = [
-    npc("cook", "Cook", 13, 22, "#ffffff", "quest"),
-    npc("farmer", "Farmer", 6, 28, "#d8a15a", "farm"),
-    npc("miller", "Millie Miller", 17, 29, "#c9c9c9", "mill"),
-    npc("guide", "Lumbridge Guide", 22, 17, "#68c3ff", "guide"),
-    npc("priest", "Father Aereck", 28, 23, "#ddddff", "priest"),
-    npc("shop", "Shopkeeper", 7, 13, "#ffd56d", "shop"),
-
-    item("egg", "Egg", 5, 20, "#fff4aa", true),
-    item("milk", "Bucket of milk", 4, 21, "#eeeeff", true),
-    item("flour", "Pot of flour", 18, 29, "#f3e2bd", true),
-
-    goblin("g1", 39, 8),
-    goblin("g2", 42, 11),
-    goblin("g3", 38, 14),
-    goblin("g4", 44, 6),
-    goblin("g5", 41, 15)
-  ];
-}
-
 spawnEntities();
 
-/******************************************************************
- * UTILS
- ******************************************************************/
-function log(text, cls = "system") {
-  const div = document.createElement("div");
-  div.className = "msg " + cls;
-  div.textContent = text;
-  messages.appendChild(div);
-  messages.scrollTop = messages.scrollHeight;
-}
+/* ===========================
+   SAVE/INV
+=========================== */
+function log(t,cls="system"){const d=document.createElement("div");d.className="msg "+cls;d.textContent=t;messages.appendChild(d);messages.scrollTop=messages.scrollHeight;}
+function save(){localStorage.setItem("misthalin-webgl-state-v4",JSON.stringify(state));log("Game saved.");}
+function load(){try{return JSON.parse(localStorage.getItem("misthalin-webgl-state-v4"));}catch{return null;}}
+function addItem(n,q=1){if(n==="Coins"){state.coins+=q;return true;}const it=state.inv.find(i=>i.name===n);if(it)it.qty+=q;else if(state.inv.length<28)state.inv.push({name:n,qty:q});else{addGround(n,state.player.x,state.player.y,q);log("Your inventory is full.");return false;}return true;}
+function removeItem(n,q=1){if(n==="Coins"){if(state.coins<q)return false;state.coins-=q;return true;}const it=state.inv.find(i=>i.name===n);if(!it||it.qty<q)return false;it.qty-=q;if(it.qty<=0)state.inv=state.inv.filter(x=>x!==it);return true;}
+function hasItem(n,q=1){return n==="Coins"?state.coins>=q:(state.inv.find(i=>i.name===n)?.qty||0)>=q;}
+function useItem(n){if(n==="Bread"){removeItem(n);state.player.hp=Math.min(state.player.maxHp,state.player.hp+5);log("You eat the bread.","loot");}else if(/sword|dagger|axe|pickaxe/i.test(n)){if(state.equip.weapon)addItem(state.equip.weapon);state.equip.weapon=n;removeItem(n);log("You wield the "+n+".");}updateUI();}
 
-function hasItem(name, n = 1) {
-  return (state.inventory[name] || 0) >= n;
+/* ===========================
+   PASSABILITY + PATHFINDING
+=========================== */
+function inBounds(x,y){return x>=0&&y>=0&&x<W&&y<H;}
+function tileEntity(x,y){return entities.find(e=>e.plane===currentPlane&&e.x===x&&e.y===y&&e.hp>0);}
+function tileGround(x,y){return ground.find(g=>g.plane===currentPlane&&g.x===x&&g.y===y);}
+function tileObject(x,y){
+  const hits=objects.filter(o=>o.plane===currentPlane&&x>=o.x&&x<o.x+o.w&&y>=o.y&&y<o.y+o.h);
+  hits.sort((a,b)=>a.w*a.h-b.w*b.h);
+  return hits[0];
 }
-
-function addItem(name, n = 1) {
-  state.inventory[name] = (state.inventory[name] || 0) + n;
-  log(`You receive ${n > 1 ? n + " " : ""}${name}.`, "loot");
-}
-
-function removeItem(name, n = 1) {
-  if (!hasItem(name, n)) return false;
-  state.inventory[name] -= n;
-  if (state.inventory[name] <= 0) delete state.inventory[name];
+function isBuildingShell(o){return !!o&&["building","castle","citywall","ge"].includes(o.type);}
+function passable(x,y){
+  if(!inBounds(x,y))return false;
+  if(currentPlane!==0)return true;
+  if(solid[y][x])return false;
+  const t=map[y][x];
+  if(t===T.water||t===T.wall)return false;
+  const o=tileObject(x,y);
+  if(o&&o.block)return false;
+  const e=tileEntity(x,y);
+  if(e&&e.kind==="monster")return false;
   return true;
 }
-
-function entityAt(x, y, includeDead = false) {
-  return entities.find(e =>
-    e.x === x &&
-    e.y === y &&
-    (includeDead || e.hp > 0 || e.kind === "item")
-  );
+function dirFromStep(a,b){
+  if(b.x>a.x)return"right";if(b.x<a.x)return"left";if(b.y>a.y)return"down";if(b.y<a.y)return"up";return state.player.dir;
 }
-
-function solidAt(x, y, options = {}) {
-  const blockNPCs = options.blockNPCs ?? false;
-
-  if (x < 0 || y < 0 || x >= WORLD_W || y >= WORLD_H) return true;
-  if (solidTiles.has(map[y][x])) return true;
-
-  return entities.some(e => {
-    if (e.x !== x || e.y !== y || e.hp <= 0) return false;
-    if (e.kind === "item") return false;
-    if (e.kind === "npc") return blockNPCs;
-    if (e.kind === "goblin") return true;
-    return !!e.solid;
-  });
-}
-
-function dist(a, b) {
-  return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
-}
-
-function adjacentEntities() {
-  const p = state.player;
-  return entities.filter(e =>
-    dist(p, e) === 1 &&
-    (e.hp > 0 || e.kind === "item")
-  );
-}
-
-function nearestAdjacent(kind) {
-  return adjacentEntities().find(e => !kind || e.kind === kind);
-}
-
-function dirDelta(dir) {
-  return {
-    up:[0,-1],
-    down:[0,1],
-    left:[-1,0],
-    right:[1,0]
-  }[dir];
-}
-
-function randomInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function lerp(a, b, t) {
-  return a + (b - a) * t;
-}
-
-function updateSmoothPositions() {
-  const p = state.player;
-
-  p.renderX = lerp(p.renderX, p.x, ENTITY_LERP);
-  p.renderY = lerp(p.renderY, p.y, ENTITY_LERP);
-
-  for (const e of entities) {
-    if (e.renderX === undefined) e.renderX = e.x;
-    if (e.renderY === undefined) e.renderY = e.y;
-
-    e.renderX = lerp(e.renderX, e.x, ENTITY_LERP);
-    e.renderY = lerp(e.renderY, e.y, ENTITY_LERP);
-  }
-}
-
-/******************************************************************
- * PATHFINDING AND CLICK/TAP WALKING
- ******************************************************************/
-function findPath(startX, startY, goalX, goalY) {
-  if (goalX < 0 || goalY < 0 || goalX >= WORLD_W || goalY >= WORLD_H) return [];
-  if (solidAt(goalX, goalY)) return [];
-
-  const startKey = `${startX},${startY}`;
-  const goalKey = `${goalX},${goalY}`;
-
-  if (startKey === goalKey) return [];
-
-  const queue = [{ x:startX, y:startY }];
-  const cameFrom = new Map();
-  const visited = new Set([startKey]);
-
-  const dirs = [
-    { x:1, y:0 },
-    { x:-1, y:0 },
-    { x:0, y:1 },
-    { x:0, y:-1 }
-  ];
-
-  while (queue.length) {
-    const current = queue.shift();
-
-    if (`${current.x},${current.y}` === goalKey) break;
-
-    for (const d of dirs) {
-      const nx = current.x + d.x;
-      const ny = current.y + d.y;
-      const key = `${nx},${ny}`;
-
-      if (visited.has(key)) continue;
-      if (solidAt(nx, ny)) continue;
-
-      visited.add(key);
-      cameFrom.set(key, current);
-      queue.push({ x:nx, y:ny });
-    }
-  }
-
-  if (!visited.has(goalKey)) return [];
-
-  const path = [];
-  let cursor = { x:goalX, y:goalY };
-
-  while (`${cursor.x},${cursor.y}` !== startKey) {
-    path.push(cursor);
-    cursor = cameFrom.get(`${cursor.x},${cursor.y}`);
-  }
-
-  path.reverse();
-  return path;
-}
-
-function setWalkDestination(worldX, worldY, screenX, screenY) {
-  const p = state.player;
-  const path = findPath(p.x, p.y, worldX, worldY);
-
-  if (!path.length) {
-    log("I can't reach that.", "system");
-    hideWalkMarkerSoon();
-    return;
-  }
-
-  walkPath = path;
-  walkMarker.style.left = `${screenX}px`;
-  walkMarker.style.top = `${screenY}px`;
-  walkMarker.style.display = "block";
-}
-
-function hideWalkMarkerSoon() {
-  setTimeout(() => {
-    if (!walkPath.length) walkMarker.style.display = "none";
-  }, 280);
-}
-
-function walkTowardNextTile() {
-  if (!walkPath.length) return;
-
-  const p = state.player;
-  const next = walkPath.shift();
-
-  const dx = next.x - p.x;
-  const dy = next.y - p.y;
-
-  let dir = null;
-
-  if (dx === 1) dir = "right";
-  else if (dx === -1) dir = "left";
-  else if (dy === 1) dir = "down";
-  else if (dy === -1) dir = "up";
-
-  if (!dir) {
-    walkPath = [];
-    walkMarker.style.display = "none";
-    return;
-  }
-
-  const moved = move(dir, { silent:true });
-
-  if (!moved) {
-    walkPath = [];
-    log("Something blocks the way.", "system");
-  }
-
-  if (!walkPath.length) {
-    walkMarker.style.display = "none";
-  }
-}
-
-function screenToWorld(clientX, clientY) {
-  const rect = canvas.getBoundingClientRect();
-
-  const scaleX = canvas.width / rect.width;
-  const scaleY = canvas.height / rect.height;
-
-  const canvasX = (clientX - rect.left) * scaleX;
-  const canvasY = (clientY - rect.top) * scaleY;
-
-  const tileX = Math.floor(canvasX / TILE + currentCamera.x);
-  const tileY = Math.floor(canvasY / TILE + currentCamera.y);
-
-  return {
-    tileX,
-    tileY,
-    markerX:clientX - rect.left,
-    markerY:clientY - rect.top
-  };
-}
-
-/******************************************************************
- * MOVEMENT AND INTERACTION
- ******************************************************************/
-function move(dir, options = {}) {
-  if (dialog.style.display === "block") {
-    closeDialog();
-    return false;
-  }
-
-  const p = state.player;
-  p.facing = dir;
-
-  const [dx, dy] = dirDelta(dir);
-  const nx = p.x + dx;
-  const ny = p.y + dy;
-
-  const ent = entityAt(nx, ny);
-
-  if (ent && ent.kind === "item") {
-    pickup(ent);
-    updateUI();
-    return true;
-  }
-
-  if (ent && ent.kind === "goblin" && ent.hp > 0) {
-    if (!options.silent) log(`${ent.name} is blocking the way.`, "system");
-    updateUI();
-    return false;
-  }
-
-  if (!solidAt(nx, ny)) {
-    p.x = nx;
-    p.y = ny;
-
-    maybeRandomGather();
-    goblinThink();
-    updateUI();
-    return true;
-  }
-
-  updateUI();
-  return false;
-}
-
-function pickup(ent) {
-  if (ent.questItem) {
-    if (ent.name === "Egg") state.quest.hasEgg = true;
-    if (ent.name === "Bucket of milk") state.quest.hasMilk = true;
-    if (ent.name === "Pot of flour") state.quest.hasFlour = true;
-  }
-
-  addItem(ent.name, 1);
-  entities = entities.filter(e => e !== ent);
-  log(`You pick up ${ent.name}.`, "loot");
-}
-
-function maybeRandomGather() {
-  const p = state.player;
-  const tile = map[p.y][p.x];
-
-  if (tile === T.wheat && Math.random() < .09 && !hasItem("Grain")) {
-    addItem("Grain");
-    log("You pluck some grain from the wheat field.", "loot");
-  }
-
-  if (tile === T.flower && Math.random() < .04) {
-    addItem("Wild herb");
-  }
-}
-
-function talk() {
-  const e = nearestAdjacent("npc");
-
-  if (!e) {
-    log("There is no one nearby to talk to.", "system");
-    return;
-  }
-
-  openNpcDialog(e);
-}
-
-function attack() {
-  const g = nearestAdjacent("goblin");
-
-  if (!g) {
-    log("There is no goblin within reach.", "system");
-    return;
-  }
-
-  const p = state.player;
-  const hit = randomInt(0, p.attack + p.strength + 2);
-
-  g.hp = Math.max(0, g.hp - hit);
-  log(`You swing at the goblin and hit ${hit}.`, "combat");
-
-  if (g.hp <= 0) {
-    state.kills++;
-    state.player.xp += 6;
-
-    const coins = randomInt(1, 5);
-    state.player.coins += coins;
-
-    log(`The goblin falls. You find ${coins} coins.`, "loot");
-
-    g.respawn = 90;
-    maybeLevel();
-  } else {
-    goblinRetaliate(g);
-  }
-
-  updateUI();
-}
-
-function goblinRetaliate(g) {
-  const p = state.player;
-
-  if (state.invincible) {
-    log("The goblin attacks, but invincibility prevents all damage.", "combat");
-    return;
-  }
-
-  const dmg = Math.max(0, randomInt(0, g.attack + 2) - Math.floor(p.defence / 2));
-
-  p.hp = Math.max(0, p.hp - dmg);
-  log(`The goblin scratches you for ${dmg}.`, "combat");
-
-  if (p.hp <= 0) {
-    log("You collapse and wake up near Lumbridge Castle.", "combat");
-    p.x = 21;
-    p.y = 16;
-    p.renderX = 21;
-    p.renderY = 16;
-    p.hp = p.maxHp;
-    walkPath = [];
-    walkMarker.style.display = "none";
-    initializeCamera();
-  }
-}
-
-function maybeLevel() {
-  const p = state.player;
-  const needed = (p.attack + p.strength + p.defence) * 12;
-
-  if (p.xp >= needed) {
-    p.xp = 0;
-    p.attack++;
-    p.strength++;
-    p.defence++;
-    p.maxHp += 2;
-    p.hp = p.maxHp;
-    log("Your combat skills improve.", "quest");
-  }
-}
-
-function useAction() {
-  const p = state.player;
-
-  if (hasItem("Bread")) {
-    removeItem("Bread");
-    p.hp = Math.min(p.maxHp, p.hp + 5);
-    log("You eat the bread and recover 5 health.", "loot");
-    updateUI();
-    return;
-  }
-
-  if (hasItem("Wild herb")) {
-    removeItem("Wild herb");
-    p.hp = Math.min(p.maxHp, p.hp + 3);
-    log("You chew the wild herb and recover 3 health.", "loot");
-    updateUI();
-    return;
-  }
-
-  if (hasItem("Cake")) {
-    removeItem("Cake");
-    p.hp = Math.min(p.maxHp, p.hp + 8);
-    log("You eat the cake and recover 8 health.", "loot");
-    updateUI();
-    return;
-  }
-
-  log("You do not have anything useful to use.", "system");
-}
-
-function searchAction() {
-  const p = state.player;
-  const loc = locationName(p.x, p.y);
-
-  if (loc === "Lumbridge Castle Kitchen" && !hasItem("Empty pot")) {
-    addItem("Empty pot");
-    log("You search the shelves and find an empty pot.", "loot");
-  } else if (loc === "Lumbridge General Store") {
-    log("The shelves contain ropes, pots, tinderboxes, and old adventuring supplies.", "system");
-  } else if (loc === "Goblin Woods") {
-    log("You find muddy tracks and crude campfire ashes.", "system");
-  } else if (loc === "Lumbridge Farm") {
-    log("You search around the farm. Chickens cluck nearby and cows graze by the fence.", "system");
-  } else {
-    log("You search the area but find nothing special.", "system");
-  }
-
-  updateUI();
-}
-
-/******************************************************************
- * NPC DIALOGUE AND QUEST
- ******************************************************************/
-function openNpcDialog(e) {
-  dialog.style.display = "block";
-  dialogName.textContent = e.name;
-  dialogOptions.innerHTML = "";
-
-  if (e.role === "quest") return cookDialog();
-  if (e.role === "farm") return farmerDialog();
-  if (e.role === "mill") return millerDialog();
-  if (e.role === "guide") return guideDialog();
-  if (e.role === "priest") return priestDialog();
-  if (e.role === "shop") return shopDialog();
-}
-
-function option(text, fn) {
-  const b = document.createElement("button");
-  b.textContent = text;
-  b.onclick = fn;
-  dialogOptions.appendChild(b);
-}
-
-function closeDialog() {
-  dialog.style.display = "none";
-  updateUI();
-}
-
-function cookDialog() {
-  const q = state.quest;
-
-  if (q.complete) {
-    dialogText.textContent = "Thanks again for helping me with the Duke of Lumbridge's birthday cake!";
-    option("You're welcome.", closeDialog);
-    return;
-  }
-
-  if (!q.started) {
-    dialogText.textContent =
-      "What am I to do? I need to bake a cake for the Duke of Lumbridge, but I've forgotten to get the ingredients. Could you help me?";
-
-    option("Yes, I'll help you.", () => {
-      q.started = true;
-      log("Quest started: Cook's Assistant.", "quest");
-      cookDialog();
-    });
-
-    option("No, I don't feel like it.", closeDialog);
-    return;
-  }
-
-  const hasAll =
-    hasItem("Pot of flour") &&
-    hasItem("Bucket of milk") &&
-    hasItem("Egg");
-
-  if (!hasAll) {
-    dialogText.textContent =
-      "Please bring me a pot of flour, a bucket of milk, and an egg. The Duke is expecting his cake soon!";
-
-    option("Where can I find flour?", () => {
-      dialogText.textContent =
-        "You can get flour from the mill near the farm. Millie Miller may be able to help.";
-      dialogOptions.innerHTML = "";
-      option("Back.", cookDialog);
-    });
-
-    option("Where can I find milk?", () => {
-      dialogText.textContent =
-        "There are dairy cows near Lumbridge. You will need a bucket of milk.";
-      dialogOptions.innerHTML = "";
-      option("Back.", cookDialog);
-    });
-
-    option("Where can I find an egg?", () => {
-      dialogText.textContent =
-        "Try looking around the chicken coop by the farm.";
-      dialogOptions.innerHTML = "";
-      option("Back.", cookDialog);
-    });
-
-    option("Goodbye.", closeDialog);
-    return;
-  }
-
-  dialogText.textContent =
-    "You have everything! Can I have the ingredients now?";
-
-  option("Give the Cook the ingredients.", () => {
-    removeItem("Pot of flour");
-    removeItem("Bucket of milk");
-    removeItem("Egg");
-
-    q.complete = true;
-    q.rewardClaimed = true;
-
-    state.player.cooking++;
-    state.player.xp += 20;
-    state.player.coins += 15;
-
-    addItem("Cake", 1);
-
-    log("Quest complete: Cook's Assistant. Reward: 15 coins, Cooking experience, and a cake.", "quest");
-    closeDialog();
-  });
-
-  option("Not yet.", closeDialog);
-}
-
-function farmerDialog() {
-  dialogText.textContent =
-    "The farm feeds Lumbridge. Eggs are near the chicken pen, milk is by the pasture, and wheat grows south of the road.";
-
-  option("Any work for me?", () => {
-    dialogText.textContent =
-      "Keep goblins away from the east woods and Lumbridge will sleep easier.";
-    dialogOptions.innerHTML = "";
-    option("Goodbye.", closeDialog);
-  });
-
-  option("Goodbye.", closeDialog);
-}
-
-function millerDialog() {
-  dialogText.textContent =
-    "A good mill turns grain into flour, but for today you may take the spare pot by the millstone if the Cook sent you.";
-
-  option("Thanks.", closeDialog);
-}
-
-function guideDialog() {
-  dialogText.textContent =
-    "Welcome to Lumbridge. Use the roads to find the castle, kitchen, farm, church, general store, River Lum bridge, and Goblin Woods.";
-
-  option("How do I fight?", () => {
-    dialogText.textContent =
-      "Stand beside a goblin and press Attack. Eat bread, cake, or herbs if your health gets low.";
-    dialogOptions.innerHTML = "";
-    option("Back.", guideDialog);
-  });
-
-  option("How do I move?", () => {
-    dialogText.textContent =
-      "Click or tap a tile to walk there. You can also use WASD or the arrow keys.";
-    dialogOptions.innerHTML = "";
-    option("Back.", guideDialog);
-  });
-
-  option("Goodbye.", closeDialog);
-}
-
-function priestDialog() {
-  dialogText.textContent =
-    "May Saradomin watch over you. Rest a moment and be restored.";
-
-  option("Pray.", () => {
-    state.player.hp = state.player.maxHp;
-    log("You feel restored.", "quest");
-    closeDialog();
-  });
-
-  option("Goodbye.", closeDialog);
-}
-
-function shopDialog() {
-  dialogText.textContent =
-    "Welcome to the Lumbridge General Store. I sell bread for 3 coins and simple training blades for 20.";
-
-  option("Buy bread - 3 coins", () => {
-    if (state.player.coins >= 3) {
-      state.player.coins -= 3;
-      addItem("Bread");
-      shopDialog();
-    } else {
-      dialogText.textContent = "You do not have enough coins.";
-    }
-
-    updateUI();
-  });
-
-  option("Buy iron shortblade - 20 coins", () => {
-    if (state.player.coins >= 20) {
-      state.player.coins -= 20;
-      addItem("Iron shortblade");
-      state.player.attack++;
-      log("Your attack improves with the better blade.", "quest");
-      shopDialog();
-    } else {
-      dialogText.textContent = "You do not have enough coins.";
-    }
-
-    updateUI();
-  });
-
-  option("Goodbye.", closeDialog);
-}
-
-/******************************************************************
- * AI
- ******************************************************************/
-function npcWander() {
-  for (const e of entities) {
-    if (e.kind !== "npc") continue;
-
-    e.moveCooldown--;
-
-    if (e.moveCooldown > 0) continue;
-
-    e.moveCooldown = randomInt(90, 260);
-
-    if (Math.random() < .35) continue;
-
-    const dirs = [
-      ["up", 0, -1],
-      ["down", 0, 1],
-      ["left", -1, 0],
-      ["right", 1, 0]
-    ];
-
-    const choice = dirs[randomInt(0, dirs.length - 1)];
-    const dx = choice[1];
-    const dy = choice[2];
-
-    const nx = e.x + dx;
-    const ny = e.y + dy;
-
-    if (!solidAt(nx, ny, { blockNPCs:false }) && dist({ x:nx, y:ny }, state.player) > 0) {
-      if (e.role === "quest" && locationName(nx, ny) !== "Lumbridge Castle Kitchen") continue;
-      if (e.role === "farm" && locationName(nx, ny) !== "Lumbridge Farm") continue;
-
-      e.x = nx;
-      e.y = ny;
-    }
-  }
-}
-
-function goblinThink() {
-  for (const g of entities) {
-    if (g.kind !== "goblin") continue;
-
-    if (g.hp <= 0) {
-      g.respawn--;
-
-      if (g.respawn <= 0) {
-        g.hp = g.maxHp;
-        g.x = randomInt(37, 44);
-        g.y = randomInt(5, 15);
-        g.renderX = g.x;
-        g.renderY = g.y;
-        log("A goblin wanders back into the woods.", "system");
-      }
-
-      continue;
-    }
-
-    const p = state.player;
-
-    if (dist(g, p) === 1 && Math.random() < .55) {
-      goblinRetaliate(g);
-      continue;
-    }
-
-    if (dist(g, p) < 6) {
-      const dx = Math.sign(p.x - g.x);
-      const dy = Math.sign(p.y - g.y);
-
-      const choices = Math.abs(p.x - g.x) > Math.abs(p.y - g.y)
-        ? [[dx, 0], [0, dy]]
-        : [[0, dy], [dx, 0]];
-
-      for (const [mx, my] of choices) {
-        const nx = g.x + mx;
-        const ny = g.y + my;
-
-        if (!solidAt(nx, ny) && !(nx === p.x && ny === p.y)) {
-          g.x = nx;
-          g.y = ny;
-          break;
-        }
-      }
-    } else if (Math.random() < .25) {
-      const dirs = [[1,0], [-1,0], [0,1], [0,-1]];
-      const [dx, dy] = dirs[randomInt(0, 3)];
-
-      const nx = g.x + dx;
-      const ny = g.y + dy;
-
-      if (!solidAt(nx, ny) && locationName(nx, ny) === "Goblin Woods") {
-        g.x = nx;
-        g.y = ny;
+function heuristic(a,b){return Math.abs(a.x-b.x)+Math.abs(a.y-b.y);}
+function findPath(sx,sy,gx,gy){
+  if(!inBounds(gx,gy))return [];
+  if(!passable(gx,gy))return nearestReachablePath(sx,sy,gx,gy);
+
+  const start=sx+","+sy,goal=gx+","+gy;
+  const open=[{x:sx,y:sy,g:0,f:heuristic({x:sx,y:sy},{x:gx,y:gy})}];
+  const came=new Map(),gScore=new Map([[start,0]]),closed=new Set();
+
+  while(open.length){
+    open.sort((a,b)=>a.f-b.f);
+    const cur=open.shift(),ck=cur.x+","+cur.y;
+    if(ck===goal)return reconstruct(came,cur,sx,sy);
+    if(closed.has(ck))continue;
+    closed.add(ck);
+
+    for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+      const nx=cur.x+dx,ny=cur.y+dy,nk=nx+","+ny;
+      if(!passable(nx,ny)||closed.has(nk))continue;
+      const ng=cur.g+1;
+      if(ng<(gScore.get(nk)??Infinity)){
+        came.set(nk,cur);
+        gScore.set(nk,ng);
+        open.push({x:nx,y:ny,g:ng,f:ng+heuristic({x:nx,y:ny},{x:gx,y:gy})});
       }
     }
   }
+  return [];
+}
+function nearestReachablePath(sx,sy,gx,gy){
+  const candidates=[];
+  for(let r=1;r<=4;r++)for(let y=gy-r;y<=gy+r;y++)for(let x=gx-r;x<=gx+r;x++){
+    if(Math.abs(x-gx)!==r&&Math.abs(y-gy)!==r)continue;
+    if(passable(x,y))candidates.push({x,y,d:Math.abs(x-gx)+Math.abs(y-gy)});
+  }
+  candidates.sort((a,b)=>a.d-b.d);
+  for(const c of candidates){const p=findPath(sx,sy,c.x,c.y);if(p.length)return p;}
+  return [];
+}
+function reconstruct(came,cur,sx,sy){
+  const p=[];
+  while(!(cur.x===sx&&cur.y===sy)){
+    p.push({x:cur.x,y:cur.y});
+    cur=came.get(cur.x+","+cur.y);
+    if(!cur)break;
+  }
+  return p.reverse();
+}
+function setDestination(x,y,mx,my){
+  const p=findPath(state.player.x,state.player.y,x,y);
+  if(!p.length){badMarker.style.left=mx+"px";badMarker.style.top=my+"px";badMarker.style.display="block";setTimeout(()=>badMarker.style.display="none",300);log("I can't reach that.");return;}
+  walkPath=p;
+  if(mx!==undefined){marker.style.left=mx+"px";marker.style.top=my+"px";marker.style.display="block";}
+}
+function stepPath(){
+  if(!walkPath.length)return;
+  const n=walkPath.shift();
+  const p=state.player;
+  state.player.dir=dirFromStep(p,n);
+  p.x=n.x;p.y=n.y;
+  const g=tileGround(p.x,p.y);if(g)pickup(g);
+  if(!walkPath.length)marker.style.display="none";
+  updateUI();
+}
+function pickup(g){if(addItem(g.name,g.qty)){ground.splice(ground.indexOf(g),1);log("You pick up "+g.name+".","loot");}}
+
+/* ===========================
+   CLICK PICKING
+=========================== */
+function screenToWorld(clientX,clientY){
+  const r=canvas.getBoundingClientRect(),x=(clientX-r.left)/r.width*2-1,y=1-(clientY-r.top)/r.height*2;
+  const near=transform(invVP,[x,y,-1,1]),far=transform(invVP,[x,y,1,1]);
+  for(const v of [near,far]){v[0]/=v[3];v[1]/=v[3];v[2]/=v[3];}
+  const t=-near[2]/(far[2]-near[2]);
+  return {x:Math.floor(near[0]+(far[0]-near[0])*t+.5),y:Math.floor(near[1]+(far[1]-near[1])*t+.5),mx:clientX-r.left,my:clientY-r.top};
 }
 
-/******************************************************************
- * RENDERING
- ******************************************************************/
-function drawTile(x, y, sx, sy) {
-  const t = map[y][x];
+/* ===========================
+   SIMPLE ACTIONS
+=========================== */
+function dist(a,b){return Math.abs(a.x-b.x)+Math.abs(a.y-b.y);}
+function nearest(kind){return entities.find(e=>e.plane===currentPlane&&e.hp>0&&dist(e,state.player)===1&&(!kind||e.kind===kind||e.role===kind));}
+function talk(){const e=nearest("npc");log(e?`${e.name}: Hello there.`:"There is no one nearby to talk to.");}
+function attack(){const e=nearest("monster");if(!e){log("There is nothing nearby to attack.");return;}const hit=Math.floor(Math.random()*3);e.hp=Math.max(0,e.hp-hit);log(`You hit the ${e.name} for ${hit}.`,"combat");if(e.hp<=0){log(e.name+" dies.","loot");addGround("Bones",e.x,e.y);}}
+function useNearest(){const o=tileObject(state.player.x,state.player.y)||tileObject(state.player.x+1,state.player.y)||tileObject(state.player.x-1,state.player.y)||tileObject(state.player.x,state.player.y+1)||tileObject(state.player.x,state.player.y-1);if(o)log("You use "+o.name+".");else log("Nothing interesting happens.");}
 
-  ctx.fillStyle = tileColor[t] || "#000";
-  ctx.fillRect(sx, sy, TILE, TILE);
+/* ===========================
+   DRAW WORLD
+=========================== */
+function tileColor(t){return COL[Object.keys(T).find(k=>T[k]===t)]||COL.grass;}
+function drawTerrainTile(x,y){
+  const t=map[y][x],h=heightAt(x,y),base=textureColor(tileColor(t),x,y,t+30,t===T.water?.05:.18);
+  const z=t===T.water?h+.012:t===T.bridge?h+.078:h+.032,th=t===T.water?.024:t===T.bridge?.13:.06;
+  cube(x+.5,y+.5,z,.985,.985,th,base);
 
-  ctx.globalAlpha = .16;
-  ctx.fillStyle = "#000";
-
-  for (let i = 0; i < 3; i++) {
-    const px = sx + ((x * 13 + y * 7 + i * 11) % TILE);
-    const py = sy + ((x * 5 + y * 17 + i * 9) % TILE);
-    ctx.fillRect(px, py, 3, 3);
+  if(t===T.grass||t===T.swamp){
+    for(let i=0;i<GFX.grassTufts;i++)if(hash2(x,y,i+200)<.42){
+      const ox=(hash2(x,y,i)-.5)*.72,oy=(hash2(y,x,i+5)-.5)*.72,hh=.12+hash2(x,y,i+17)*.14,c=i%2?[.17,.45,.13,1]:[.24,.58,.17,1];
+      cube(x+.5+ox,y+.5+oy,z+.04+hh/2,.035,.02,hh,c);
+      cube(x+.535+ox,y+.485+oy,z+.04+hh*.42,.02,.03,hh*.75,shade(c,.82));
+    }
+  } else if(t===T.water){
+    for(let i=0;i<GFX.ripples;i++){const oy=-.32+i*.28+(hash2(x,y,i)-.5)*.08,len=.35+hash2(y,x,i+4)*.4;cube(x+.5,y+.5+oy,z+.02+i*.003,len,.02,.006,[.38,.70,.95,1]);}
+  } else if(t===T.bridge){
+    for(let i=0;i<4;i++)cube(x+.5,y+.18+i*.22,z+.08,.86,.04,.04,i%2?MAT.plankA:MAT.plankB);
+    cube(x+.5,y+.08,z+.16,.92,.08,.1,shade(MAT.plankA,.75));cube(x+.5,y+.92,z+.16,.92,.08,.1,shade(MAT.plankA,.75));
+  } else if(t===T.path||t===T.dirt||t===T.stone){
+    for(let i=0;i<GFX.pebbles;i++)if(hash2(x,y,i+77)<.72){
+      const s=.06+hash2(x,y,i)*.08,ox=(hash2(x,y,i+10)-.5)*.65,oy=(hash2(x,y,i+20)-.5)*.65;
+      cube(x+.5+ox,y+.5+oy,z+.05,s*1.6,s,s*.55,t===T.stone?[.34,.34,.32,1]:[.36,.24,.13,1]);
+    }
+  } else if(t===T.wheat){
+    for(let i=0;i<GFX.wheatTufts;i++){const ox=(hash2(x,y,i)-.5)*.75,oy=(hash2(y,x,i+9)-.5)*.75,c=shade(COL.wheat,.85+hash2(x,y,i+3)*.35);cube(x+.5+ox,y+.5+oy,z+.2,.025,.025,.28,c);pyramid(x+.5+ox,y+.5+oy,z+.36,.12,.12,.18,c);}
   }
-
-  ctx.globalAlpha = 1;
-
-  if (t === T.water) {
-    ctx.fillStyle = "rgba(255,255,255,.18)";
-    ctx.fillRect(sx + ((x + y) % 3) * 6, sy + 10, 14, 2);
-  }
-
-  if (t === T.tree) {
-    ctx.fillStyle = "#16451d";
-    ctx.fillRect(sx + 8, sy + 6, 16, 18);
-    ctx.fillStyle = "#6b3e1b";
-    ctx.fillRect(sx + 14, sy + 20, 4, 9);
-  }
-
-  if (t === T.wheat) {
-    ctx.fillStyle = "#efd76a";
-    for (let i = 0; i < 4; i++) {
-      ctx.fillRect(sx + 5 + i * 6, sy + 8, 2, 18);
+}
+function drawWallTile(x,y){
+  const h=heightAt(x,y);
+  cube(x+.5,y+.5,h+2.6,.98,.98,5.2,textureColor(MAT.stoneA,x,y,9,.18));
+  if(GFX.wallBricks)for(let r=0;r<7;r++)for(let c=0;c<2;c++)cube(x+.25+c*.5,y+.02,h+.7+r*.65,.36,.035,.18,textureColor(MAT.stoneB,x+r,y+c,15,.20));
+  cube(x+.5,y+.5,h+5.45,.45,.45,.35,MAT.stoneB);
+}
+function drawDoorTile(x,y){
+  const h=heightAt(x,y);
+  cube(x+.5,y+.5,h+.08,.98,.98,.12,COL.floor);
+  cube(x+.5,y+.08,h+1.1,.74,.10,2.1,MAT.plankB);
+}
+function drawTree(o){
+  cube(o.x,o.y,.62,.35,.35,1.24,COL.wood);
+  for(let i=0;i<4;i++)cube(o.x,o.y-.28,.20+i*.27,.38,.035,.045,shade(COL.wood,.66));
+  pyramid(o.x,o.y,1.45,1.55,1.55,1.35,[.10,.38,.11,1]);
+  pyramid(o.x,o.y,2.05,1.25,1.25,1.05,[.13,.46,.13,1]);
+  pyramid(o.x,o.y,2.55,.86,.86,.82,[.16,.52,.16,1]);
+  cube(o.x-.38,o.y+.12,1.75,.55,.50,.42,[.09,.34,.10,1]);
+  cube(o.x+.36,o.y-.18,1.92,.50,.48,.36,[.12,.43,.12,1]);
+}
+function drawProp(o){
+  if(o.type==="tree"){drawTree(o);return;}
+  if(o.type==="fence"){cube(o.x+o.w/2-.5,o.y+o.h/2-.5,.35,o.w,o.h,.7,COL.wood);return;}
+  if(o.type==="grave"){cube(o.x,o.y,.35,.55,.25,.70,[.45,.45,.43,1]);return;}
+  if(o.type==="coffin"){cube(o.x,o.y,.28,.80,1.10,.40,COL.wood);return;}
+  if(o.type==="bank"||o.type==="store"||o.type==="axeShop"){cube(o.x+.25,o.y,.35,1.4,.8,.7,COL.wood);cube(o.x+.25,o.y,.85,1.2,.6,.18,COL.door);return;}
+  if(o.type==="range"){cube(o.x,o.y,.45,.9,.9,.9,[.30,.30,.30,1]);cube(o.x,o.y,.75,.5,.5,.2,[1,.35,.05,1]);return;}
+  if(o.type==="altar"){cube(o.x,o.y,.35,1,.8,.55,[.82,.84,.88,1]);return;}
+  if(o.type==="rockCopper"||o.type==="rockTin"){cube(o.x,o.y,.35,.9,.8,.7,[.50,.45,.40,1]);cube(o.x+.15,o.y,.82,.25,.25,.15,o.type==="rockCopper"?[.80,.42,.18,1]:[.80,.78,.70,1]);return;}
+  if(o.type==="fish"){cube(o.x,o.y,.1,.7,.7,.08,[.75,.95,1,1]);return;}
+}
+function drawBuildingLabel(o){
+  // Floors are drawn by terrain. Walls are drawn tile-by-tile, so buildings do not block clicks except real wall/prop tiles.
+  if(o.type==="castle"||o.type==="citywall"||o.type==="ge"){
+    const cx=o.x+o.w/2-.5,cy=o.y+o.h/2-.5;
+    if(o.type==="castle"){
+      // Tall angular keep volume for castle scale.
+      cube(cx,cy-1,7.7,o.w*.45,o.h*.38,4.8,MAT.stoneA);
+      for(let i=0;i<10;i++){cube(cx-o.w*.22+i*(o.w*.44/9),cy-o.h*.20,10.25,.5,.5,.4,MAT.stoneB);cube(cx-o.w*.22+i*(o.w*.44/9),cy+o.h*.20,10.25,.5,.5,.4,MAT.stoneB);}
+      cube(cx,cy+o.h*.22,1.35,1.2,.12,2.3,MAT.plankB);
+    }
+    if(o.type==="ge"){
+      cube(cx,cy,1.2,o.w*.50,o.h*.38,1.0,MAT.stoneB);
+      for(let a=0;a<12;a++){const ang=a/12*Math.PI*2;cube(cx+Math.cos(ang)*10,cy+Math.sin(ang)*7,.55,.7,.7,.6,MAT.stoneA);}
     }
   }
-
-  if (t === T.wall) {
-    ctx.strokeStyle = "#3b3023";
-    ctx.strokeRect(sx + 1, sy + 1, TILE - 2, TILE - 2);
-    ctx.fillStyle = "rgba(255,255,255,.08)";
-    ctx.fillRect(sx + 2, sy + 2, TILE - 4, 3);
-  }
-
-  if (t === T.fence) {
-    ctx.fillStyle = "#4b2c13";
-    ctx.fillRect(sx + 4, sy + 12, 24, 5);
-    ctx.fillRect(sx + 8, sy + 6, 4, 20);
-    ctx.fillRect(sx + 21, sy + 6, 4, 20);
-  }
 }
 
-function drawSprite(e, sx, sy) {
-  if (e.kind === "item") {
-    ctx.fillStyle = "#1b1208";
-    ctx.fillRect(sx + 9, sy + 22, 14, 5);
-    ctx.fillStyle = e.color;
-    ctx.fillRect(sx + 11, sy + 12, 10, 10);
-    ctx.fillRect(sx + 14, sy + 9, 5, 5);
-    return;
+/* ===========================
+   LIVING ACTORS - ANGULAR ONLY
+=========================== */
+function dirAngle(d){if(d==="up")return 0;if(d==="right")return Math.PI/2;if(d==="down")return Math.PI;if(d==="left")return-Math.PI/2;return Math.PI;}
+function drawRS2Player(x,y,bob=0){
+  const yaw=dirAngle(state.player.dir),ca=Math.cos(yaw),sa=Math.sin(yaw);
+  const part=(m,lx,ly,lz,sx,sy,sz,c)=>{const wx=x+lx*ca-ly*sa,wy=y+lx*sa+ly*ca;drawMesh(m,wx,wy,bob+lz,sx,sy,sz,c,yaw);};
+  const skin=[.74,.50,.30,1],skinS=[.62,.38,.22,1],shirt=[.48,.47,.20,1],shirtD=[.33,.34,.12,1],pants=[.03,.43,.22,1],pantsD=[.02,.31,.16,1],belt=[.25,.07,.03,1],boots=[.20,.11,.045,1],beard=[.15,.10,.045,1];
+  part("rs2Boot",-.18,-.18,-.58,.40,.54,.36,boots);part("rs2Boot",.18,-.18,-.58,.40,.54,.36,boots);
+  part("rs2Leg",-.17,0,-.07,.34,.27,.96,pants);part("rs2Leg",.17,0,-.07,.34,.27,.96,pants);
+  part("cube",-.17,-.19,-.08,.22,.04,.70,shade(pants,.72));part("cube",.17,-.19,-.08,.22,.04,.70,shade(pants,.72));
+  part("cube",-.055,-.02,-.02,.035,.30,.78,pantsD);part("cube",.055,-.02,-.02,.035,.30,.78,pantsD);
+  part("cube",0,0,.43,.78,.42,.13,belt);part("cube",0,-.23,.43,.20,.07,.16,[.90,.67,.19,1]);
+  part("rs2Torso",0,0,.88,.98,.88,1.10,shirt);part("cube",0,-.37,.88,.82,.055,.88,shirtD);
+  part("cube",-.18,-.405,.92,.30,.035,.78,shade(shirt,.90));part("cube",.18,-.405,.92,.30,.035,.78,shade(shirt,1.08));
+  part("cube",-.55,0,1.22,.42,.48,.34,shirt);part("cube",.55,0,1.22,.42,.48,.34,shirt);
+  part("rs2UpperArm",-.58,-.01,.80,.30,.25,.72,skin);part("rs2UpperArm",.58,-.01,.80,.30,.25,.72,skin);
+  part("rs2Forearm",-.58,-.02,.33,.27,.22,.62,skin);part("rs2Forearm",.58,-.02,.33,.27,.22,.62,skin);
+  part("cube",-.58,-.03,-.07,.20,.18,.19,skin);part("cube",.58,-.03,-.07,.20,.18,.19,skin);
+  part("cube",0,0,1.48,.22,.22,.22,skinS);part("rs2Head",0,0,1.78,.86,.78,.86,skin);
+  part("cube",-.25,-.05,1.78,.07,.38,.55,shade(skin,.78));part("cube",.25,-.05,1.78,.07,.38,.55,shade(skin,.94));
+  part("cube",-.11,-.335,1.83,.14,.035,.035,COL.black);part("cube",.11,-.335,1.83,.14,.035,.035,COL.black);
+  part("cube",0,-.365,1.75,.08,.07,.16,shade(skin,.82));
+  part("cube",0,-.385,1.62,.30,.045,.08,beard);part("triPrism",0,-.395,1.45,.42,.075,.44,beard);
+  part("cube",-.31,0,1.76,.07,.10,.16,skinS);part("cube",.31,0,1.76,.07,.10,.16,skinS);
+  part("cube",-.31,-.43,1.08,.16,.030,.46,shade(shirt,.76));part("cube",.31,-.43,1.08,.16,.030,.46,shade(shirt,1.10));
+  if(state.equip.weapon){const metal=/iron/i.test(state.equip.weapon)?MAT.iron:MAT.bronze;part("cube",.71,-.10,.32,.065,.065,.78,metal);part("cube",.71,-.10,.76,.18,.045,.12,shade(metal,1.22));}
+}
+function drawHuman(x,y,color,player=false,bob=0){
+  if(player){drawRS2Player(x,y,bob);return;}
+  const skin=[.78,.56,.38,1],shirt=color,shirtD=shade(shirt,.68),pants=[.24,.20,.13,1],boots=MAT.boot,hair=[.25,.16,.07,1];
+  rs2Boot(x-.18,y-.13,bob-.50,.34,.44,.28,boots);rs2Boot(x+.18,y-.13,bob-.50,.34,.44,.28,boots);
+  rs2Leg(x-.17,y,bob-.04,.30,.24,.82,pants);rs2Leg(x+.17,y,bob-.04,.30,.24,.82,pants);
+  cube(x,y,bob+.40,.72,.38,.12,MAT.leather);rs2Torso(x,y,bob+.86,.88,.78,1.0,shirt);cube(x,y-.34,bob+.86,.70,.045,.78,shirtD);
+  cube(x-.48,y,bob+1.13,.34,.40,.28,shirt);cube(x+.48,y,bob+1.13,.34,.40,.28,shirt);
+  rs2UpperArm(x-.52,y-.01,bob+.72,.26,.22,.66,skin);rs2UpperArm(x+.52,y-.01,bob+.72,.26,.22,.66,skin);
+  rs2Forearm(x-.52,y-.02,bob+.30,.22,.18,.50,skin);rs2Forearm(x+.52,y-.02,bob+.30,.22,.18,.50,skin);
+  cube(x-.52,y-.02,bob+.02,.18,.16,.16,skin);cube(x+.52,y-.02,bob+.02,.18,.16,.16,skin);
+  cube(x,y,bob+1.38,.18,.18,.18,shade(skin,.82));rs2Head(x,y,bob+1.66,.78,.70,.78,skin);
+  cube(x,y-.03,bob+1.95,.46,.34,.16,hair);cube(x,y-.22,bob+1.82,.38,.08,.18,shade(hair,.72));
+  cube(x-.10,y-.31,bob+1.72,.11,.030,.030,COL.black);cube(x+.10,y-.31,bob+1.72,.11,.030,.030,COL.black);
+  cube(x,y-.34,bob+1.62,.07,.06,.12,shade(skin,.82));cube(x,y-.35,bob+1.50,.15,.025,.025,[.28,.07,.04,1]);
+}
+function drawAnimal(e){
+  const x=e.rx??e.x,y=e.ry??e.y,bob=Math.sin(tick/9+x+y)*.035;
+  if(e.name==="Cow"){const body=COL.cow,patch=[.27,.17,.10,1];angBody(x,y,.58+bob,1.45,.78,.82,body);cube(x-.24,y-.35,.72+bob,.40,.035,.28,patch);angHead(x+.70,y,.92+bob,.62,.44,.46,body);cube(x+1.02,y,.84+bob,.28,.28,.20,shade(body,.82));for(const lx of[-.38,.36])for(const ly of[-.25,.25]){rs2LowerLeg(x+lx,y+ly,.18+bob,.16,.13,.44,shade(body,.78));cube(x+lx,y+ly,-.08+bob,.18,.16,.10,COL.black);}}
+  else if(e.name==="Chicken"){angBird(x,y,.42+bob,.62,.50,.62,COL.chicken);angHead(x+.34,y,.74+bob,.34,.28,.30,COL.chicken);tri(x+.55,y,.74+bob,.22,.055,.18,[1,.42,.08,1]);cube(x+.30,y,1.00+bob,.16,.08,.14,[.90,.08,.04,1]);cube(x-.15,y-.27,.45+bob,.24,.05,.28,shade(COL.chicken,.82));cube(x-.15,y+.27,.45+bob,.24,.05,.28,shade(COL.chicken,.82));}
+  else if(e.name==="Rat"){angBody(x,y,.27+bob,.72,.38,.30,COL.rat);angHead(x+.42,y,.33+bob,.32,.24,.22,COL.rat);cube(x-.52,y,.25+bob,.58,.035,.035,shade(COL.rat,.65));}
+  else if(e.name==="Giant spider"){angSpider(x,y,.28+bob,.86,.70,.38,COL.spider);angSpider(x+.55,y,.30+bob,.52,.42,.28,shade(COL.spider,1.2));for(const dx of[-.48,-.24,.20,.44]){cube(x+dx,y-.48,.19+bob,.12,.58,.08,COL.spider);cube(x+dx,y+.48,.19+bob,.12,.58,.08,COL.spider);cube(x+dx,y-.82,.13+bob,.10,.26,.06,shade(COL.spider,.72));cube(x+dx,y+.82,.13+bob,.10,.26,.06,shade(COL.spider,.72));}}
+  else if(e.name==="Sheep"){angBody(x,y,.50+bob,.96,.74,.64,COL.sheep);for(let i=0;i<7;i++){const a=i/7*Math.PI*2;angWool(x+Math.cos(a)*.26,y+Math.sin(a)*.22,.70+bob,.28,.23,.20,shade(COL.sheep,.92+(i%3)*.05));}angHead(x+.50,y,.78+bob,.40,.30,.30,[.25,.20,.16,1]);for(const lx of[-.28,.28])for(const ly of[-.18,.18])rs2LowerLeg(x+lx,y+ly,.11+bob,.10,.08,.34,[.18,.14,.10,1]);}
+}
+function drawActor(e,color,player=false){
+  const x=e.rx??e.x,y=e.ry??e.y,bob=Math.sin(tick/9+x+y)*.04;
+  if(player){drawHuman(x,y,color,true,bob);return;}
+  if(["Cow","Chicken","Rat","Giant spider","Sheep"].includes(e.name)){drawAnimal(e);return;}
+  if(e.name==="Goblin"){
+    const gs=COL.goblin,gc=[.34,.22,.12,1];rs2Torso(x,y,.58+bob,.72,.58,.78,gc);cube(x,y-.25,.58+bob,.58,.055,.48,shade(gc,.62));rs2Head(x,y,1.20+bob,.82,.70,.62,gs);
+    cube(x-.42,y,1.23+bob,.22,.07,.16,gs);cube(x+.42,y,1.23+bob,.22,.07,.16,gs);cube(x-.13,y-.32,1.27+bob,.08,.03,.035,[.9,.04,.04,1]);cube(x+.13,y-.32,1.27+bob,.08,.03,.035,[.9,.04,.04,1]);
+    rs2UpperArm(x-.48,y-.02,.58+bob,.22,.18,.62,gs);rs2UpperArm(x+.48,y-.02,.58+bob,.22,.18,.62,gs);rs2Leg(x-.16,y,.03+bob,.20,.16,.44,shade(gc,.85));rs2Leg(x+.16,y,.03+bob,.20,.16,.44,shade(gc,.85));return;
   }
-
-  if (e.kind === "goblin") {
-    if (e.hp <= 0) return;
-
-    ctx.fillStyle = "#1b1208";
-    ctx.fillRect(sx + 7, sy + 25, 18, 4);
-
-    ctx.fillStyle = "#3f7835";
-    ctx.fillRect(sx + 9, sy + 10, 14, 15);
-
-    ctx.fillStyle = "#6dbc52";
-    ctx.fillRect(sx + 8, sy + 5, 16, 12);
-
-    ctx.fillStyle = "#222";
-    ctx.fillRect(sx + 11, sy + 9, 3, 3);
-    ctx.fillRect(sx + 18, sy + 9, 3, 3);
-
-    ctx.fillStyle = "#6b3e1b";
-    ctx.fillRect(sx + 22, sy + 13, 7, 3);
-
-    drawHpBar(e, sx, sy);
-    return;
-  }
-
-  ctx.fillStyle = "#1b1208";
-  ctx.fillRect(sx + 7, sy + 25, 18, 4);
-
-  ctx.fillStyle = "#9b6b38";
-  ctx.fillRect(sx + 11, sy + 10, 10, 15);
-
-  ctx.fillStyle = e.color;
-  ctx.fillRect(sx + 9, sy + 5, 14, 10);
-
-  ctx.fillStyle = "#222";
-  ctx.fillRect(sx + 12, sy + 9, 2, 2);
-  ctx.fillRect(sx + 18, sy + 9, 2, 2);
+  if(e.name==="Restless ghost"){rs2Torso(x,y,.62+bob,.78,.62,1.05,COL.ghost);rs2Head(x,y,1.42+bob,.70,.60,.64,COL.ghost);cube(x-.10,y-.32,1.48+bob,.08,.025,.030,COL.black);cube(x+.10,y-.32,1.48+bob,.08,.025,.030,COL.black);return;}
+  drawHuman(x,y,color,false,bob);
 }
 
-function drawPlayer(sx, sy) {
-  const p = state.player;
+/* ===========================
+   RENDER
+=========================== */
+const camera={yaw:-.8,pitch:.78,distance:26,height:1.0,targetYaw:-.8,targetPitch:.78,targetDistance:26,targetHeight:1.0,minPitch:.28,maxPitch:1.3,minDistance:8,maxDistance:58,smoothing:.12};
+let tick=0,walkPath=[],walkTimer=0,draggingCamera=false,dragStart={x:0,y:0,yaw:camera.targetYaw,pitch:camera.targetPitch},pointerDown=null,currentPlane=0,lastPointer={x:0,y:0};
 
-  ctx.fillStyle = "#1b1208";
-  ctx.fillRect(sx + 6, sy + 25, 20, 4);
+function resize(){const r=canvas.parentElement.getBoundingClientRect();canvas.width=Math.max(320,Math.floor(r.width));canvas.height=Math.max(180,Math.floor(r.height));gl.viewport(0,0,canvas.width,canvas.height);const mr=mini.parentElement.getBoundingClientRect();mini.width=Math.max(120,Math.floor(mr.width));mini.height=Math.max(80,Math.floor(mr.height));}
+window.addEventListener("resize",resize);resize();
 
-  ctx.fillStyle = "#2f70bd";
-  ctx.fillRect(sx + 10, sy + 12, 12, 14);
+function smooth(){const p=state.player;p.rx+=(p.x-p.rx)*.25;p.ry+=(p.y-p.ry)*.25;for(const e of entities){e.rx+=(e.x-e.rx)*.22;e.ry+=(e.y-e.ry)*.22;}for(const g of ground){g.rx+=(g.x-g.rx)*.25;g.ry+=(g.y-g.ry)*.25;}}
+function render(now=0){
+  tick++;
+  if(walkPath.length&&now-walkTimer>=STEP_MS/(state.runEnabled&&state.player.run>0?1.65:1)){walkTimer=now;stepPath();}
+  if(!state.runEnabled&&state.player.run<100)state.player.run=Math.min(100,state.player.run+.03);
+  smooth();
 
-  ctx.fillStyle = "#f1c27d";
-  ctx.fillRect(sx + 9, sy + 5, 14, 10);
+  camera.yaw+=(camera.targetYaw-camera.yaw)*camera.smoothing;
+  camera.pitch+=(camera.targetPitch-camera.pitch)*camera.smoothing;
+  camera.distance+=(camera.targetDistance-camera.distance)*camera.smoothing;
+  camera.height+=(camera.targetHeight-camera.height)*camera.smoothing;
 
-  ctx.fillStyle = "#5a3421";
-  ctx.fillRect(sx + 8, sy + 3, 16, 5);
+  gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+  const p=state.player,aspect=canvas.width/canvas.height,target=[p.rx,p.ry,heightAt(p.rx,p.ry)+camera.height],hor=Math.cos(camera.pitch)*camera.distance;
+  const eye=[target[0]+Math.cos(camera.yaw)*hor,target[1]+Math.sin(camera.yaw)*hor,target[2]+Math.sin(camera.pitch)*camera.distance];
+  VP=multiply(perspective(Math.PI/4.2,aspect,.1,260),lookAt(eye,target,[0,0,1]));
+  invVP=invert(VP);
 
-  ctx.fillStyle = "#222";
-  ctx.fillRect(sx + 12, sy + 9, 2, 2);
-  ctx.fillRect(sx + 18, sy + 9, 2, 2);
-
-  ctx.fillStyle = "#b7b7b7";
-
-  if (p.facing === "left") {
-    ctx.fillRect(sx + 4, sy + 13, 8, 3);
+  if(currentPlane===0){
+    const minX=Math.max(0,p.x-52),maxX=Math.min(W,p.x+52),minY=Math.max(0,p.y-52),maxY=Math.min(H,p.y+52);
+    for(let y=minY;y<maxY;y++)for(let x=minX;x<maxX;x++){
+      if(map[y][x]===T.wall)drawWallTile(x,y);
+      else if(map[y][x]===T.door)drawDoorTile(x,y);
+      else drawTerrainTile(x,y);
+    }
   } else {
-    ctx.fillRect(sx + 20, sy + 13, 8, 3);
+    cube(48,150,.05,26,26,.1,COL.floor);
   }
 
-  drawHpBar({ hp:p.hp, maxHp:p.maxHp }, sx, sy - 3);
-}
+  for(const o of objects){if(o.plane===currentPlane){if(isBuildingShell(o))drawBuildingLabel(o);else drawProp(o);}}
+  for(const g of ground.filter(g=>g.plane===currentPlane))cube(g.rx,g.ry,heightAt(g.rx,g.ry)+.25,.45,.45,.35,COL.door);
+  for(const e of entities.filter(e=>e.plane===currentPlane&&e.hp>0))drawActor(e,e.color);
+  drawActor({rx:p.rx,ry:p.ry,name:"Player"},COL.blue,true);
 
-function drawHpBar(e, sx, sy) {
-  const w = 24;
-  const pct = Math.max(0, e.hp / e.maxHp);
-
-  ctx.fillStyle = "#120806";
-  ctx.fillRect(sx + 4, sy + 1, w, 4);
-
-  ctx.fillStyle = pct > .45 ? "#40d35a" : "#e04b41";
-  ctx.fillRect(sx + 4, sy + 1, Math.floor(w * pct), 4);
-}
-
-function render(now = 0) {
-  if (walkPath.length && now - walkTimer >= WALK_STEP_MS) {
-    walkTimer = now;
-    walkTowardNextTile();
-  }
-
-  npcWander();
-  updateSmoothPositions();
-
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  const p = state.player;
-
-  const viewW = canvas.width / TILE;
-  const viewH = canvas.height / TILE;
-
-  camera.viewW = viewW;
-  camera.viewH = viewH;
-
-  camera.targetX = p.renderX - viewW / 2;
-  camera.targetY = p.renderY - viewH / 2;
-
-  const maxCamX = Math.max(0, WORLD_W - viewW);
-  const maxCamY = Math.max(0, WORLD_H - viewH);
-
-  camera.targetX = Math.max(0, Math.min(maxCamX, camera.targetX));
-  camera.targetY = Math.max(0, Math.min(maxCamY, camera.targetY));
-
-  camera.x = lerp(camera.x, camera.targetX, CAMERA_LERP);
-  camera.y = lerp(camera.y, camera.targetY, CAMERA_LERP);
-
-  camera.x = Math.max(0, Math.min(maxCamX, camera.x));
-  camera.y = Math.max(0, Math.min(maxCamY, camera.y));
-
-  const camX = camera.x;
-  const camY = camera.y;
-
-  currentCamera.x = camX;
-  currentCamera.y = camY;
-  currentCamera.viewW = viewW;
-  currentCamera.viewH = viewH;
-
-  const startX = Math.floor(camX);
-  const startY = Math.floor(camY);
-  const endX = Math.ceil(camX + viewW) + 1;
-  const endY = Math.ceil(camY + viewH) + 1;
-
-  for (let y = startY; y < endY; y++) {
-    for (let x = startX; x < endX; x++) {
-      if (x < 0 || y < 0 || x >= WORLD_W || y >= WORLD_H) continue;
-
-      drawTile(
-        x,
-        y,
-        Math.round((x - camX) * TILE),
-        Math.round((y - camY) * TILE)
-      );
-    }
-  }
-
-  const visible = entities
-    .filter(e =>
-      e.renderX >= camX - 1 &&
-      e.renderY >= camY - 1 &&
-      e.renderX < camX + viewW + 1 &&
-      e.renderY < camY + viewH + 1
-    )
-    .sort((a, b) => a.renderY - b.renderY);
-
-  for (const e of visible) {
-    drawSprite(
-      e,
-      Math.round((e.renderX - camX) * TILE),
-      Math.round((e.renderY - camY) * TILE)
-    );
-  }
-
-  drawPlayer(
-    Math.round((p.renderX - camX) * TILE),
-    Math.round((p.renderY - camY) * TILE)
-  );
-
-  renderMinimap();
-
+  drawMini();
   requestAnimationFrame(render);
 }
 
-function renderMinimap() {
-  mctx.clearRect(0, 0, mini.width, mini.height);
-
-  const sx = mini.width / WORLD_W;
-  const sy = mini.height / WORLD_H;
-
-  for (let y = 0; y < WORLD_H; y++) {
-    for (let x = 0; x < WORLD_W; x++) {
-      mctx.fillStyle = tileColor[map[y][x]];
-      mctx.fillRect(x * sx, y * sy, Math.ceil(sx), Math.ceil(sy));
-    }
+/* ===========================
+   MINIMAP
+=========================== */
+function drawMini(){
+  mctx.clearRect(0,0,mini.width,mini.height);
+  const sx=mini.width/W,sy=mini.height/H;
+  for(let y=0;y<H;y+=2)for(let x=0;x<W;x+=2){
+    const c=tileColor(map[y][x]);
+    mctx.fillStyle=`rgb(${c[0]*255},${c[1]*255},${c[2]*255})`;
+    mctx.fillRect(x*sx,y*sy,Math.ceil(sx*2),Math.ceil(sy*2));
   }
-
-  for (const e of entities) {
-    if (e.hp <= 0 && e.kind !== "item") continue;
-
-    mctx.fillStyle =
-      e.kind === "goblin"
-        ? "#ff3333"
-        : e.kind === "npc"
-          ? "#ffff66"
-          : "#ffffff";
-
-    mctx.fillRect(
-      e.x * sx,
-      e.y * sy,
-      Math.max(2, sx),
-      Math.max(2, sy)
-    );
-  }
-
-  mctx.fillStyle = "#00ffff";
-  mctx.fillRect(
-    state.player.x * sx - 1,
-    state.player.y * sy - 1,
-    Math.max(3, sx + 2),
-    Math.max(3, sy + 2)
-  );
+  mctx.fillStyle="#000";for(let y=0;y<H;y+=2)for(let x=0;x<W;x+=2)if(solid[y][x])mctx.fillRect(x*sx,y*sy,Math.max(1,sx*2),Math.max(1,sy*2));
+  for(const e of entities){if(e.plane!==currentPlane||e.hp<=0)continue;mctx.fillStyle=e.kind==="monster"?"#e33":"#ff5";mctx.fillRect(e.x*sx,e.y*sy,3,3);}
+  mctx.fillStyle="#0ff";mctx.fillRect(state.player.x*sx-2,state.player.y*sy-2,5,5);
+  if(walkPath.length){mctx.strokeStyle="#ff0";mctx.beginPath();mctx.moveTo(state.player.x*sx,state.player.y*sy);for(const n of walkPath)mctx.lineTo(n.x*sx,n.y*sy);mctx.stroke();}
 }
-
-/******************************************************************
- * UI
- ******************************************************************/
-function updateUI() {
-  const p = state.player;
-
-  locPill.textContent = locationName(p.x, p.y);
-
-  const near = adjacentEntities()[0];
-  targetPill.textContent = near ? `${near.name}` : "No target";
-
-  document.querySelectorAll(".tab").forEach(button => {
-    button.classList.toggle("active", button.dataset.tab === state.tab);
-  });
-
-  if (state.tab === "stats") {
-    panel.innerHTML = `
-      <div class="sectionTitle">Character</div>
-      <div class="statLine"><span>Health</span><strong>${p.hp}/${p.maxHp}</strong></div>
-      <div class="bar"><div style="width:${100 * p.hp / p.maxHp}%"></div></div>
-      <div class="statLine"><span>Invincibility</span><strong>${state.invincible ? "ON" : "OFF"}</strong></div>
-      <div class="statLine"><span>Attack</span><strong>${p.attack}</strong></div>
-      <div class="statLine"><span>Strength</span><strong>${p.strength}</strong></div>
-      <div class="statLine"><span>Defence</span><strong>${p.defence}</strong></div>
-      <div class="statLine"><span>Cooking</span><strong>${p.cooking}</strong></div>
-      <div class="statLine"><span>XP</span><strong>${p.xp}</strong></div>
-      <div class="statLine"><span>Coins</span><strong>${p.coins}</strong></div>
-      <div class="statLine"><span>Goblins defeated</span><strong>${state.kills}</strong></div>
-    `;
-  }
-
-  if (state.tab === "inv") {
-    const rows = Object.entries(state.inventory)
-      .map(([k, v]) => `<div class="invLine"><span>${k}</span><strong>${v}</strong></div>`)
-      .join("") || `<p>Your pack is empty.</p>`;
-
-    panel.innerHTML = `
-      <div class="sectionTitle">Backpack</div>
-      ${rows}
-      <p style="color:var(--muted);margin-top:8px;">
-        Use bread, cake, or herbs to heal. Quest ingredients are handed to the Cook.
-      </p>
-    `;
-  }
-
-  if (state.tab === "quest") {
-    const q = state.quest;
-    const status = q.complete ? "Complete" : q.started ? "In progress" : "Not started";
-
-    panel.innerHTML = `
-      <div class="sectionTitle">Cook's Assistant</div>
-      <div class="questLine"><span>Status</span><strong>${status}</strong></div>
-      <div class="questLine"><span>Pot of flour</span><strong>${hasItem("Pot of flour") ? "Yes" : "No"}</strong></div>
-      <div class="questLine"><span>Bucket of milk</span><strong>${hasItem("Bucket of milk") ? "Yes" : "No"}</strong></div>
-      <div class="questLine"><span>Egg</span><strong>${hasItem("Egg") ? "Yes" : "No"}</strong></div>
-      <p style="color:var(--muted);">
-        Speak to the Cook in Lumbridge Castle Kitchen. Gather an egg, a bucket of milk, and a pot of flour.
-      </p>
-    `;
-  }
-
-  if (state.tab === "help") {
-    panel.innerHTML = `
-      <div class="sectionTitle">Controls</div>
-      <p><strong>Move:</strong> click/tap a tile, WASD, or arrow keys.</p>
-      <p><strong>Talk:</strong> stand beside an NPC and press Talk.</p>
-      <p><strong>Attack:</strong> stand beside a goblin and press Attack.</p>
-      <p><strong>Search:</strong> look for useful items nearby.</p>
-      <p><strong>Save:</strong> stores progress locally.</p>
-      <p style="color:var(--muted);">
-        Unofficial fan project. RuneScape names and references belong to their respective owners.
-      </p>
-      <button id="invincibleBtn" style="width:100%;margin-top:6px;">
-        Invincibility: ${state.invincible ? "ON" : "OFF"}
-      </button>
-      <button id="resetBtn" style="width:100%;margin-top:6px;">Reset Game</button>
-    `;
-
-    document.getElementById("invincibleBtn").onclick = () => {
-      state.invincible = !state.invincible;
-      log(`Invincibility ${state.invincible ? "enabled" : "disabled"}.`, "system");
-      updateUI();
-    };
-
-    document.getElementById("resetBtn").onclick = resetState;
-  }
-}
-
-/******************************************************************
- * INPUT
- ******************************************************************/
-window.addEventListener("keydown", event => {
-  const key = event.key.toLowerCase();
-
-  if (["arrowup", "w"].includes(key)) {
-    cancelWalkPath();
-    move("up");
-  } else if (["arrowdown", "s"].includes(key)) {
-    cancelWalkPath();
-    move("down");
-  } else if (["arrowleft", "a"].includes(key)) {
-    cancelWalkPath();
-    move("left");
-  } else if (["arrowright", "d"].includes(key)) {
-    cancelWalkPath();
-    move("right");
-  } else if (key === " " || key === "enter") {
-    contextAction();
-  } else if (key === "escape") {
-    closeDialog();
-  }
+mini.addEventListener("click",e=>{
+  const r=mini.getBoundingClientRect();
+  const x=Math.floor((e.clientX-r.left)/r.width*W);
+  const y=Math.floor((e.clientY-r.top)/r.height*H);
+  setDestination(x,y);
 });
 
-canvas.addEventListener("pointerdown", event => {
-  if (dialog.style.display === "block") {
-    closeDialog();
-    return;
-  }
+/* ===========================
+   UI
+=========================== */
+function locName(x,y){
+  if(currentPlane===1)return"Lumbridge Castle Upper Floor";
+  if(x>=36&&x<63&&y>=142&&y<169)return"Lumbridge Castle";
+  if(x>=54&&x<90&&y>=7&&y<37)return"Grand Exchange";
+  if(x>=78&&x<143&&y>=26&&y<74)return"Varrock";
+  if(x>=61&&x<66&&y>=96)return"River Lum";
+  if(x>=54&&y>=202)return"Lumbridge Swamp";
+  if(x>=8&&x<29&&y>=165&&y<177)return"Lumbridge Cow Field";
+  if(x>=8&&x<26&&y>=145&&y<156)return"Lumbridge Chicken Coop";
+  if(x>=8&&x<28&&y>=113&&y<123)return"Lumbridge Sheep Field";
+  return"Misthalin";
+}
+function updateUI(){
+  locPill.textContent=locName(state.player.x,state.player.y);
+  const n=nearest();targetPill.textContent=n?n.name:"No target";
+  hpOrb.textContent=`HP ${state.player.hp}/${state.player.maxHp}`;
+  prOrb.textContent=`Pr ${state.player.prayer}`;
+  runOrb.textContent=`${state.runEnabled?"Run":"Walk"} ${Math.floor(state.player.run)}`;
+  spOrb.textContent=`Spec ${state.player.spec}`;
+  document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===state.tab));
+  const panels={combat:combatPanel,skills:skillsPanel,quest:questPanel,inv:invPanel,equip:equipPanel,prayer:prayerPanel,magic:magicPanel,bank:bankPanel,settings:settingsPanel,music:musicPanel};
+  (panels[state.tab]||combatPanel)();
+}
+function combatPanel(){panel.innerHTML=`<div class="title">Combat Options</div><div class="row"><span>Weapon</span><strong>${state.equip.weapon||"None"}</strong></div><div class="row"><span>Coins</span><strong>${state.coins}</strong></div><button id="runToggle2" style="width:100%">Run: ${state.runEnabled?"ON":"OFF"}</button>`;document.getElementById("runToggle2").onclick=()=>{state.runEnabled=!state.runEnabled;updateUI();};}
+function skillsPanel(){panel.innerHTML=`<div class="title">Skills</div>`+skillNames.map(s=>`<div class="row"><span>${s}</span><strong>${state.skills[s]?.level||1}</strong></div>`).join("");}
+function questPanel(){panel.innerHTML=`<div class="title">Quest List</div><p>Cook's Assistant</p><p>Sheep Shearer</p><p>The Restless Ghost</p><p>Goblin Trouble</p>`;}
+function invPanel(){const slots=Array.from({length:28},(_,i)=>state.inv[i]);panel.innerHTML=`<div class="title">Inventory</div><div class="gridInv">${slots.map((it,i)=>`<div class="slot" data-i="${i}">${it?it.name:""}${it&&it.qty>1?`<span class="qty">${it.qty}</span>`:""}</div>`).join("")}</div>`;panel.querySelectorAll(".slot").forEach(s=>s.onclick=()=>{const it=state.inv[+s.dataset.i];if(it)useItem(it.name);});}
+function equipPanel(){panel.innerHTML=`<div class="title">Worn Equipment</div>`+Object.keys(state.equip).map(k=>`<div class="row"><span>${k}</span><strong>${state.equip[k]||"-"}</strong></div>`).join("");}
+function prayerPanel(){panel.innerHTML=`<div class="title">Prayer</div><div class="row"><span>Points</span><strong>${state.player.prayer}/${state.player.maxPrayer}</strong></div>`;}
+function magicPanel(){panel.innerHTML=`<div class="title">Spellbook</div><button id="tele" style="width:100%">Lumbridge Home Teleport</button>`;document.getElementById("tele").onclick=()=>{Object.assign(state.player,{x:48,y:164,rx:48,ry:164});currentPlane=0;walkPath=[];};}
+function bankPanel(){panel.innerHTML=`<div class="title">Bank</div><button id="dep" style="width:100%">Deposit inventory</button><div class="title">Stored</div>${state.bank.map((it,i)=>`<div class="row"><span>${it.name} x${it.qty}</span><button data-w="${i}">Withdraw</button></div>`).join("")}`;document.getElementById("dep").onclick=()=>{for(const it of state.inv){const b=state.bank.find(x=>x.name===it.name);if(b)b.qty+=it.qty;else state.bank.push({...it});}state.inv=[];updateUI();};panel.querySelectorAll("[data-w]").forEach(b=>b.onclick=()=>{const it=state.bank[+b.dataset.w];if(addItem(it.name)){it.qty--;if(it.qty<=0)state.bank.splice(+b.dataset.w,1);updateUI();}});}
+function settingsPanel(){panel.innerHTML=`<div class="title">Settings</div><button id="frontPreview" style="width:100%">Front model preview camera</button><button id="reset" style="width:100%;margin-top:4px">Reset save</button><p style="color:var(--muted)">Walls are solid. Doors, floors, paths, land, and bridges are passable. Click the minimap to walk.</p>`;document.getElementById("frontPreview").onclick=()=>{camera.targetYaw=Math.PI/2;camera.targetPitch=.72;camera.targetDistance=12;camera.targetHeight=.92;};document.getElementById("reset").onclick=()=>{localStorage.removeItem("misthalin-webgl-state-v4");location.reload();};}
+function musicPanel(){panel.innerHTML=`<div class="title">Music Player</div><p>Harmony</p><p>Adventure</p><p>Medieval</p>`;}
 
-  const result = screenToWorld(event.clientX, event.clientY);
-
-  setWalkDestination(
-    result.tileX,
-    result.tileY,
-    result.markerX,
-    result.markerY
-  );
+/* ===========================
+   INPUT
+=========================== */
+canvas.addEventListener("pointermove",e=>{
+  if(draggingCamera){camera.targetYaw=dragStart.yaw-(e.clientX-dragStart.x)*.008;camera.targetPitch=Math.max(camera.minPitch,Math.min(camera.maxPitch,dragStart.pitch+(e.clientY-dragStart.y)*.004));return;}
+  const w=screenToWorld(e.clientX,e.clientY),en=tileEntity(w.x,w.y),gr=tileGround(w.x,w.y),ob=tileObject(w.x,w.y);
+  hudTop.textContent=en?(en.kind==="monster"?"Attack ":"Talk-to ")+en.name:gr?"Take "+gr.name:(ob&&!isBuildingShell(ob)?"Use "+ob.name:"Walk here");
 });
-
-document.getElementById("btnTalk").onclick = talk;
-document.getElementById("btnAttack").onclick = attack;
-document.getElementById("btnUse").onclick = useAction;
-document.getElementById("btnSearch").onclick = searchAction;
-document.getElementById("btnSave").onclick = saveState;
-
-document.querySelectorAll(".tab").forEach(button => {
-  button.onclick = () => {
-    state.tab = button.dataset.tab;
-    updateUI();
-  };
+canvas.addEventListener("pointerdown",e=>{const r=canvas.getBoundingClientRect();lastPointer={x:e.clientX-r.left,y:e.clientY-r.top};pointerDown={x:e.clientX,y:e.clientY};dragStart={x:e.clientX,y:e.clientY,yaw:camera.targetYaw,pitch:camera.targetPitch};draggingCamera=true;});
+canvas.addEventListener("pointerup",e=>{
+  const moved=pointerDown?Math.hypot(e.clientX-pointerDown.x,e.clientY-pointerDown.y):999;
+  draggingCamera=false;if(moved>8)return;
+  const w=screenToWorld(e.clientX,e.clientY),en=tileEntity(w.x,w.y),gr=tileGround(w.x,w.y),ob=tileObject(w.x,w.y);
+  if(gr){setDestination(w.x,w.y,w.mx,w.my);return;}
+  if(en&&dist(en,state.player)<=1){en.kind==="monster"?attack():talk();return;}
+  if(ob&&!isBuildingShell(ob)&&dist({x:w.x,y:w.y},state.player)<=1){useNearest();return;}
+  setDestination(w.x,w.y,w.mx,w.my);
 });
+canvas.addEventListener("wheel",e=>{e.preventDefault();camera.targetDistance=Math.max(camera.minDistance,Math.min(camera.maxDistance,camera.targetDistance+Math.sign(e.deltaY)*1.4));},{passive:false});
+window.addEventListener("keydown",e=>{
+  const k=e.key.toLowerCase();
+  if(k==="a")camera.targetYaw-=.18;else if(k==="d")camera.targetYaw+=.18;else if(k==="w")camera.targetPitch=Math.min(camera.maxPitch,camera.targetPitch+.08);else if(k==="s")camera.targetPitch=Math.max(camera.minPitch,camera.targetPitch-.08);
+  else if(k==="r"||k==="pageup")camera.targetHeight=Math.min(3,camera.targetHeight+.15);else if(k==="f"||k==="pagedown")camera.targetHeight=Math.max(.25,camera.targetHeight-.15);
+  else if(k==="arrowup")setDestination(state.player.x,state.player.y-1);else if(k==="arrowdown")setDestination(state.player.x,state.player.y+1);else if(k==="arrowleft")setDestination(state.player.x-1,state.player.y);else if(k==="arrowright")setDestination(state.player.x+1,state.player.y);
+});
+document.getElementById("btnTalk").onclick=talk;
+document.getElementById("btnAttack").onclick=attack;
+document.getElementById("btnUse").onclick=useNearest;
+document.getElementById("btnSearch").onclick=()=>{log("You search around "+locName(state.player.x,state.player.y)+".");};
+document.getElementById("btnBank").onclick=()=>{state.tab="bank";updateUI();};
+document.getElementById("btnSave").onclick=save;
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{state.tab=b.dataset.tab;updateUI();});
 
-function cancelWalkPath() {
-  walkPath = [];
-  walkMarker.style.display = "none";
-}
-
-function contextAction() {
-  const near = nearestAdjacent();
-
-  if (!near) {
-    searchAction();
-    return;
-  }
-
-  if (near.kind === "npc") {
-    talk();
-  } else if (near.kind === "goblin") {
-    attack();
-  } else if (near.kind === "item") {
-    pickup(near);
-  }
-}
-
-/******************************************************************
- * STARTUP
- ******************************************************************/
-function initializeCamera() {
-  const viewW = canvas.width / TILE;
-  const viewH = canvas.height / TILE;
-
-  const maxCamX = Math.max(0, WORLD_W - viewW);
-  const maxCamY = Math.max(0, WORLD_H - viewH);
-
-  camera.x = Math.max(0, Math.min(maxCamX, state.player.x - viewW / 2));
-  camera.y = Math.max(0, Math.min(maxCamY, state.player.y - viewH / 2));
-
-  camera.targetX = camera.x;
-  camera.targetY = camera.y;
-
-  currentCamera.x = camera.x;
-  currentCamera.y = camera.y;
-  currentCamera.viewW = viewW;
-  currentCamera.viewH = viewH;
-
-  state.player.renderX = state.player.x;
-  state.player.renderY = state.player.y;
-}
-
-log("Welcome to Lumbridge Adventure.", "system");
-log("Speak to the Cook in Lumbridge Castle Kitchen to begin Cook's Assistant.", "quest");
-log("Unofficial fan project. RuneScape names and references belong to their respective owners.", "system");
-log("Click or tap the map to walk. Keyboard movement still works.", "system");
-
+/* ===========================
+   START
+=========================== */
+log("Welcome to the solid-wall pathfinding build.","system");
+log("Walls are blocked; doors, floors, paths, land, and bridges are passable.","system");
+log("Click the game world or minimap to pathfind to the shortest reachable route.","system");
 updateUI();
-initializeCamera();
-render();
-
+requestAnimationFrame(render);
 })();
 </script>
 </body>
