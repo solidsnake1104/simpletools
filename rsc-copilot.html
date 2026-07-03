@@ -1,168 +1,659 @@
 <!doctype html>
 <html lang="en">
 <head>
+<meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#2b2b2b">
-<title>RS Classic Lite</title>
+<meta name="theme-color" content="#0b1220">
+<title>RS Classic Redux — PWA</title>
+
+<!-- PWA manifest (inline for single-file demo) -->
+<link rel="manifest" href="manifest.json" id="manifestLink">
+
 <style>
-  :root{--bg:#0b1220;--panel:#1b2430;--accent:#c9a24a}
-  html,body{height:100%;margin:0;background:var(--bg);font-family:Verdana,Arial;}
-  #app{display:flex;flex-direction:row;height:100vh;gap:6px;padding:6px;box-sizing:border-box}
-  /* Left: game canvas (landscape-first, iPhone fit) */
-  #gameWrap{flex:1;min-width:640px;background:#081018;border:4px solid #000;position:relative;overflow:hidden}
-  canvas{width:100%;height:100%;display:block}
-  /* Right: UI column RS2-like */
-  #ui{width:360px;background:var(--panel);color:#ddd;padding:8px;display:flex;flex-direction:column;gap:8px}
-  .panel{background:#0f1720;border:2px solid #000;padding:8px;border-radius:4px}
-  #minimap{height:140px;background:#071018;position:relative}
-  #log{flex:1;overflow:auto;font-size:13px;padding:6px;background:#071018}
-  #actions{display:flex;gap:6px;justify-content:space-between}
-  button{background:#111827;color:#fff;border:1px solid #000;padding:8px;border-radius:4px;flex:1}
-  /* Simple sprite tiles */
-  .tile{width:32px;height:32px;display:inline-block}
-  .grass{background:linear-gradient(#2b6,#1a4)}
-  .path{background:#8b6b3a}
-  .water{background:linear-gradient(#1a4,#0a2)}
-  .tree{background:#0b3;border-radius:6px}
-  /* Responsive tweaks for iPhone landscape */
-  @media (max-width:900px){#ui{width:320px}#gameWrap{min-width:520px}}
+  :root{
+    --bg:#0b1220; --panel:#121826; --accent:#c9a24a; --muted:#9aa6b2;
+    --ui-w:360px; --tile:32px;
+  }
+  html,body{height:100%;margin:0;background:var(--bg);font-family:Inter,Segoe UI,Arial,sans-serif;color:#e6eef6}
+  /* App layout: landscape-first */
+  #app{display:flex;flex-direction:row;height:100vh;gap:8px;padding:8px;box-sizing:border-box}
+  /* Game canvas area */
+  #gameWrap{flex:1;min-width:640px;background:#07101a;border:3px solid #000;border-radius:6px;position:relative;overflow:hidden;display:flex;flex-direction:column}
+  #gameCanvas{flex:1;display:block;width:100%;height:100%;background:linear-gradient(#0b1622,#071018)}
+  /* HUD overlay */
+  #hud{position:absolute;left:12px;top:12px;padding:6px 10px;background:rgba(0,0,0,0.45);border:1px solid #000;border-radius:6px;font-weight:600}
+  /* Right column UI (RS2-like) */
+  #ui{width:var(--ui-w);display:flex;flex-direction:column;gap:8px}
+  .panel{background:linear-gradient(#0f1720,#0b1116);border:2px solid #000;padding:8px;border-radius:6px;box-shadow:0 2px 0 rgba(0,0,0,0.6)}
+  #minimap{height:160px;position:relative}
+  #chat{height:220px;overflow:auto;font-size:13px;padding:6px;background:linear-gradient(#071018,#061018);border-radius:4px}
+  #actionBar{display:flex;gap:6px}
+  .btn{background:#0f1720;border:1px solid #000;color:#e6eef6;padding:8px;border-radius:4px;flex:1;font-weight:600}
+  .small{padding:6px;font-size:13px}
+  /* Inventory grid */
+  #inventory{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+  .slot{background:#08121a;border:1px solid #000;height:56px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted)}
+  /* Action log */
+  .logItem{padding:4px 6px;border-bottom:1px dashed rgba(255,255,255,0.03);font-size:13px}
+  /* Responsive for narrow landscape (iPhone) */
+  @media (max-width:900px){
+    :root{--ui-w:300px}
+    #gameWrap{min-width:520px}
+    #minimap{height:120px}
+  }
+  /* RS2-like top tabs */
+  #tabs{display:flex;gap:6px;margin-bottom:6px}
+  .tab{background:#0b1220;border:1px solid #000;padding:6px 8px;border-radius:4px;color:var(--muted);cursor:pointer}
+  .tab.active{background:linear-gradient(#1b2430,#0f1720);color:#fff;border-color:var(--accent)}
+  /* Tooltip */
+  .tooltip{position:absolute;background:#0b1220;padding:6px;border-radius:4px;border:1px solid #000;color:#fff;font-size:12px;pointer-events:none}
 </style>
 </head>
 <body>
 <div id="app">
   <div id="gameWrap" class="panel">
-    <canvas id="game" width="960" height="640"></canvas>
-    <div id="hud" style="position:absolute;left:8px;top:8px;color:#fff;font-weight:bold">HP: <span id="hp">20</span> | XP: <span id="xp">0</span></div>
+    <canvas id="gameCanvas" width="1024" height="640"></canvas>
+    <div id="hud">HP: <span id="hp">20</span> &nbsp;|&nbsp; XP: <span id="xp">0</span> &nbsp;|&nbsp; Quest: <span id="qstate">None</span></div>
+    <div id="tooltip" class="tooltip" style="display:none"></div>
   </div>
+
   <div id="ui">
-    <div id="minimap" class="panel"><canvas id="mini" width="320" height="140"></canvas></div>
-    <div id="log" class="panel"></div>
-    <div id="actions" class="panel">
-      <button id="attackBtn">Attack</button>
-      <button id="talkBtn">Talk</button>
-      <button id="inventoryBtn">Inventory</button>
+    <div class="panel">
+      <div id="tabs">
+        <div class="tab active" data-tab="stats">Stats</div>
+        <div class="tab" data-tab="quests">Quests</div>
+        <div class="tab" data-tab="skills">Skills</div>
+      </div>
+      <div id="statsView">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+          <div><strong>Level</strong><div id="level">1</div></div>
+          <div><strong>Combat</strong><div id="combat">1</div></div>
+          <div><strong>Gold</strong><div id="gold">0</div></div>
+        </div>
+        <div id="minimap" style="border-radius:4px;overflow:hidden">
+          <canvas id="mini" width="300" height="160"></canvas>
+        </div>
+      </div>
+      <div id="questsView" style="display:none">
+        <strong>Active Quests</strong>
+        <div id="questList" style="margin-top:6px"></div>
+      </div>
+      <div id="skillsView" style="display:none">
+        <strong>Skills</strong>
+        <div style="margin-top:6px">Cooking: <span id="skillCooking">1</span></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <strong>Inventory</strong>
+        <button class="btn small" id="openInv">Open</button>
+      </div>
+      <div id="inventory"></div>
+    </div>
+
+    <div class="panel">
+      <div style="display:flex;gap:6px;margin-bottom:6px">
+        <button class="btn" id="attackBtn">Attack</button>
+        <button class="btn" id="talkBtn">Talk</button>
+      </div>
+      <div id="chat" aria-live="polite"></div>
+    </div>
+
+    <div class="panel" style="display:flex;gap:6px">
+      <button class="btn" id="saveBtn">Save</button>
+      <button class="btn" id="resetBtn">Reset</button>
     </div>
   </div>
 </div>
 
 <script>
-/* --- Core game state --- */
-const TILE=32, MAP_W=30, MAP_H=20;
-const canvas=document.getElementById('game'), ctx=canvas.getContext('2d');
-const mini=document.getElementById('mini'), mctx=mini.getContext('2d');
-const logEl=document.getElementById('log');
-let player={x:14,y:10,hp:20,xp:0,inv:{egg:0,flour:0,milk:0}};
-let goblins=[],npcs=[];
-let map=[]; let quest={cooksAssistant: {state:'not-started'}}; // states: not-started, started, got-items, completed
+/* -------------------------
+   Configuration & Constants
+   ------------------------- */
+const TILE = 32;
+const MAP_W = 48, MAP_H = 28; // expanded map
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const mini = document.getElementById('mini'), mctx = mini.getContext('2d');
+const chat = document.getElementById('chat');
+const tooltip = document.getElementById('tooltip');
 
-/* --- Build expanded Lumbridge-like map (fields, castle, cook house, swamp edge) --- */
-function genMap(){
-  for(let y=0;y<MAP_H;y++){map[y]=[];for(let x=0;x<MAP_W;x++){
-    if(y>14) map[y][x]='water';
-    else if(x<3||x>26) map[y][x]='tree';
-    else if((x>10&&x<14&&y>6&&y<10)) map[y][x]='path';
-    else map[y][x]='grass';
-  }}
-  // landmarks
-  map[8][12]='castle'; map[11][8]='cook'; map[6][18]='market';
+canvas.width = 1024; canvas.height = 640;
+
+/* -------------------------
+   Game State
+   ------------------------- */
+let state = {
+  player: {x:24,y:14,hp:30,maxHp:30,xp:0,level:1,gold:0,dir:0,anim:0,inv:{egg:0,flour:0,milk:0,rawOnion:0,rawMeat:0},cooking:1},
+  goblins: [],
+  npcs: [],
+  map: [],
+  quest: {cooksAssistant: {state:'not-started'}},
+  time:0
+};
+
+/* -------------------------
+   Procedural Sprite Sheet
+   ------------------------- */
+/* We'll draw a small sprite atlas on an offscreen canvas and use it for animated sprites.
+   This avoids external assets and still gives a pixel-art look. */
+const atlas = document.createElement('canvas');
+atlas.width = 256; atlas.height = 128;
+const actx = atlas.getContext('2d');
+
+function drawAtlas(){
+  // background transparent
+  actx.clearRect(0,0,atlas.width,atlas.height);
+  // Player frames (4 frames)
+  for(let f=0;f<4;f++){
+    const sx = f*32, sy = 0;
+    // body
+    actx.fillStyle = '#ffd86b';
+    actx.fillRect(sx+6,sy+6,20,20);
+    // tunic
+    actx.fillStyle = '#2b6bd8';
+    actx.fillRect(sx+6,sy+14,20,8);
+    // head
+    actx.fillStyle = '#f0c090';
+    actx.fillRect(sx+10,sy+2,12,10);
+    // simple arm animation
+    actx.fillStyle = '#2b6bd8';
+    if(f%2===0) actx.fillRect(sx+2,sy+12,6,4); else actx.fillRect(sx+26,sy+12,6,4);
+    // outline
+    actx.strokeStyle='#000'; actx.lineWidth=1;
+    actx.strokeRect(sx+6,sy+6,20,20);
+  }
+  // Goblin frames (4)
+  for(let f=0;f<4;f++){
+    const sx = f*32, sy = 32;
+    actx.fillStyle = '#6b8b3a';
+    actx.fillRect(sx+6,sy+8,20,16);
+    actx.fillStyle = '#3a5b1a';
+    actx.fillRect(sx+10,sy+2,12,8);
+    actx.strokeStyle='#000'; actx.strokeRect(sx+6,sy+8,20,16);
+  }
+  // NPC cook (single)
+  actx.fillStyle='#a33'; actx.fillRect(128+6,0+6,20,20);
+  actx.fillStyle='#fff'; actx.fillRect(128+10,0+2,12,8);
+  actx.strokeStyle='#000'; actx.strokeRect(128+6,0+6,20,20);
+  // Item icons (egg, flour, milk)
+  // egg
+  actx.fillStyle='#fff'; actx.beginPath(); actx.ellipse(200,20,8,10,0,0,Math.PI*2); actx.fill(); actx.stroke();
+  // flour (bag)
+  actx.fillStyle='#f5f5dc'; actx.fillRect(200,48,12,12); actx.strokeRect(200,48,12,12);
+  // milk (bucket)
+  actx.fillStyle='#ccc'; actx.fillRect(200,80,12,10); actx.fillStyle='#fff'; actx.fillRect(202,82,8,6); actx.strokeRect(200,80,12,10);
 }
-genMap();
+drawAtlas();
 
-/* --- Entities --- */
+/* -------------------------
+   Map Generation (Lumbridge-inspired)
+   ------------------------- */
+function genMap(){
+  const map = [];
+  for(let y=0;y<MAP_H;y++){
+    map[y]=[];
+    for(let x=0;x<MAP_W;x++){
+      // default grass
+      let tile='grass';
+      // river at bottom-right
+      if(x>34 && y>18) tile='water';
+      // trees border
+      if(x<2||y<2||x>MAP_W-3||y>MAP_H-3) tile='trees';
+      // path network
+      if((y===14 && x>6 && x<40) || (x===24 && y>6 && y<22)) tile='path';
+      // castle area
+      if(x>10 && x<18 && y>8 && y<14) tile='castle';
+      // cook house
+      if(x===8 && y===16) tile='cook';
+      // farm patch
+      if(x>30 && x<36 && y>10 && y<14) tile='farm';
+      map[y][x]=tile;
+    }
+  }
+  // place a few special tiles (cow pen near water)
+  map[36] = map[36] || [];
+  return map;
+}
+state.map = genMap();
+
+/* -------------------------
+   Entities: spawn goblins & NPCs
+   ------------------------- */
 function spawnGoblins(){
-  goblins=[];
-  for(let i=0;i<6;i++) goblins.push({x:5+i,y:12+((i%2)?1:0),hp:6});
+  state.goblins = [];
+  const positions = [{x:6,y:18},{x:9,y:19},{x:12,y:17},{x:16,y:18},{x:20,y:16},{x:28,y:18}];
+  positions.forEach((p,i)=> state.goblins.push({id:i,x:p.x,y:p.y,hp:8,maxHp:8,aggro:false,anim:0}));
 }
 spawnGoblins();
-npcs.push({id:'cook',name:'Cook',x:8,y:11,dialogue:()=>cookDialogue()});
 
-/* --- Rendering --- */
+state.npcs = [
+  {id:'cook',name:'Cook',x:8,y:16,dialogueId:'cook',facing:2},
+  {id:'farmer',name:'Farmer',x:32,y:12,dialogueId:'farmer',facing:0}
+];
+
+/* -------------------------
+   Rendering
+   ------------------------- */
 function draw(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  const scaleX=canvas.width/MAP_W, scaleY=canvas.height/MAP_H;
-  for(let y=0;y<MAP_H;y++)for(let x=0;x<MAP_W;x++){
-    const t=map[y][x];
-    ctx.fillStyle = t==='water'?'#0a3':'#2a6';
-    if(t==='path') ctx.fillStyle='#8b6b3a';
-    if(t==='tree') ctx.fillStyle='#063';
-    if(t==='castle') ctx.fillStyle='#444';
-    if(t==='cook') ctx.fillStyle='#a33';
-    ctx.fillRect(x*scaleX,y*scaleY,scaleX,scaleY);
+  const tileW = canvas.width / MAP_W, tileH = canvas.height / MAP_H;
+  // draw tiles
+  for(let y=0;y<MAP_H;y++){
+    for(let x=0;x<MAP_W;x++){
+      const t = state.map[y][x];
+      if(t==='grass'){ ctx.fillStyle='#2b6b3a'; ctx.fillRect(x*tileW,y*tileH,tileW,tileH); }
+      else if(t==='path'){ ctx.fillStyle='#8b6b3a'; ctx.fillRect(x*tileW,y*tileH,tileW,tileH); }
+      else if(t==='water'){ ctx.fillStyle='#0a3b5a'; ctx.fillRect(x*tileW,y*tileH,tileW,tileH); }
+      else if(t==='trees'){ ctx.fillStyle='#063'; ctx.fillRect(x*tileW,y*tileH,tileW,tileH); }
+      else if(t==='castle'){ ctx.fillStyle='#444'; ctx.fillRect(x*tileW,y*tileH,tileW,tileH); ctx.fillStyle='#222'; ctx.fillRect(x*tileW+4,y*tileH+4,tileW-8,tileH-8); }
+      else if(t==='cook'){ ctx.fillStyle='#a33'; ctx.fillRect(x*tileW,y*tileH,tileW,tileH); }
+      else if(t==='farm'){ ctx.fillStyle='#6b3a1a'; ctx.fillRect(x*tileW,y*tileH,tileW,tileH); }
+    }
   }
-  // goblins
-  goblins.forEach(g=>{ctx.fillStyle='#6b3';ctx.fillRect(g.x*scaleX+4,g.y*scaleY+4,scaleX-8,scaleY-8)});
-  // player
-  ctx.fillStyle='#ffd700';ctx.fillRect(player.x*scaleX+4,player.y*scaleY+4,scaleX-8,scaleY-8);
-  drawMini();
-}
-function drawMini(){
-  mctx.clearRect(0,0,mini.width,mini.height);
-  const mw=mini.width/MAP_W, mh=mini.height/MAP_H;
-  for(let y=0;y<MAP_H;y++)for(let x=0;x<MAP_W;x++){
-    const t=map[y][x];
-    mctx.fillStyle = t==='water'?'#0a3': t==='path'?'#8b6b3a': t==='tree'?'#063': t==='castle'?'#666': t==='cook'?'#a33':'#2a6';
-    mctx.fillRect(x*mw,y*mh,mw,mh);
-  }
-  mctx.fillStyle='#ffd700'; mctx.fillRect(player.x*mw,player.y*mh,mw,mh);
+  // draw NPCs
+  state.npcs.forEach(n=>{
+    drawSprite(128,0,n.x,n.y);
+  });
+  // draw goblins
+  state.goblins.forEach(g=>{
+    drawSprite((g.anim%4)*32,32,g.x,g.y);
+  });
+  // draw player
+  const p = state.player;
+  drawSprite((p.anim%4)*32,0,p.x,p.y,true);
+  // draw UI overlays (health bars)
+  drawHealthBars(tileW,tileH);
+  drawMiniMap();
 }
 
-/* --- Input & Movement --- */
+function drawSprite(sx,sy,mapX,mapY,isPlayer=false){
+  const tileW = canvas.width / MAP_W, tileH = canvas.height / MAP_H;
+  const dx = mapX*tileW, dy = mapY*tileH;
+  // draw from atlas scaled to tile size
+  ctx.drawImage(atlas, sx, sy, 32, 32, dx+2, dy+2, tileW-4, tileH-4);
+  // player highlight
+  if(isPlayer){
+    ctx.strokeStyle='#ffd86b'; ctx.lineWidth=2;
+    ctx.strokeRect(dx+2,dy+2,tileW-4,tileH-4);
+  }
+}
+
+function drawHealthBars(tileW,tileH){
+  // goblin bars
+  state.goblins.forEach(g=>{
+    const x = g.x*tileW, y = g.y*tileH;
+    const w = tileW-6, h=6;
+    const pct = Math.max(0,g.hp)/g.maxHp;
+    ctx.fillStyle='rgba(0,0,0,0.6)'; ctx.fillRect(x+3,y+2,w,h);
+    ctx.fillStyle='#b33'; ctx.fillRect(x+3,y+2,w*pct,h);
+    ctx.strokeStyle='#000'; ctx.strokeRect(x+3,y+2,w,h);
+  });
+  // player bar
+  const p = state.player;
+  const px = p.x*tileW, py = p.y*tileH;
+  const pw = tileW-6, ph=6;
+  const ppct = p.hp/p.maxHp;
+  ctx.fillStyle='rgba(0,0,0,0.6)'; ctx.fillRect(px+3,py+tileH-10,pw,ph);
+  ctx.fillStyle='#2b8'; ctx.fillRect(px+3,py+tileH-10,pw*ppct,ph);
+  ctx.strokeStyle='#000'; ctx.strokeRect(px+3,py+tileH-10,pw,ph);
+}
+
+function drawMiniMap(){
+  const mw = mini.width / MAP_W, mh = mini.height / MAP_H;
+  mctx.clearRect(0,0,mini.width,mini.height);
+  for(let y=0;y<MAP_H;y++){
+    for(let x=0;x<MAP_W;x++){
+      const t = state.map[y][x];
+      if(t==='grass') mctx.fillStyle='#2b6b3a';
+      else if(t==='path') mctx.fillStyle='#8b6b3a';
+      else if(t==='water') mctx.fillStyle='#0a3b5a';
+      else if(t==='trees') mctx.fillStyle='#063';
+      else if(t==='castle') mctx.fillStyle='#666';
+      else if(t==='cook') mctx.fillStyle='#a33';
+      else if(t==='farm') mctx.fillStyle='#6b3a1a';
+      mctx.fillRect(x*mw,y*mh,mw,mh);
+    }
+  }
+  // entities
+  mctx.fillStyle='#ffd86b'; mctx.fillRect(state.player.x*mw,state.player.y*mh,mw,mh);
+  mctx.fillStyle='#6b8b3a'; state.goblins.forEach(g=> mctx.fillRect(g.x*mw,g.y*mh,mw,mh));
+  mctx.fillStyle='#fff'; state.npcs.forEach(n=> mctx.fillRect(n.x*mw,n.y*mh,mw,mh));
+}
+
+/* -------------------------
+   Input & UI
+   ------------------------- */
 window.addEventListener('keydown',e=>{
   const k=e.key;
-  let nx=player.x, ny=player.y;
-  if(k==='ArrowUp') ny--;
-  if(k==='ArrowDown') ny++;
-  if(k==='ArrowLeft') nx--;
-  if(k==='ArrowRight') nx++;
-  if(nx>=0&&nx<MAP_W&&ny>=0&&ny<MAP_H){player.x=nx;player.y=ny;draw();checkTile();}
+  if(k==='ArrowUp') movePlayer(0,-1);
+  if(k==='ArrowDown') movePlayer(0,1);
+  if(k==='ArrowLeft') movePlayer(-1,0);
+  if(k==='ArrowRight') movePlayer(1,0);
+  if(k===' ') attackNearest();
 });
-document.getElementById('attackBtn').onclick=attackNearest;
-document.getElementById('talkBtn').onclick=tryTalk;
-document.getElementById('inventoryBtn').onclick=showInv;
 
-/* --- Mechanics: combat, NPCs, quest --- */
+document.getElementById('attackBtn').addEventListener('click',attackNearest);
+document.getElementById('talkBtn').addEventListener('click',tryTalk);
+document.getElementById('openInv').addEventListener('click',showInventory);
+document.getElementById('saveBtn').addEventListener('click',saveGame);
+document.getElementById('resetBtn').addEventListener('click',resetGame);
+
+/* Tabs */
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('statsView').style.display = t.dataset.tab==='stats' ? 'block' : 'none';
+    document.getElementById('questsView').style.display = t.dataset.tab==='quests' ? 'block' : 'none';
+    document.getElementById('skillsView').style.display = t.dataset.tab==='skills' ? 'block' : 'none';
+  });
+});
+
+/* -------------------------
+   Movement & Collision
+   ------------------------- */
+function canWalk(x,y){
+  if(x<0||y<0||x>=MAP_W||y>=MAP_H) return false;
+  const t = state.map[y][x];
+  if(t==='water' || t==='trees') return false;
+  return true;
+}
+
+function movePlayer(dx,dy){
+  const nx = state.player.x + dx, ny = state.player.y + dy;
+  if(canWalk(nx,ny)){
+    state.player.x = nx; state.player.y = ny;
+    state.player.anim = (state.player.anim+1)%4;
+    state.time++;
+    checkTileEvent();
+    tickGoblins();
+    draw(); updateHUD();
+  } else {
+    addLog("You can't walk there.");
+  }
+}
+
+/* -------------------------
+   Tile Events & Item Pickup
+   ------------------------- */
+function checkTileEvent(){
+  const t = state.map[state.player.y][state.player.x];
+  // chance to find items in farm/grass/path
+  if(t==='farm' && Math.random()<0.25){ state.player.inv.flour++; addLog("You harvested some flour from the farm."); }
+  if(t==='grass' && Math.random()<0.06){ state.player.inv.egg++; addLog("You found an egg in the grass."); }
+  if(t==='water' && Math.random()<0.04){ state.player.inv.milk++; addLog("You collected milk from a nearby cow."); }
+  // stepping on cook house triggers talk prompt
+  if(t==='cook') addLog("You are at the Cook's house. Talk to the Cook to start the quest.");
+}
+
+/* -------------------------
+   Combat System
+   ------------------------- */
 function attackNearest(){
-  const g=goblins.find(gg=>Math.abs(gg.x-player.x)+Math.abs(gg.y-player.y)<=1);
-  if(!g){log("No goblin in range.");return;}
-  g.hp-=4; log("You hit the goblin!");
-  if(g.hp<=0){log("Goblin slain."); player.xp+=5; goblins.splice(goblins.indexOf(g),1)}
-  else {log("Goblin HP: "+g.hp); player.hp-=2; log("You take 2 damage.");}
+  // find adjacent goblin
+  const g = state.goblins.find(gg => Math.abs(gg.x-state.player.x)+Math.abs(gg.y-state.player.y) <= 1);
+  if(!g){ addLog("No enemy in range."); return; }
+  // player attack roll
+  const hit = Math.random() < 0.8;
+  if(hit){
+    const dmg = Math.floor(3 + Math.random()*4);
+    g.hp -= dmg;
+    addLog(`You hit the goblin for ${dmg} damage.`);
+    if(g.hp <= 0){
+      addLog("Goblin slain.");
+      state.player.xp += 8;
+      state.player.gold += 2;
+      state.goblins = state.goblins.filter(x=>x!==g);
+    }
+  } else addLog("You miss.");
+  // goblin retaliates if alive
+  if(g.hp>0){
+    if(Math.random()<0.6){
+      const gd = Math.floor(1 + Math.random()*3);
+      state.player.hp -= gd;
+      addLog(`Goblin hits you for ${gd}.`);
+      if(state.player.hp<=0){ addLog("You fainted! Respawning at Lumbridge."); respawnPlayer(); }
+    } else addLog("Goblin misses you.");
+  }
   updateHUD(); draw();
 }
+
+/* Goblin AI: simple wander + aggro if player nearby */
+function tickGoblins(){
+  state.goblins.forEach(g=>{
+    g.anim = (g.anim+1)%4;
+    const dist = Math.abs(g.x-state.player.x)+Math.abs(g.y-state.player.y);
+    if(dist<=4){
+      // chase
+      if(state.player.x > g.x && canWalk(g.x+1,g.y)) g.x++;
+      else if(state.player.x < g.x && canWalk(g.x-1,g.y)) g.x--;
+      else if(state.player.y > g.y && canWalk(g.x,g.y+1)) g.y++;
+      else if(state.player.y < g.y && canWalk(g.x,g.y-1)) g.y--;
+      // if adjacent, attack
+      if(Math.abs(g.x-state.player.x)+Math.abs(g.y-state.player.y)===1){
+        if(Math.random()<0.5){
+          const dmg = Math.floor(1+Math.random()*3);
+          state.player.hp -= dmg;
+          addLog(`A goblin strikes you for ${dmg}.`);
+          if(state.player.hp<=0){ addLog("You fainted! Respawning at Lumbridge."); respawnPlayer(); }
+        }
+      }
+    } else {
+      // wander randomly
+      if(Math.random()<0.3){
+        const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+        const d = dirs[Math.floor(Math.random()*dirs.length)];
+        if(canWalk(g.x+d[0],g.y+d[1])){ g.x+=d[0]; g.y+=d[1]; }
+      }
+    }
+  });
+}
+
+/* -------------------------
+   NPC Dialogue & Quest: Cook's Assistant
+   ------------------------- */
+const dialogues = {
+  cook: [
+    {id:'intro',text:"Oh dear, oh dear! I've lost my egg, milk and flour. Could you help me?"},
+    {id:'remind',text:"Please bring me an egg, a bucket of milk, and some flour."},
+    {id:'thanks',text:"Thank you so much! Now I can finish the cake."},
+    {id:'complete',text:"You've already helped me. Thank you again!"}
+  ],
+  farmer: [
+    {id:'hello',text:"The farm's been busy. I saw some eggs near the henhouse."}
+  ]
+};
+
 function tryTalk(){
-  const npc=npcs.find(n=>Math.abs(n.x-player.x)+Math.abs(n.y-player.y)<=1);
-  if(npc) npc.dialogue();
-  else log("No one to talk to.");
-}
-function cookDialogue(){
-  if(quest.cooksAssistant.state==='not-started'){
-    quest.cooksAssistant.state='started';
-    log("Cook: Oh dear, I've lost my items! Please bring me an egg, a bucket of milk, and some flour.");
-  } else if(quest.cooksAssistant.state==='started'){
-    if(player.inv.egg&&player.inv.milk&&player.inv.flour){
-      quest.cooksAssistant.state='completed';
-      player.xp+=50; log("Cook: Thank you! Quest complete. You gain 50 XP.");
-      player.inv.egg=player.inv.milk=player.inv.flour=0;
-      updateHUD();
-    } else log("Cook: Still missing items.");
-  } else log("Cook: Thanks again!");
+  // find adjacent NPC
+  const npc = state.npcs.find(n => Math.abs(n.x-state.player.x)+Math.abs(n.y-state.player.y) <= 1);
+  if(!npc){ addLog("No one nearby to talk to."); return; }
+  if(npc.dialogueId==='cook') cookTalk();
+  else addLog(`${npc.name}: ${dialogues[npc.dialogueId][0].text}`);
 }
 
-/* Simple item pickup when stepping on special tiles */
-function checkTile(){
-  const t=map[player.y][player.x];
-  if(t==='grass' && Math.random()<0.05){player.inv.egg++; log("You found an egg!");}
-  if(t==='path' && Math.random()<0.03){player.inv.flour++; log("You found flour!");}
-  if(t==='water' && Math.random()<0.02){player.inv.milk++; log("You collected milk from a cow near water!");}
+function cookTalk(){
+  const q = state.quest.cooksAssistant;
+  if(q.state==='not-started'){
+    q.state='started';
+    addLog("Cook: " + dialogues.cook[0].text);
+    addLog("Quest started: Cook's Assistant.");
+    updateQuestUI();
+  } else if(q.state==='started'){
+    // check inventory
+    const inv = state.player.inv;
+    if(inv.egg>0 && inv.milk>0 && inv.flour>0){
+      // hand over items
+      inv.egg--; inv.milk--; inv.flour--;
+      q.state='completed';
+      state.player.xp += 60;
+      addLog("Cook: " + dialogues.cook[2].text);
+      addLog("Quest complete: Cook's Assistant. +60 XP");
+      updateQuestUI(); updateHUD();
+    } else {
+      addLog("Cook: " + dialogues.cook[1].text);
+      // give hints
+      if(inv.egg===0) addLog("Hint: Eggs can be found in grassy areas or near the henhouse.");
+      if(inv.milk===0) addLog("Hint: Milk can be collected near cows by water.");
+      if(inv.flour===0) addLog("Hint: Flour can be harvested from the farm.");
+    }
+  } else {
+    addLog("Cook: " + dialogues.cook[3].text);
+  }
+}
+
+/* -------------------------
+   Inventory UI
+   ------------------------- */
+function showInventory(){
+  const inv = state.player.inv;
+  const invEl = document.getElementById('inventory');
+  invEl.innerHTML = '';
+  const items = [
+    {key:'egg',label:'Egg',count:inv.egg},
+    {key:'flour',label:'Flour',count:inv.flour},
+    {key:'milk',label:'Milk',count:inv.milk},
+    {key:'rawOnion',label:'Onion',count:inv.rawOnion},
+    {key:'rawMeat',label:'Meat',count:inv.rawMeat}
+  ];
+  items.forEach(it=>{
+    const s = document.createElement('div'); s.className='slot';
+    s.innerHTML = `<div style="text-align:center"><strong>${it.label}</strong><div style="font-size:12px;color:var(--muted)">${it.count}</div></div>`;
+    s.addEventListener('click',()=>{ itemAction(it.key); });
+    invEl.appendChild(s);
+  });
+}
+
+function itemAction(key){
+  if(key==='egg') addLog("Egg: Can be used in cooking.");
+  if(key==='flour') addLog("Flour: Used for baking.");
+  if(key==='milk') addLog("Milk: Used for baking.");
+}
+
+/* -------------------------
+   HUD & Logs
+   ------------------------- */
+function addLog(text){
+  const d = document.createElement('div'); d.className='logItem'; d.textContent = text;
+  chat.prepend(d);
+}
+
+function updateHUD(){
+  document.getElementById('hp').textContent = state.player.hp;
+  document.getElementById('xp').textContent = state.player.xp;
+  document.getElementById('level').textContent = state.player.level;
+  document.getElementById('combat').textContent = Math.max(1,Math.floor(state.player.xp/100)+1);
+  document.getElementById('gold').textContent = state.player.gold;
+  document.getElementById('qstate').textContent = state.quest.cooksAssistant.state;
+  document.getElementById('skillCooking').textContent = state.player.cooking;
+  // quest list
+  updateQuestUI();
+}
+
+/* -------------------------
+   Quest UI
+   ------------------------- */
+function updateQuestUI(){
+  const qList = document.getElementById('questList');
+  qList.innerHTML = '';
+  const q = state.quest.cooksAssistant;
+  const el = document.createElement('div');
+  el.style.padding='6px'; el.style.border='1px solid rgba(255,255,255,0.03)'; el.style.borderRadius='4px';
+  el.innerHTML = `<strong>Cook's Assistant</strong><div style="font-size:13px;color:var(--muted)">Status: ${q.state}</div>`;
+  qList.appendChild(el);
+}
+
+/* -------------------------
+   Save / Load
+   ------------------------- */
+function saveGame(){
+  const save = JSON.stringify(state);
+  localStorage.setItem('rsc_redux_save', save);
+  addLog("Game saved.");
+}
+function loadGame(){
+  const s = localStorage.getItem('rsc_redux_save');
+  if(s){ state = JSON.parse(s); addLog("Save loaded."); draw(); updateHUD(); }
+}
+function resetGame(){
+  if(confirm("Reset the game?")){ localStorage.removeItem('rsc_redux_save'); location.reload(); }
+}
+
+/* -------------------------
+   Respawn & Utilities
+   ------------------------- */
+function respawnPlayer(){
+  state.player.hp = state.player.maxHp;
+  state.player.x = 24; state.player.y = 14;
+  draw(); updateHUD();
+}
+
+/* -------------------------
+   Initialization & Game Loop
+   ------------------------- */
+function init(){
+  // initial logs
+  addLog("Welcome to Lumbridge Redux. Use arrow keys to move. Space or Attack to fight.");
+  addLog("Talk to the Cook at the red house to start the Cook's Assistant quest.");
+  // initial UI
+  showInventory();
   updateHUD();
+  draw();
+  // animate loop for subtle updates
+  setInterval(()=>{
+    state.time++;
+    // small chance to respawn goblins if none
+    if(state.goblins.length<3 && Math.random()<0.02) spawnGoblins();
+    // animate player/goblins
+    state.player.anim = (state.player.anim+1)%4;
+    state.goblins.forEach(g=> g.anim = (g.anim+1)%4);
+    draw();
+  },400);
+}
+init();
+
+/* -------------------------
+   PWA: Inline manifest + service worker registration
+   ------------------------- */
+/* Create a manifest blob and register a simple service worker for offline caching.
+   For single-file demo, we create a blob URL for manifest and register a minimal SW. */
+const manifest = {
+  name: "RS Classic Redux",
+  short_name: "RSRedux",
+  start_url: ".",
+  display: "standalone",
+  background_color: "#071018",
+  theme_color: "#0b1220",
+  icons: []
+};
+const manifestBlob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
+const manifestURL = URL.createObjectURL(manifestBlob);
+document.getElementById('manifestLink').setAttribute('href', manifestURL);
+
+// Minimal service worker script as blob
+const swCode = `
+self.addEventListener('install', e => {
+  self.skipWaiting();
+  e.waitUntil(caches.open('rsc-cache-v1').then(c => c.addAll(['./'])));
+});
+self.addEventListener('fetch', e => {
+  e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
+});
+`;
+const swBlob = new Blob([swCode], {type:'application/javascript'});
+const swURL = URL.createObjectURL(swBlob);
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register(swURL).catch(()=>{/* ignore */});
 }
 
-/* --- UI helpers --- */
-function log(s){const p=document.createElement('div');p.textContent=s;logEl.prepend(p)}
-function updateHUD(){document.getElementById('hp').textContent=player.hp;document.getElementById('xp').textContent=player.xp}
-
-/* --- Init --- */
-draw(); updateHUD(); log("Welcome to Lumbridge-lite. Talk to the Cook at the red house to start Cook's Assistant quest.");
+/* -------------------------
+   Final touches: expose some debug helpers
+   ------------------------- */
+window._state = state;
+window._drawAtlas = drawAtlas;
+window._spawnGoblins = spawnGoblins;
 </script>
 </body>
 </html>

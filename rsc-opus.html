@@ -5,16 +5,17 @@
 <title>Lumbridge Adventures</title>
 <style>
 * { box-sizing:border-box; margin:0; padding:0; }
-body { background:#222; color:#e8d8a0; font-family:'Courier New',monospace; display:flex; justify-content:center; padding:10px; }
+body { background:#181410; color:#e8d8a0; font-family:'Courier New',monospace; display:flex; justify-content:center; padding:10px; }
 #game { display:flex; gap:10px; }
-canvas { background:#3a5f2a; border:3px solid #8a6d3b; cursor:pointer; }
+canvas#view { background:#3a5f2a; border:3px solid #8a6d3b; cursor:pointer; image-rendering:pixelated; }
 #sidebar { width:250px; display:flex; flex-direction:column; gap:8px; }
 .panel { background:#1b1b1b; border:2px solid #8a6d3b; padding:8px; border-radius:4px; }
 h2 { color:#ffcc33; font-size:13px; border-bottom:1px solid #8a6d3b; margin-bottom:5px; }
 .stat { display:flex; justify-content:space-between; font-size:12px; margin:1px 0; }
 .bar { height:9px; background:#400; border:1px solid #000; margin:2px 0 4px; }
 .bar > span { display:block; height:100%; background:#c00; }
-#log { height:120px; overflow-y:auto; font-size:11px; line-height:1.4; }
+#minimap { width:100%; background:#000; border:1px solid #8a6d3b; image-rendering:pixelated; }
+#log { height:110px; overflow-y:auto; font-size:11px; line-height:1.4; }
 #inv .slot { display:inline-block; width:70px; height:20px; border:1px solid #8a6d3b; margin:2px; font-size:10px; text-align:center; line-height:18px; }
 #options button { display:block; width:100%; margin-top:4px; padding:4px; text-align:left; background:#5a4522; color:#e8d8a0; border:1px solid #8a6d3b; cursor:pointer; font-family:inherit; font-size:11px; }
 #options button:hover { background:#7a5d32; }
@@ -24,8 +25,9 @@ h2 { color:#ffcc33; font-size:13px; border-bottom:1px solid #8a6d3b; margin-bott
 <div id="game">
   <canvas id="view" width="800" height="640"></canvas>
   <div id="sidebar">
+    <div class="panel"><h2>Map</h2><canvas id="minimap" width="200" height="150"></canvas></div>
     <div class="panel"><h2>Stats</h2>
-      <div class="stat"><span>Hitpoints</span><span id="hpText">10 / 10</span></div>
+      <div class="stat"><span>Hitpoints</span><span id="hpText">12 / 12</span></div>
       <div class="bar"><span id="hpBar"></span></div>
       <div class="stat"><span>Attack</span><span id="atkLvl">1</span></div>
       <div class="stat"><span>Strength</span><span id="strLvl">1</span></div>
@@ -44,352 +46,494 @@ h2 { color:#ffcc33; font-size:13px; border-bottom:1px solid #8a6d3b; margin-bott
   </div>
 </div>
 <script>
-// ===== Lumbridge Adventures: a RuneScape Classic inspired browser RPG =====
-const TILE = 32, COLS = 25, ROWS = 20;
-const canvas = document.getElementById('view');
-const ctx = canvas.getContext('2d');
+// ===== Lumbridge Adventures v2: sprite graphics + expanded world =====
+const TILE=32, COLS=40, ROWS=30, VIEW_COLS=25, VIEW_ROWS=20;
+const canvas=document.getElementById('view');
+const ctx=canvas.getContext('2d');
+const mini=document.getElementById('minimap');
+const mctx=mini.getContext('2d');
+let camX=0, camY=0, frame=0;
+
+// ---------- TILE TYPES ----------
+const GRASS=0, WATER=1, PATH=2, WALL=3, FLOOR=4, BRIDGE=5, TREE=6,
+      SAND=7, RANGE=8, FLOWER=9, COBBLE=10, FENCE=11, DOOR=12, FIELD=13;
+const WALKABLE=new Set([GRASS,PATH,FLOOR,BRIDGE,SAND,RANGE,FLOWER,COBBLE,DOOR,FIELD]);
+const walkable=c=>WALKABLE.has(c);
 
 // ---------- MAP ----------
-// tile codes: 0 grass, 1 water, 2 path, 3 wall, 4 floor, 5 bridge, 6 tree, 8 range
-function buildMap() {
-  const m = [];
-  for (let y = 0; y < ROWS; y++) m.push(new Array(COLS).fill(0));
-  // River Lum along the east edge
-  for (let y = 0; y < ROWS; y++) for (let x = 22; x < COLS; x++) m[y][x] = 1;
-  // A wooden bridge across the river
-  for (let x = 22; x < COLS; x++) m[9][x] = 5;
-  // Scattered trees
-  [[12,2],[13,3],[18,4],[19,5],[3,15],[6,16],[20,12]].forEach(([x,y]) => m[y][x] = 6);
-  // Lumbridge Castle: walls on rows 1 and 7, cols 1..8
-  for (let x = 1; x <= 8; x++) { m[1][x] = 3; m[7][x] = 3; }
-  for (let y = 1; y <= 7; y++) { m[y][1] = 3; m[y][8] = 3; }
-  // Castle interior floor
-  for (let y = 2; y <= 6; y++) for (let x = 2; x <= 7; x++) m[y][x] = 4;
-  // Kitchen cooking range
-  m[3][7] = 8;
-  // Castle doorway + path leading south
-  m[7][4] = 2;
-  for (let y = 8; y <= 12; y++) m[y][4] = 2;
+function buildMap(){
+  const m=[];
+  for(let y=0;y<ROWS;y++){const r=[];for(let x=0;x<COLS;x++)r.push(GRASS);m.push(r);}
+  const put=(x,y,c)=>{ if(x>=0&&y>=0&&x<COLS&&y<ROWS) m[y][x]=c; };
+  const rect=(x0,y0,x1,y1,c)=>{ for(let y=y0;y<=y1;y++) for(let x=x0;x<=x1;x++) put(x,y,c); };
+  const box=(x0,y0,x1,y1,c)=>{ for(let x=x0;x<=x1;x++){put(x,y0,c);put(x,y1,c);} for(let y=y0;y<=y1;y++){put(x0,y,c);put(x1,y,c);} };
+
+  // River Lum with sandy banks
+  for(let y=0;y<ROWS;y++){ put(26,y,SAND); put(30,y,SAND); }
+  rect(27,0,29,ROWS-1,WATER);
+
+  // Roads
+  rect(3,13,26,13,PATH);    // west high road
+  rect(31,13,39,13,PATH);   // east wilderness road
+  rect(8,13,8,26,PATH);     // farm road (south)
+  rect(20,9,20,13,PATH);    // church connector
+  put(7,12,PATH); put(8,12,PATH);
+  rect(26,13,30,13,BRIDGE); // bridge over the Lum
+
+  // Lumbridge Castle
+  rect(2,2,13,11,WALL);
+  rect(3,3,12,10,FLOOR);
+  rect(3,6,12,6,WALL); put(5,6,DOOR);
+  put(7,11,DOOR); put(8,11,DOOR);
+  put(11,3,RANGE);
+
+  // Church of Saradomin
+  rect(17,2,24,8,WALL);
+  rect(18,3,23,7,COBBLE);
+  put(20,8,DOOR);
+
+  // General store
+  rect(17,14,23,19,WALL);
+  rect(18,15,22,18,FLOOR);
+  put(20,14,DOOR);
+
+  // Farm (fenced) with wheat field
+  box(3,18,12,27,FENCE);
+  put(8,18,PATH);
+  rect(4,20,6,25,FIELD);
+
+  // Town trees
+  [[15,3],[16,7],[25,4],[24,10],[15,16],[15,22],[24,16]].forEach(([x,y])=>put(x,y,TREE));
+  // Wilderness trees east of the Lum
+  [[31,2],[33,4],[35,3],[37,6],[39,9],[32,10],[34,12],[36,15],[38,18],[31,20],[33,23],[35,26],[37,27],[32,28],[39,3],[31,7],[38,24]].forEach(([x,y])=>put(x,y,TREE));
+  // Flowers
+  [[6,3],[10,15],[13,25],[19,11],[25,8],[16,27],[22,26]].forEach(([x,y])=>put(x,y,FLOWER));
   return m;
 }
-const map = buildMap();
-const walkable = c => c === 0 || c === 2 || c === 4 || c === 5 || c === 8;
+const map=buildMap();
 
-// ---------- ENTITIES ----------
-const player = {
-  x: 4, y: 11,
-  hp: 10, maxhp: 10,
-  atk: 1, str: 1, def: 1, cook: 1,
-  atkXp: 0, strXp: 0, defXp: 0, cookXp: 0,
-  qp: 0, inv: ['Bronze sword'],
-  path: [], mode: 'walk', target: null
+// ---------- CAMERA ----------
+const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
+function updateCamera(){
+  camX=clamp(player.x-Math.floor(VIEW_COLS/2),0,COLS-VIEW_COLS);
+  camY=clamp(player.y-Math.floor(VIEW_ROWS/2),0,ROWS-VIEW_ROWS);
+}
+
+// ---------- PLAYER ----------
+const player={
+  x:8, y:15, dir:'down',
+  hp:12, maxhp:12,
+  atk:1, str:1, def:1, cook:1,
+  atkXp:0, strXp:0, defXp:0, cookXp:0,
+  qp:0, inv:['Bronze sword'],
+  path:[], mode:'walk', target:null
 };
 
-const npcs = [
-  { id:'cook', name:'Cook',         x:6,  y:2,  color:'#ffffff', letter:'C' },
-  { id:'duke', name:'Duke Horacio', x:3,  y:5,  color:'#c080e0', letter:'D' },
-  { id:'hans', name:'Hans',         x:11, y:10, color:'#66bb66', letter:'H' }
+// ---------- NPCS ----------
+const npcs=[
+  { id:'cook',  name:'Cook',          x:10, y:4,  sprite:'cook' },
+  { id:'duke',  name:'Duke Horacio',    x:6,  y:8,  sprite:'duke' },
+  { id:'hans',  name:'Hans',          x:10, y:14, sprite:'hans' },
+  { id:'fred',  name:'Farmer Fred',     x:10, y:22, sprite:'farmer' },
+  { id:'guard', name:'Lumbridge Guard', x:9,  y:12, sprite:'guard' },
+  { id:'shop',  name:'Shopkeeper',       x:20, y:16, sprite:'shop' }
 ];
 
-const resources = [
-  { name:'Chicken',   x:14, y:3,  gives:'Egg' },
-  { name:'Dairy cow', x:17, y:6,  gives:'Bucket of milk' },
-  { name:'Flour bin', x:12, y:13, gives:'Pot of flour' }
+// ---------- RESOURCES ----------
+const resources=[
+  { name:'Chicken',   x:5,  y:26, gives:'Egg',            sprite:'chicken' },
+  { name:'Dairy cow', x:11, y:25, gives:'Bucket of milk', sprite:'cow' },
+  { name:'Flour bin', x:11, y:19, gives:'Pot of flour',   sprite:'flourbin' }
 ];
 
-let goblins = [];
-function spawnGoblins() {
-  goblins = [[15,14],[17,15],[14,16]].map(([x,y]) => ({ x, y, hp:5, maxhp:5, alive:true, respawn:0 }));
+// ---------- MONSTERS ----------
+const MTYPES={
+  goblin:{ name:'Goblin',    maxhp:6, dmg:3, xp:{atk:5,str:5,def:4}, sprite:'goblin', drop:'Coins' },
+  rat:   { name:'Giant rat', maxhp:4, dmg:2, xp:{atk:3,str:3,def:2}, sprite:'rat',    drop:'Raw rat meat' }
+};
+let monsters=[];
+function spawnMonsters(){
+  monsters=[];
+  [['goblin',33,10],['goblin',35,16],['goblin',32,19],['goblin',36,22],['goblin',34,25],['rat',6,27],['rat',11,27]]
+    .forEach(([k,x,y])=>{ const t=MTYPES[k]; monsters.push({ kind:k, x, y, hp:t.maxhp, maxhp:t.maxhp, alive:true, respawn:0, home:{x,y} }); });
 }
-spawnGoblins();
+spawnMonsters();
 // ---------- HELPERS ----------
-function log(msg, color) {
-  const box = document.getElementById('log');
-  const d = document.createElement('div');
-  d.textContent = msg;
-  if (color) d.style.color = color;
+function log(msg, color){
+  const box=document.getElementById('log');
+  const d=document.createElement('div');
+  d.textContent=msg;
+  if(color) d.style.color=color;
   box.appendChild(d);
-  box.scrollTop = box.scrollHeight;
+  box.scrollTop=box.scrollHeight;
 }
-const rand = n => Math.floor(Math.random() * n);
-const dist = (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
-function occupied(x, y) {
-  if (npcs.some(n => n.x === x && n.y === y)) return true;
-  if (goblins.some(g => g.alive && g.x === x && g.y === y)) return true;
+const rand=n=>Math.floor(Math.random()*n);
+const dist=(a,b)=>Math.abs(a.x-b.x)+Math.abs(a.y-b.y);
+function occupied(x,y){
+  if(npcs.some(n=>n.x===x&&n.y===y)) return true;
+  if(monsters.some(g=>g.alive&&g.x===x&&g.y===y)) return true;
   return false;
 }
 
 // ---------- PATHFINDING (breadth-first search) ----------
-function findPath(sx, sy, tx, ty) {
-  if (sx === tx && sy === ty) return [];
-  const q = [[sx, sy]];
-  const prev = {};
-  prev[sx + ',' + sy] = null;
-  while (q.length) {
-    const [cx, cy] = q.shift();
-    for (const [dx, dy] of [[0,-1],[0,1],[-1,0],[1,0]]) {
-      const nx = cx + dx, ny = cy + dy, key = nx + ',' + ny;
-      if (nx < 0 || ny < 0 || nx >= COLS || ny >= ROWS) continue;
-      if (key in prev) continue;
-      const blockedByEntity = occupied(nx, ny) && !(nx === tx && ny === ty);
-      if (!walkable(map[ny][nx]) || blockedByEntity) continue;
-      prev[key] = [cx, cy];
-      if (nx === tx && ny === ty) {
-        const path = []; let cur = [nx, ny];
-        while (cur) { path.push({ x:cur[0], y:cur[1] }); cur = prev[cur[0] + ',' + cur[1]]; }
+function findPath(sx,sy,tx,ty){
+  if(sx===tx&&sy===ty) return [];
+  const q=[[sx,sy]];
+  const prev={};
+  prev[sx+','+sy]=null;
+  while(q.length){
+    const [cx,cy]=q.shift();
+    for(const [dx,dy] of [[0,-1],[0,1],[-1,0],[1,0]]){
+      const nx=cx+dx, ny=cy+dy, key=nx+','+ny;
+      if(nx<0||ny<0||nx>=COLS||ny>=ROWS) continue;
+      if(key in prev) continue;
+      const blocked=occupied(nx,ny)&&!(nx===tx&&ny===ty);
+      if(!walkable(map[ny][nx])||blocked) continue;
+      prev[key]=[cx,cy];
+      if(nx===tx&&ny===ty){
+        const path=[]; let cur=[nx,ny];
+        while(cur){ path.push({x:cur[0],y:cur[1]}); cur=prev[cur[0]+','+cur[1]]; }
         path.reverse(); path.shift();
         return path;
       }
-      q.push([nx, ny]);
+      q.push([nx,ny]);
     }
   }
   return null;
 }
-function adjacentWalkable(tx, ty) {
-  const opts = [[tx,ty-1],[tx,ty+1],[tx-1,ty],[tx+1,ty]]
-    .filter(([x,y]) => x >= 0 && y >= 0 && x < COLS && y < ROWS && walkable(map[y][x]) && !occupied(x,y));
-  if (!opts.length) return null;
-  opts.sort((a,b) => (Math.abs(a[0]-player.x)+Math.abs(a[1]-player.y)) - (Math.abs(b[0]-player.x)+Math.abs(b[1]-player.y)));
+function adjacentWalkable(tx,ty){
+  const opts=[[tx,ty-1],[tx,ty+1],[tx-1,ty],[tx+1,ty]]
+    .filter(([x,y])=>x>=0&&y>=0&&x<COLS&&y<ROWS&&walkable(map[y][x])&&!occupied(x,y));
+  if(!opts.length) return null;
+  opts.sort((a,b)=>(Math.abs(a[0]-player.x)+Math.abs(a[1]-player.y))-(Math.abs(b[0]-player.x)+Math.abs(b[1]-player.y)));
   return { x:opts[0][0], y:opts[0][1] };
 }
 // ---------- INPUT ----------
-canvas.addEventListener('click', e => {
-  const r = canvas.getBoundingClientRect();
-  const tx = Math.floor((e.clientX - r.left) / TILE);
-  const ty = Math.floor((e.clientY - r.top) / TILE);
-  if (tx < 0 || ty < 0 || tx >= COLS || ty >= ROWS) return;
+canvas.addEventListener('click', e=>{
+  const r=canvas.getBoundingClientRect();
+  const tx=camX+Math.floor((e.clientX-r.left)/TILE);
+  const ty=camY+Math.floor((e.clientY-r.top)/TILE);
+  if(tx<0||ty<0||tx>=COLS||ty>=ROWS) return;
 
-  const gob = goblins.find(g => g.alive && g.x === tx && g.y === ty);
-  if (gob) { approach(tx, ty, 'attack', gob); return; }
+  const mon=monsters.find(g=>g.alive&&g.x===tx&&g.y===ty);
+  if(mon){ approach(tx,ty,'attack',mon); return; }
 
-  const npc = npcs.find(n => n.x === tx && n.y === ty);
-  if (npc) { approach(tx, ty, 'talk', npc); return; }
+  const npc=npcs.find(n=>n.x===tx&&n.y===ty);
+  if(npc){ approach(tx,ty,'talk',npc); return; }
 
-  const res = resources.find(o => o.x === tx && o.y === ty);
-  if (res) { approach(tx, ty, 'gather', res); return; }
+  const res=resources.find(o=>o.x===tx&&o.y===ty);
+  if(res){ approach(tx,ty,'gather',res); return; }
 
-  player.mode = 'walk'; player.target = null;
-  const p = findPath(player.x, player.y, tx, ty);
-  if (p && p.length) player.path = p;
-  else log('You cannot walk there.');
+  player.mode='walk'; player.target=null;
+  const p=findPath(player.x,player.y,tx,ty);
+  if(p&&p.length) player.path=p;
+  else if(!(tx===player.x&&ty===player.y)) log('You cannot walk there.');
 });
 
-function approach(tx, ty, mode, obj) {
-  player.mode = mode; player.target = obj;
-  if (dist(player, { x:tx, y:ty }) <= 1) { player.path = []; return; }
-  const spot = adjacentWalkable(tx, ty);
-  if (!spot) { log('You cannot reach that.'); player.mode = 'walk'; return; }
-  const p = findPath(player.x, player.y, spot.x, spot.y);
-  if (p) player.path = p;
-  else { log('You cannot reach that.'); player.mode = 'walk'; }
+function approach(tx,ty,mode,obj){
+  player.mode=mode; player.target=obj;
+  if(dist(player,{x:tx,y:ty})<=1){ player.path=[]; return; }
+  const spot=adjacentWalkable(tx,ty);
+  if(!spot){ log('You cannot reach that.'); player.mode='walk'; return; }
+  const p=findPath(player.x,player.y,spot.x,spot.y);
+  if(p) player.path=p;
+  else { log('You cannot reach that.'); player.mode='walk'; }
 }
 
-document.addEventListener('keydown', e => {
-  const moves = { ArrowUp:[0,-1], ArrowDown:[0,1], ArrowLeft:[-1,0], ArrowRight:[1,0],
-                  w:[0,-1], s:[0,1], a:[-1,0], d:[1,0] };
-  const mv = moves[e.key]; if (!mv) return;
-  const nx = player.x + mv[0], ny = player.y + mv[1];
-  if (nx < 0 || ny < 0 || nx >= COLS || ny >= ROWS) return;
-  const gob = goblins.find(g => g.alive && g.x === nx && g.y === ny);
-  if (gob) { player.mode = 'attack'; player.target = gob; return; }
-  if (walkable(map[ny][nx]) && !occupied(nx, ny)) { player.x = nx; player.y = ny; player.path = []; player.mode = 'walk'; }
+document.addEventListener('keydown', e=>{
+  const moves={ ArrowUp:[0,-1,'up'], ArrowDown:[0,1,'down'], ArrowLeft:[-1,0,'left'], ArrowRight:[1,0,'right'],
+                 w:[0,-1,'up'], s:[0,1,'down'], a:[-1,0,'left'], d:[1,0,'right'] };
+  const mv=moves[e.key]; if(!mv) return;
+  e.preventDefault();
+  player.dir=mv[2];
+  const nx=player.x+mv[0], ny=player.y+mv[1];
+  if(nx<0||ny<0||nx>=COLS||ny>=ROWS) return;
+  const mon=monsters.find(g=>g.alive&&g.x===nx&&g.y===ny);
+  if(mon){ player.mode='attack'; player.target=mon; return; }
+  if(walkable(map[ny][nx])&&!occupied(nx,ny)){ player.x=nx; player.y=ny; player.path=[]; player.mode='walk'; }
 });
 // ---------- COMBAT ----------
-function maxHit(lvl) { return 1 + Math.floor(lvl * 0.6); }
-function giveXp(skill, amt) {
-  player[skill + 'Xp'] += amt;
-  const lvl = 1 + Math.floor(player[skill + 'Xp'] / 40);
-  if (lvl > player[skill]) { player[skill] = lvl; log('You advance a ' + skill + ' level! Now ' + lvl + '.', '#ffcc33'); }
-  if (skill === 'str' || skill === 'def') player.maxhp = 10 + Math.floor((player.str + player.def) / 2);
+function maxHit(lvl){ return 1+Math.floor(lvl*0.6); }
+function giveXp(skill, amt){
+  player[skill+'Xp']+=amt;
+  const lvl=1+Math.floor(player[skill+'Xp']/40);
+  if(lvl>player[skill]){ player[skill]=lvl; log('You advance a '+skill+' level! Now '+lvl+'.', '#ffcc33'); }
+  if(skill==='str'||skill==='def') player.maxhp=12+Math.floor((player.str+player.def)/2);
 }
-function playerAttack(g) {
-  const dmg = rand(maxHit(player.str) + 1);
-  g.hp -= dmg;
-  log(dmg > 0 ? 'You hit the goblin for ' + dmg + '.' : 'You miss the goblin.');
-  giveXp('atk', 4); giveXp('str', 4);
-  if (g.hp <= 0) {
-    g.alive = false; g.respawn = 20;
-    log('You have defeated the goblin!', '#88ff88');
-    giveXp('def', 3);
-    if (Math.random() < 0.5) addItem('Coins');
-    player.mode = 'walk'; player.target = null;
+function playerAttack(m){
+  const t=MTYPES[m.kind], nm=t.name.toLowerCase();
+  const dmg=rand(maxHit(player.str)+1);
+  m.hp-=dmg;
+  log(dmg>0 ? ('You hit the '+nm+' for '+dmg+'.') : ('You miss the '+nm+'.'));
+  giveXp('atk',t.xp.atk); giveXp('str',t.xp.str);
+  if(m.hp<=0){
+    m.alive=false; m.respawn=30;
+    log('You have defeated the '+nm+'!', '#88ff88');
+    giveXp('def',t.xp.def);
+    if(Math.random()<0.6) addItem(t.drop);
+    player.mode='walk'; player.target=null;
   }
 }
-function goblinAttack(g) {
-  const dmg = rand(3);
-  player.hp -= dmg;
-  log(dmg > 0 ? 'The goblin hits you for ' + dmg + '.' : 'The goblin misses.', '#ff9999');
-  giveXp('def', 1);
-  if (player.hp <= 0) die();
+function monsterAttack(m){
+  const t=MTYPES[m.kind], nm=t.name.toLowerCase();
+  const dmg=rand(t.dmg);
+  player.hp-=dmg;
+  log(dmg>0 ? ('The '+nm+' hits you for '+dmg+'.') : ('The '+nm+' misses.'), '#ff9999');
+  giveXp('def',1);
+  if(player.hp<=0) die();
 }
-function die() {
+function die(){
   log('Oh dear, you are dead!', '#ff4444');
-  player.hp = player.maxhp; player.x = 4; player.y = 11;
-  player.path = []; player.mode = 'walk'; player.target = null;
+  player.hp=player.maxhp; player.x=8; player.y=15;
+  player.path=[]; player.mode='walk'; player.target=null;
 }
 
 // ---------- INVENTORY ----------
-function addItem(it) { player.inv.push(it); log('You get: ' + it + '.'); renderInv(); }
-function hasItem(it) { return player.inv.includes(it); }
-function removeItem(it) { const i = player.inv.indexOf(it); if (i >= 0) player.inv.splice(i, 1); renderInv(); }
-function renderInv() {
-  const box = document.getElementById('inv'); box.innerHTML = '';
-  player.inv.forEach(it => { const s = document.createElement('span'); s.className = 'slot'; s.textContent = it; box.appendChild(s); });
+function addItem(it){ player.inv.push(it); log('You get: '+it+'.'); renderInv(); }
+function hasItem(it){ return player.inv.includes(it); }
+function removeItem(it){ const i=player.inv.indexOf(it); if(i>=0) player.inv.splice(i,1); renderInv(); }
+function renderInv(){
+  const box=document.getElementById('inv'); box.innerHTML='';
+  player.inv.forEach(it=>{ const s=document.createElement('span'); s.className='slot'; s.textContent=it; box.appendChild(s); });
 }
 // ---------- NPC DIALOGUE & QUEST ----------
-let quest = 0; // 0 not started, 1 in progress, 2 finished
-const dPanel = document.getElementById('dialoguePanel');
+let quest=0; // 0 not started, 1 in progress, 2 finished
+const dPanel=document.getElementById('dialoguePanel');
 
-function talk(npc) {
-  if (npc.id === 'cook') return cookDialogue();
-  if (npc.id === 'duke') return showDialogue('Duke Horacio',
-    "Welcome to my castle, adventurer. My cook is in a terrible panic about my birthday cake.",
-    [{ t:'(Leave)', f:closeDialogue }]);
-  if (npc.id === 'hans') return showDialogue('Hans',
-    "Hello there! I've worked here for years. Mind the goblins east of the river.",
-    [{ t:'(Leave)', f:closeDialogue }]);
+function talk(npc){
+  switch(npc.id){
+    case 'cook': return cookDialogue();
+    case 'duke': return showDialogue('Duke Horacio',
+      quest===2 ? "Splendid cake! You have my thanks, adventurer." : "Welcome to my castle. My cook is in a dreadful panic about my birthday cake.",
+      [{ t:'(Leave)', f:closeDialogue }]);
+    case 'hans': return showDialogue('Hans',
+      "Hello! I've worked here for years. Cross the bridge to the east and you'll find goblins — mind yourself!",
+      [{ t:'(Leave)', f:closeDialogue }]);
+    case 'fred': return showDialogue('Farmer Fred',
+      "The chickens and cows are yours to use. The flour bin is by the mill if you need flour.",
+      [{ t:'(Leave)', f:closeDialogue }]);
+    case 'guard': return showDialogue('Lumbridge Guard',
+      "Keep the peace, traveller. Those goblins across the Lum have been restless of late.",
+      [{ t:'(Leave)', f:closeDialogue }]);
+    case 'shop': return showDialogue('Shopkeeper',
+      "Welcome to the Lumbridge general store! (Trading arrives in a future update.)",
+      [{ t:'(Leave)', f:closeDialogue }]);
+  }
 }
-function showDialogue(who, text, opts) {
-  dPanel.style.display = 'block';
-  document.getElementById('speaker').textContent = who;
-  document.getElementById('npcText').textContent = text;
-  const box = document.getElementById('options'); box.innerHTML = '';
-  opts.forEach(o => { const b = document.createElement('button'); b.textContent = o.t; b.onclick = o.f; box.appendChild(b); });
+function showDialogue(who, text, opts){
+  dPanel.style.display='block';
+  document.getElementById('speaker').textContent=who;
+  document.getElementById('npcText').textContent=text;
+  const box=document.getElementById('options'); box.innerHTML='';
+  opts.forEach(o=>{ const b=document.createElement('button'); b.textContent=o.t; b.onclick=o.f; box.appendChild(b); });
 }
-function closeDialogue() { dPanel.style.display = 'none'; }
+function closeDialogue(){ dPanel.style.display='none'; }
 
-function cookDialogue() {
-  if (quest === 0) {
+function cookDialogue(){
+  if(quest===0){
     showDialogue('Cook',
       "The Duke's birthday is today and I've forgotten the cake ingredients! Please, will you help me?",
       [{ t:'Yes, I will help you.', f:acceptQuest },
        { t:"I can't right now.", f:closeDialogue }]);
-  } else if (quest === 1) {
-    const need = [];
-    if (!hasItem('Egg')) need.push('an egg');
-    if (!hasItem('Bucket of milk')) need.push('a bucket of milk');
-    if (!hasItem('Pot of flour')) need.push('a pot of flour');
-    if (need.length === 0) {
+  } else if(quest===1){
+    const need=[];
+    if(!hasItem('Egg')) need.push('an egg');
+    if(!hasItem('Bucket of milk')) need.push('a bucket of milk');
+    if(!hasItem('Pot of flour')) need.push('a pot of flour');
+    if(need.length===0){
       showDialogue('Cook', "You have everything! Hand it over and I'll start baking.",
         [{ t:'Give the ingredients.', f:completeQuest }]);
     } else {
-      showDialogue('Cook', 'You still need to bring me ' + need.join(', ') + '. Hurry!',
+      showDialogue('Cook', 'You still need to bring me '+need.join(', ')+'. Hurry!',
         [{ t:'(Leave)', f:closeDialogue }]);
     }
   } else {
     showDialogue('Cook', "Thank you again! The Duke loved his cake.", [{ t:'(Leave)', f:closeDialogue }]);
   }
 }
-function acceptQuest() {
-  quest = 1;
-  updateQuest('Bring the Cook: an Egg, a Bucket of milk, and a Pot of flour. Search the chicken, the dairy cow and the flour bin around Lumbridge.');
+function acceptQuest(){
+  quest=1;
+  updateQuest('Bring the Cook: an Egg, a Bucket of milk, and a Pot of flour. Search the chicken, the dairy cow and the flour bin around the farm.');
   log('Quest started: Cook\'s Assistant.', '#ffcc33');
   cookDialogue();
 }
-function completeQuest() {
+function completeQuest(){
   removeItem('Egg'); removeItem('Bucket of milk'); removeItem('Pot of flour');
-  quest = 2;
-  player.qp += 1; document.getElementById('qpVal').textContent = player.qp;
-  giveXp('cook', 300);
+  quest=2;
+  player.qp+=1; document.getElementById('qpVal').textContent=player.qp;
+  giveXp('cook',300);
   addItem('Cooking gauntlets');
   updateQuest('Complete! You helped the Cook bake the Duke\'s birthday cake.');
   log('Congratulations! Quest complete: Cook\'s Assistant (+1 Quest Point).', '#88ff88');
   showDialogue('Cook', "You've saved the day! Take these Cooking gauntlets as a reward.", [{ t:'(Leave)', f:closeDialogue }]);
 }
-function updateQuest(t) { document.getElementById('questText').textContent = t; }
+function updateQuest(t){ document.getElementById('questText').textContent=t; }
 
-function gather(res) {
-  if (hasItem(res.gives)) { log('You already have a ' + res.gives.toLowerCase() + '.'); return; }
+function gather(res){
+  if(hasItem(res.gives)){ log('You already have a '+res.gives.toLowerCase()+'.'); return; }
   addItem(res.gives);
-  if (res.name === 'Chicken') log('You take a fresh egg.');
-  else if (res.name === 'Dairy cow') log('You milk the cow into a bucket.');
-  else if (res.name === 'Flour bin') log('You grind wheat into a pot of flour.');
+  if(res.name==='Chicken') log('You take a fresh egg.');
+  else if(res.name==='Dairy cow') log('You milk the cow into a bucket.');
+  else if(res.name==='Flour bin') log('You grind wheat into a pot of flour.');
 }
 // ---------- GAME TICK ----------
-function interact() {
-  const t = player.target;
-  if (!t) return;
-  if (player.mode === 'talk' && dist(player, t) <= 1) { talk(t); player.mode = 'walk'; player.target = null; }
-  else if (player.mode === 'gather' && dist(player, t) <= 1) { gather(t); player.mode = 'walk'; player.target = null; }
+function interact(){
+  const t=player.target;
+  if(!t) return;
+  if(player.mode==='talk'&&dist(player,t)<=1){ talk(t); player.mode='walk'; player.target=null; }
+  else if(player.mode==='gather'&&dist(player,t)<=1){ gather(t); player.mode='walk'; player.target=null; }
 }
-function tick() {
+function tick(){
+  frame++;
   // move player one step along the path
-  if (player.path && player.path.length) {
-    const step = player.path.shift();
-    if (!occupied(step.x, step.y)) { player.x = step.x; player.y = step.y; }
-    else player.path = [];
+  if(player.path&&player.path.length){
+    const s=player.path.shift();
+    if(!occupied(s.x,s.y)){
+      if(s.x>player.x) player.dir='right'; else if(s.x<player.x) player.dir='left';
+      else if(s.y>player.y) player.dir='down'; else if(s.y<player.y) player.dir='up';
+      player.x=s.x; player.y=s.y;
+    } else player.path=[];
   }
   // resolve talk / gather on arrival
-  if ((player.mode === 'talk' || player.mode === 'gather') && (!player.path || !player.path.length)) interact();
+  if((player.mode==='talk'||player.mode==='gather')&&(!player.path||!player.path.length)) interact();
   // player combat
-  if (player.mode === 'attack' && player.target && player.target.alive) {
-    if (dist(player, player.target) <= 1 && !player.path.length) playerAttack(player.target);
-  } else if (player.mode === 'attack') {
-    player.mode = 'walk';
-  }
-  // goblin AI
-  goblins.forEach(g => {
-    if (!g.alive) { if (--g.respawn <= 0) { g.alive = true; g.hp = g.maxhp; } return; }
-    const d = dist(g, player);
-    if (d <= 1) goblinAttack(g);
-    else if (d <= 4) stepToward(g, player);
+  if(player.mode==='attack'&&player.target&&player.target.alive){
+    if(dist(player,player.target)<=1&&!player.path.length) playerAttack(player.target);
+  } else if(player.mode==='attack') player.mode='walk';
+  // monster AI
+  monsters.forEach(m=>{
+    if(!m.alive){ if(--m.respawn<=0){ m.alive=true; m.hp=m.maxhp; m.x=m.home.x; m.y=m.home.y; } return; }
+    const d=dist(m,player);
+    if(d<=1) monsterAttack(m);
+    else if(d<=5) stepToward(m,player);
+    else if(Math.random()<0.3) wander(m);
   });
+  updateCamera();
   drawHUD();
 }
-function stepToward(g, tgt) {
-  const dx = Math.sign(tgt.x - g.x), dy = Math.sign(tgt.y - g.y);
-  const tries = Math.abs(tgt.x - g.x) > Math.abs(tgt.y - g.y) ? [[dx,0],[0,dy]] : [[0,dy],[dx,0]];
-  for (const [mx, my] of tries) {
-    const nx = g.x + mx, ny = g.y + my;
-    if (nx >= 0 && ny >= 0 && nx < COLS && ny < ROWS && walkable(map[ny][nx]) && !occupied(nx,ny) && !(nx === player.x && ny === player.y)) { g.x = nx; g.y = ny; return; }
+function stepToward(g, tgt){
+  const dx=Math.sign(tgt.x-g.x), dy=Math.sign(tgt.y-g.y);
+  const tries=Math.abs(tgt.x-g.x)>Math.abs(tgt.y-g.y) ? [[dx,0],[0,dy]] : [[0,dy],[dx,0]];
+  for(const [mx,my] of tries){
+    const nx=g.x+mx, ny=g.y+my;
+    if(nx>=0&&ny>=0&&nx<COLS&&ny<ROWS&&walkable(map[ny][nx])&&!occupied(nx,ny)&&!(nx===player.x&&ny===player.y)){ g.x=nx; g.y=ny; return; }
   }
 }
-// ---------- RENDER ----------
-const COLORS = { 0:'#4a7a30', 1:'#2a5aa0', 2:'#b89a5a', 3:'#6b6b6b', 4:'#8a7a55', 5:'#9a7a3a', 6:'#2f5020', 8:'#333' };
-function draw() {
-  for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
-    ctx.fillStyle = COLORS[map[y][x]]; ctx.fillRect(x*TILE, y*TILE, TILE, TILE);
-    if (map[y][x] === 6) { ctx.fillStyle = '#1f3512'; ctx.beginPath(); ctx.arc(x*TILE+16, y*TILE+16, 12, 0, 7); ctx.fill(); }
-    if (map[y][x] === 8) { ctx.fillStyle = '#c0392b'; ctx.fillRect(x*TILE+6, y*TILE+6, 20, 20); }
-  }
-  resources.forEach(r => {
-    ctx.fillStyle = '#eeddaa'; ctx.fillRect(r.x*TILE+8, r.y*TILE+8, 16, 16);
-    ctx.fillStyle = '#000'; ctx.font = '9px monospace'; ctx.fillText(r.name[0], r.x*TILE+13, r.y*TILE+20);
-  });
-  npcs.forEach(n => {
-    drawFigure(n.x, n.y, n.color);
-    ctx.fillStyle = '#000'; ctx.font = '10px monospace'; ctx.fillText(n.letter, n.x*TILE+13, n.y*TILE+20);
-  });
-  goblins.forEach(g => {
-    if (!g.alive) return;
-    drawFigure(g.x, g.y, '#3a7a2a');
-    ctx.fillStyle = '#000'; ctx.fillRect(g.x*TILE+4, g.y*TILE+2, 24, 4);
-    ctx.fillStyle = '#0f0'; ctx.fillRect(g.x*TILE+4, g.y*TILE+2, 24*(g.hp/g.maxhp), 4);
-  });
-  drawFigure(player.x, player.y, '#ffd23f');
+function wander(g){
+  const [mx,my]=[[0,-1],[0,1],[-1,0],[1,0]][rand(4)];
+  const nx=g.x+mx, ny=g.y+my;
+  if(nx>=0&&ny>=0&&nx<COLS&&ny<ROWS&&walkable(map[ny][nx])&&!occupied(nx,ny)&&!(nx===player.x&&ny===player.y)&&dist({x:nx,y:ny},g.home)<=4){ g.x=nx; g.y=ny; }
 }
-function drawFigure(x, y, color) {
-  ctx.fillStyle = color;
-  ctx.beginPath(); ctx.arc(x*TILE+16, y*TILE+12, 7, 0, 7); ctx.fill();
-  ctx.fillRect(x*TILE+11, y*TILE+16, 10, 12);
+// ---------- SPRITE ART (8x8 grids, drawn at scale 4) ----------
+const ART={
+  player: ["  hhhh  "," hffffh "," feefef "," ffffff "," bbbbbb "," bbbbbb "," ll  ll "," ll  ll "],
+  cook:  ["  wwww  "," wwwwww "," ffffff "," feefef "," wwwwww "," wwwwww "," ww  ww "," ww  ww "],
+  duke:  ["  yyyy  "," ffffff "," feefef "," pppppp "," pppppp "," pppppp "," pp  pp "," pp  pp "],
+  hans:  ["  hhhh  "," hffffh "," feefef "," gggggg "," gggggg "," gggggg "," ll  ll "," ll  ll "],
+  farmer:["  ssss  "," sffffs "," feefef "," oooooo "," oooooo "," oooooo "," ll  ll "," ll  ll "],
+  guard: ["  aaaa  "," affffa "," feefef "," aaaaaa "," aaaaaa "," aaaaaa "," aa  aa "," aa  aa "],
+  shop:  ["  rrrr  "," rffffr "," feefef "," vvvvvv "," vvvvvv "," vvvvvv "," ll  ll "," ll  ll "],
+  goblin:["  gggg  "," gggggg "," geggeg "," gggggg "," grrrrg "," gggggg "," gg  gg "," gg  gg "],
+  rat:   ["        ","   nn   ","  nnnn  "," nnnnnn "," nennen "," nnnnnn ","  n  n  ","  t  t  "],
+  chicken:["   r    ","  ww    "," wwww r "," wwwww  ","  wwww  ","  wwww  ","  y  y  ","        "],
+  cow:   ["        "," k    k "," wwwwww "," wkwwkw "," wwwwww "," wwwwww "," ll  ll ","        "]
+};
+const PAL={
+  h:'#6b4a2a', f:'#e8b890', e:'#20140a', b:'#3466a8', l:'#4a3520',
+  w:'#f2f2f2', y:'#e8c24a', p:'#7a3ea0', g:'#5a8a3a', r:'#c0392b',
+  s:'#d8b84a', o:'#3a5a8a', a:'#9aa0aa', v:'#7a5230', k:'#2a2a2a',
+  n:'#8a7a5a', t:'#6a4a2a'
+};
+function blit(px,py,art){
+  for(let r=0;r<8;r++){ const row=art[r]; for(let c=0;c<8;c++){ const ch=row[c]; if(ch===' ')continue; const col=PAL[ch]; if(!col)continue; ctx.fillStyle=col; ctx.fillRect(px+c*4,py+r*4,4,4); } }
+}
+function shadow(px,py){ ctx.fillStyle='rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(px+16,py+30,10,4,0,0,7); ctx.fill(); }
+
+// ---------- TILE RENDERING ----------
+function hash(x,y){ let h=(x*73856093)^(y*19349663); h=(h^(h>>>13))>>>0; return h; }
+function grassTufts(x,y,sx,sy){ const h=hash(x,y); ctx.fillStyle='#3f6a28'; for(let i=0;i<3;i++) ctx.fillRect(sx+4+((h>>(i*3))&7)*3, sy+6+((h>>(i*4))&7)*3, 2,4); }
+function flowers(x,y,sx,sy){ const h=hash(x+7,y+3), cols=['#e85050','#e8d24a','#d060c0']; for(let i=0;i<3;i++){ ctx.fillStyle=cols[i%3]; ctx.fillRect(sx+5+i*9, sy+6+((h>>i)&3)*4, 3,3); } }
+function speckle(x,y,sx,sy,c){ const h=hash(x,y); ctx.fillStyle=c; for(let i=0;i<5;i++) ctx.fillRect(sx+((h>>(i*3))&15)*2, sy+((h>>(i*2))&15)*2, 2,2); }
+function water(sx,sy){ ctx.fillStyle='#2a5aa0'; ctx.fillRect(sx,sy,TILE,TILE); ctx.fillStyle='#3a6ec0'; const o=Math.sin((frame+sx)/8)*2; for(let i=0;i<TILE;i+=8) ctx.fillRect(sx+2, sy+i+4+o, TILE-4, 2); ctx.fillStyle='#6a9ee8'; ctx.fillRect(sx+5, sy+6+o, 6,2); }
+function bridge(sx,sy){ ctx.fillStyle='#9a6a3a'; ctx.fillRect(sx,sy,TILE,TILE); ctx.fillStyle='#7a4e28'; for(let i=0;i<TILE;i+=6) ctx.fillRect(sx,sy+i,TILE,1); ctx.fillStyle='#5a3a20'; ctx.fillRect(sx,sy,2,TILE); ctx.fillRect(sx+TILE-2,sy,2,TILE); }
+function wall(sx,sy){ ctx.fillStyle='#7a7a80'; ctx.fillRect(sx,sy,TILE,TILE); ctx.strokeStyle='#5a5a60'; ctx.lineWidth=1; for(let r=0;r<TILE;r+=8){ ctx.beginPath(); ctx.moveTo(sx,sy+r+8); ctx.lineTo(sx+TILE,sy+r+8); ctx.stroke(); const off=(r/8)%2?4:0; for(let c=off;c<TILE;c+=16){ ctx.beginPath(); ctx.moveTo(sx+c,sy+r); ctx.lineTo(sx+c,sy+r+8); ctx.stroke(); } } }
+function floor(sx,sy){ ctx.fillStyle='#9a7a52'; ctx.fillRect(sx,sy,TILE,TILE); ctx.strokeStyle='#7a5e3a'; ctx.lineWidth=1; for(let i=0;i<TILE;i+=8){ ctx.beginPath(); ctx.moveTo(sx,sy+i); ctx.lineTo(sx+TILE,sy+i); ctx.stroke(); } }
+function cobbles(sx,sy){ ctx.fillStyle='#8a8a8a'; ctx.fillRect(sx,sy,TILE,TILE); ctx.strokeStyle='#5f5f5f'; ctx.lineWidth=1; for(let r=0;r<TILE;r+=8) for(let c=0;c<TILE;c+=8) ctx.strokeRect(sx+c+((r/8)%2?4:0)-4, sy+r, 8,8); }
+function door(sx,sy){ ctx.fillStyle='#6a4a28'; ctx.fillRect(sx+8,sy+4,16,24); ctx.fillStyle='#4a3018'; ctx.fillRect(sx+15,sy+4,2,24); ctx.fillStyle='#e8c24a'; ctx.fillRect(sx+19,sy+16,3,3); }
+function fence(sx,sy){ ctx.fillStyle='#7a5230'; ctx.fillRect(sx,sy+10,TILE,3); ctx.fillRect(sx,sy+20,TILE,3); ctx.fillStyle='#5a3a20'; ctx.fillRect(sx+6,sy+6,3,20); ctx.fillRect(sx+22,sy+6,3,20); }
+function field(sx,sy){ ctx.fillStyle='#7a5a2a'; ctx.fillRect(sx,sy,TILE,TILE); ctx.fillStyle='#5a3f1e'; for(let i=0;i<TILE;i+=6) ctx.fillRect(sx,sy+i,TILE,1); ctx.fillStyle='#d8c24a'; for(let i=0;i<TILE;i+=8) ctx.fillRect(sx+3+(i%8), sy+2, 2,9); }
+function range(sx,sy){ ctx.fillStyle='#3a3a3a'; ctx.fillRect(sx+4,sy+4,24,24); ctx.fillStyle=(frame%6<3)?'#e8a020':'#e85020'; ctx.beginPath(); ctx.moveTo(sx+16,sy+10); ctx.lineTo(sx+22,sy+24); ctx.lineTo(sx+10,sy+24); ctx.closePath(); ctx.fill(); ctx.fillStyle='#f8e060'; ctx.fillRect(sx+14,sy+18,4,6); }
+function tree(sx,sy){ ctx.fillStyle='#5a3a1a'; ctx.fillRect(sx+14,sy+18,4,10); ctx.fillStyle='#1f5a1f'; ctx.beginPath(); ctx.arc(sx+16,sy+12,12,0,7); ctx.fill(); ctx.fillStyle='#2f7a2f'; ctx.beginPath(); ctx.arc(sx+12,sy+10,7,0,7); ctx.arc(sx+20,sy+11,7,0,7); ctx.fill(); ctx.fillStyle='#3f9a3f'; ctx.beginPath(); ctx.arc(sx+15,sy+8,4,0,7); ctx.fill(); }
+function flourbin(sx,sy){ ctx.fillStyle='#a07a4a'; ctx.fillRect(sx+8,sy+8,16,18); ctx.fillStyle='#7a5a30'; ctx.fillRect(sx+8,sy+12,16,2); ctx.fillRect(sx+8,sy+20,16,2); ctx.fillStyle='#f0e8d0'; ctx.fillRect(sx+11,sy+5,10,5); }
+function drawTile(t,x,y,sx,sy){
+  switch(t){
+    case GRASS:  ctx.fillStyle='#4a7a30'; ctx.fillRect(sx,sy,TILE,TILE); grassTufts(x,y,sx,sy); break;
+    case FLOWER: ctx.fillStyle='#4a7a30'; ctx.fillRect(sx,sy,TILE,TILE); grassTufts(x,y,sx,sy); flowers(x,y,sx,sy); break;
+    case PATH:   ctx.fillStyle='#b89a5a'; ctx.fillRect(sx,sy,TILE,TILE); speckle(x,y,sx,sy,'#a2854a'); break;
+    case SAND:   ctx.fillStyle='#d8c98a'; ctx.fillRect(sx,sy,TILE,TILE); speckle(x,y,sx,sy,'#c7b678'); break;
+    case WATER:  water(sx,sy); break;
+    case BRIDGE: bridge(sx,sy); break;
+    case WALL:   wall(sx,sy); break;
+    case FLOOR:  floor(sx,sy); break;
+    case COBBLE: cobbles(sx,sy); break;
+    case DOOR:   floor(sx,sy); door(sx,sy); break;
+    case FENCE:  ctx.fillStyle='#4a7a30'; ctx.fillRect(sx,sy,TILE,TILE); fence(sx,sy); break;
+    case FIELD:  field(sx,sy); break;
+    case RANGE:  wall(sx,sy); range(sx,sy); break;
+    case TREE:   ctx.fillStyle='#4a7a30'; ctx.fillRect(sx,sy,TILE,TILE); grassTufts(x,y,sx,sy); tree(sx,sy); break;
+    default:    ctx.fillStyle='#4a7a30'; ctx.fillRect(sx,sy,TILE,TILE);
+  }
+}
+
+// ---------- SCENE RENDER ----------
+const offscreen=o=>o.x<camX||o.y<camY||o.x>=camX+VIEW_COLS||o.y>=camY+VIEW_ROWS;
+function nameTag(name,sx,sy){ ctx.font='9px monospace'; const w=ctx.measureText(name).width; ctx.fillStyle='rgba(0,0,0,0.55)'; ctx.fillRect(sx+16-w/2-2, sy-11, w+4, 10); ctx.fillStyle='#ffe8a0'; ctx.textAlign='center'; ctx.fillText(name, sx+16, sy-3); ctx.textAlign='left'; }
+function hpbar(m,sx,sy){ ctx.fillStyle='#000'; ctx.fillRect(sx+4,sy-4,24,4); ctx.fillStyle='#3ac83a'; ctx.fillRect(sx+4,sy-4,24*(m.hp/m.maxhp),4); }
+function draw(){
+  updateCamera();
+  for(let y=0;y<VIEW_ROWS;y++) for(let x=0;x<VIEW_COLS;x++){
+    const mx=camX+x, my=camY+y; if(mx>=COLS||my>=ROWS) continue;
+    drawTile(map[my][mx], mx, my, x*TILE, y*TILE);
+  }
+  // target highlight
+  if(player.target&&!offscreen(player.target)){ const tsx=(player.target.x-camX)*TILE, tsy=(player.target.y-camY)*TILE; ctx.strokeStyle='#ffcc33'; ctx.lineWidth=2; ctx.strokeRect(tsx+1,tsy+1,TILE-2,TILE-2); }
+  // resources
+  resources.forEach(o=>{ if(offscreen(o)) return; const sx=(o.x-camX)*TILE, sy=(o.y-camY)*TILE; shadow(sx,sy); if(o.sprite==='flourbin') flourbin(sx,sy); else blit(sx,sy,ART[o.sprite]); });
+  // npcs
+  npcs.forEach(n=>{ if(offscreen(n)) return; const sx=(n.x-camX)*TILE, sy=(n.y-camY)*TILE; shadow(sx,sy); blit(sx,sy,ART[n.sprite]); nameTag(n.name,sx,sy); });
+  // monsters
+  monsters.forEach(m=>{ if(!m.alive||offscreen(m)) return; const t=MTYPES[m.kind], sx=(m.x-camX)*TILE, sy=(m.y-camY)*TILE; shadow(sx,sy); blit(sx,sy,ART[t.sprite]); hpbar(m,sx,sy); });
+  // player
+  const psx=(player.x-camX)*TILE, psy=(player.y-camY)*TILE; shadow(psx,psy); blit(psx,psy,ART.player);
+  drawMinimap();
+}
+function drawMinimap(){
+  const sw=mini.width/COLS, sh=mini.height/ROWS;
+  const mc={0:'#4a7a30',1:'#2a5aa0',2:'#b89a5a',3:'#7a7a80',4:'#9a7a52',5:'#9a6a3a',6:'#1f5a1f',7:'#d8c98a',8:'#e85020',9:'#4a7a30',10:'#8a8a8a',11:'#7a5230',12:'#6a4a28',13:'#7a5a2a'};
+  for(let y=0;y<ROWS;y++) for(let x=0;x<COLS;x++){ mctx.fillStyle=mc[map[y][x]]||'#4a7a30'; mctx.fillRect(x*sw,y*sh,sw,sh); }
+  npcs.forEach(n=>{ mctx.fillStyle='#fff'; mctx.fillRect(n.x*sw,n.y*sh,sw,sh); });
+  monsters.forEach(m=>{ if(!m.alive) return; mctx.fillStyle='#e33'; mctx.fillRect(m.x*sw,m.y*sh,sw,sh); });
+  mctx.fillStyle='#ffcc33'; mctx.fillRect(player.x*sw-1,player.y*sh-1,sw+2,sh+2);
+  mctx.strokeStyle='rgba(255,255,255,0.6)'; mctx.lineWidth=1; mctx.strokeRect(camX*sw,camY*sh,VIEW_COLS*sw,VIEW_ROWS*sh);
 }
 
 // ---------- HUD ----------
-function drawHUD() {
-  document.getElementById('hpText').textContent = Math.max(0, player.hp) + ' / ' + player.maxhp;
-  document.getElementById('hpBar').style.width = Math.max(0, player.hp / player.maxhp * 100) + '%';
-  document.getElementById('atkLvl').textContent = player.atk;
-  document.getElementById('strLvl').textContent = player.str;
-  document.getElementById('defLvl').textContent = player.def;
-  document.getElementById('cookLvl').textContent = player.cook;
+function drawHUD(){
+  document.getElementById('hpText').textContent=Math.max(0,player.hp)+' / '+player.maxhp;
+  document.getElementById('hpBar').style.width=Math.max(0,player.hp/player.maxhp*100)+'%';
+  document.getElementById('atkLvl').textContent=player.atk;
+  document.getElementById('strLvl').textContent=player.str;
+  document.getElementById('defLvl').textContent=player.def;
+  document.getElementById('cookLvl').textContent=player.cook;
 }
 
 // ---------- START ----------
 renderInv();
 drawHUD();
-updateQuest('Not started. Talk to the Cook in the Lumbridge Castle kitchen.');
-log('Welcome to Lumbridge! Click to move; click a goblin, NPC, or resource to interact.', '#ffcc33');
-setInterval(() => { tick(); draw(); }, 320);
+updateQuest('Not started. Enter Lumbridge Castle and talk to the Cook in the kitchen.');
+log('Welcome to Lumbridge! Click to move; click a monster, NPC, or resource to interact. Cross the bridge east for goblins.', '#ffcc33');
+updateCamera();
+setInterval(()=>{ tick(); draw(); }, 300);
 draw();
 </script>
 </body>
