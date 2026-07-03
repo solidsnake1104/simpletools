@@ -2,2680 +2,1285 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Lumbridge">
-<meta name="theme-color" content="#3d2b1f">
-<title>RS Classic PWA — Lumbridge Adventure</title>
-<link rel="manifest" href="data:application/json,%7B%22name%22%3A%22Lumbridge%20Adventure%22%2C%22short_name%22%3A%22Lumbridge%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%233d2b1f%22%2C%22theme_color%22%3A%22%233d2b1f%22%7D">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Irondale – Classic Browser RPG (Isometric 2D)</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-:root {
-  --bg-panel: #3d2b1f;
-  --bg-panel-light: #4a3728;
-  --border-gold: #c8a85a;
-  --border-dark: #1a1008;
-  --text-gold: #c8a85a;
-  --text-white: #f0e8d0;
-  --text-green: #00c800;
-  --text-red: #c80000;
-  --text-orange: #f07800;
-  --text-blue: #4080ff;
-  --text-cyan: #00c8c8;
-  --canvas-sky: #4a7c9e;
-  --hp-green: #00b400;
-  --xp-bar: #8b6914;
-}
-* { margin:0; padding:0; box-sizing:border-box; }
-html, body {
-  width:100%; height:100%;
-  overflow:hidden;
-  background:#1a1008;
-  font-family:'Press Start 2P', monospace;
-  user-select:none;
-  -webkit-user-select:none;
-}
-#game-container {
-  display:flex;
-  width:100vw;
-  height:100vh;
-  padding-top: env(safe-area-inset-top, 0);
-  padding-bottom: env(safe-area-inset-bottom, 0);
-  padding-left: env(safe-area-inset-left, 0);
-  padding-right: env(safe-area-inset-right, 0);
-}
-#left-panel {
-  flex:1;
-  display:flex;
-  flex-direction:column;
-  min-width:0;
-}
-#game-canvas-wrap {
-  flex:1;
-  position:relative;
-  overflow:hidden;
-  background: var(--canvas-sky);
-}
-#game-canvas {
-  display:block;
-  width:100%;
-  height:100%;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-  cursor: crosshair;
-}
-#chatbox {
-  height:80px;
-  background:#000;
-  border-top:2px solid var(--border-gold);
-  display:flex;
-  flex-direction:column;
-}
-#chat-messages {
-  flex:1;
-  overflow-y:auto;
-  padding:4px 6px;
-  font-size:9px;
-  line-height:1.6;
-  color: var(--text-green);
-  scrollbar-width:thin;
-  scrollbar-color: var(--bg-panel-light) #000;
-}
-#chat-messages::-webkit-scrollbar { width:6px; }
-#chat-messages::-webkit-scrollbar-track { background:#000; }
-#chat-messages::-webkit-scrollbar-thumb { background:var(--bg-panel-light); border-radius:3px; }
-#chat-input-wrap {
-  display:flex;
-  border-top:1px solid #222;
-}
-#chat-input {
-  flex:1;
-  background:#111;
-  border:none;
-  color:var(--text-white);
-  font-family:'Press Start 2P', monospace;
-  font-size:8px;
-  padding:4px 6px;
-  outline:none;
-}
-#right-panel {
-  width:240px;
-  background: var(--bg-panel);
-  border-left:2px solid var(--border-gold);
-  display:flex;
-  flex-direction:column;
-  overflow:hidden;
-  box-shadow: inset 2px 0 8px rgba(0,0,0,0.4);
-}
-#minimap-wrap {
-  padding:4px;
-  border-bottom:2px solid var(--border-dark);
-  display:flex;
-  justify-content:center;
-  background: var(--bg-panel-light);
-}
-#minimap-canvas {
-  width:120px; height:120px;
-  border:2px solid var(--border-gold);
-  image-rendering: pixelated;
-}
-#tab-bar {
-  display:flex;
-  border-bottom:2px solid var(--border-dark);
-  background: var(--bg-panel-light);
-}
-.tab-btn {
-  flex:1;
-  background:transparent;
-  border:none;
-  border-bottom:2px solid transparent;
-  color: var(--text-gold);
-  font-family:'Press Start 2P', monospace;
-  font-size:9px;
-  padding:6px 2px;
-  cursor:pointer;
-  transition: background 0.15s;
-}
-.tab-btn:hover { background: rgba(200,168,90,0.1); }
-.tab-btn.active {
-  border-bottom-color: var(--border-gold);
-  background: rgba(200,168,90,0.15);
-}
-#tab-content {
-  flex:1;
-  overflow-y:auto;
-  padding:6px;
-  scrollbar-width:thin;
-  scrollbar-color: var(--bg-panel-light) var(--bg-panel);
-}
-#tab-content::-webkit-scrollbar { width:6px; }
-#tab-content::-webkit-scrollbar-track { background:var(--bg-panel); }
-#tab-content::-webkit-scrollbar-thumb { background:var(--bg-panel-light); border-radius:3px; }
-.panel-section {
-  background: var(--bg-panel-light);
-  border:1px solid var(--border-dark);
-  border-radius:4px;
-  padding:6px;
-  margin-bottom:6px;
-  box-shadow: inset 1px 1px 0 rgba(255,255,255,0.06), inset -1px -1px 0 rgba(0,0,0,0.3);
-}
-.panel-title {
-  color: var(--text-gold);
-  font-size:8px;
-  margin-bottom:4px;
-  text-align:center;
-}
-.skill-row {
-  display:flex;
-  align-items:center;
-  margin-bottom:3px;
-  font-size:7px;
-  color: var(--text-white);
-}
-.skill-icon { width:16px; height:16px; margin-right:4px; image-rendering:pixelated; }
-.skill-name { flex:1; }
-.skill-level { color:var(--text-gold); margin-right:4px; }
-.skill-xp-bar {
-  width:40px; height:4px;
-  background:#222;
-  border-radius:2px;
-  overflow:hidden;
-}
-.skill-xp-fill {
-  height:100%;
-  background: var(--xp-bar);
-  transition: width 0.3s;
-}
-.inv-grid {
-  display:grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap:2px;
-}
-.inv-slot {
-  width:100%;
-  aspect-ratio:1;
-  background: rgba(0,0,0,0.3);
-  border:1px solid var(--border-dark);
-  border-radius:2px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  position:relative;
-  cursor:pointer;
-  transition: border-color 0.15s;
-}
-.inv-slot:hover { border-color: var(--border-gold); }
-.inv-slot canvas { width:100%; height:100%; image-rendering:pixelated; }
-.inv-slot .stack-count {
-  position:absolute;
-  bottom:1px; right:2px;
-  font-size:6px;
-  color: var(--text-gold);
-  text-shadow: 1px 1px 0 #000;
-}
-.equip-grid {
-  display:grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(3, 1fr);
-  gap:2px;
-  max-width:160px;
-  margin:0 auto;
-}
-.equip-slot {
-  aspect-ratio:1;
-  background:rgba(0,0,0,0.3);
-  border:1px solid var(--border-dark);
-  border-radius:2px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:6px;
-  color:#666;
-  cursor:pointer;
-  position:relative;
-}
-.equip-slot:hover { border-color: var(--border-gold); }
-.equip-slot canvas { width:100%; height:100%; image-rendering:pixelated; }
-.quest-item {
-  padding:4px;
-  margin-bottom:4px;
-  border:1px solid var(--border-dark);
-  border-radius:3px;
-  background: rgba(0,0,0,0.2);
-}
-.quest-name { font-size:8px; color:var(--text-gold); margin-bottom:2px; }
-.quest-status { font-size:7px; color:var(--text-cyan); }
-.quest-obj { font-size:7px; color:var(--text-white); margin-top:2px; }
-.stat-row { display:flex; justify-content:space-between; font-size:7px; color:var(--text-white); margin-bottom:3px; }
-.stat-val { color:var(--text-gold); }
-.info-line { font-size:7px; color:var(--text-white); margin-bottom:4px; line-height:1.6; }
-.info-label { color:var(--text-gold); }
-#dialog-overlay {
-  display:none;
-  position:absolute;
-  top:0;left:0;right:0;bottom:0;
-  background:rgba(0,0,0,0.5);
-  z-index:10;
-  justify-content:center;
-  align-items:center;
-}
-#dialog-overlay.show { display:flex; }
-#dialog-box {
-  width:320px;
-  background:var(--bg-panel);
-  border:3px solid var(--border-gold);
-  border-radius:6px;
-  padding:12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.6), inset 1px 1px 0 rgba(255,255,255,0.06);
-}
-#dialog-speaker { font-size:9px; color:var(--text-gold); margin-bottom:8px; }
-#dialog-text { font-size:8px; color:var(--text-white); line-height:1.6; margin-bottom:10px; min-height:50px; }
-#dialog-options { display:flex; flex-direction:column; gap:4px; }
-.dialog-opt {
-  background: var(--bg-panel-light);
-  border:1px solid var(--border-gold);
-  border-radius:4px;
-  color:var(--text-gold);
-  font-family:'Press Start 2P', monospace;
-  font-size:7px;
-  padding:6px 8px;
-  cursor:pointer;
-  text-align:left;
-  transition: background 0.15s;
-}
-.dialog-opt:hover { background: rgba(200,168,90,0.2); }
-#cooking-overlay {
-  display:none;
-  position:absolute;
-  top:0;left:0;right:0;bottom:0;
-  background:rgba(0,0,0,0.6);
-  z-index:10;
-  justify-content:center;
-  align-items:center;
-}
-#cooking-overlay.show { display:flex; }
-#cooking-box {
-  width:300px;
-  background:var(--bg-panel);
-  border:3px solid var(--border-gold);
-  border-radius:6px;
-  padding:16px;
-  text-align:center;
-}
-#cooking-title { font-size:9px; color:var(--text-gold); margin-bottom:12px; }
-#cooking-bar-wrap {
-  width:100%;
-  height:20px;
-  background:#222;
-  border:2px solid var(--border-dark);
-  border-radius:4px;
-  position:relative;
-  margin-bottom:12px;
-  overflow:hidden;
-}
-#cooking-green-zone {
-  position:absolute;
-  height:100%;
-  background: rgba(0,180,0,0.3);
-  border-left:1px solid var(--text-green);
-  border-right:1px solid var(--text-green);
-}
-#cooking-needle {
-  position:absolute;
-  top:0;
-  width:3px;
-  height:100%;
-  background:var(--text-red);
-  box-shadow: 0 0 4px var(--text-red);
-}
-#cooking-btn {
-  background:var(--bg-panel-light);
-  border:2px solid var(--border-gold);
-  color:var(--text-gold);
-  font-family:'Press Start 2P', monospace;
-  font-size:9px;
-  padding:8px 16px;
-  border-radius:4px;
-  cursor:pointer;
-}
-#cooking-btn:hover { background:rgba(200,168,90,0.2); }
-#context-menu {
-  display:none;
-  position:absolute;
-  z-index:20;
-  background:var(--bg-panel);
-  border:2px solid var(--border-gold);
-  border-radius:4px;
-  min-width:100px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
-}
-.ctx-item {
-  display:block;
-  width:100%;
-  background:transparent;
-  border:none;
-  color:var(--text-gold);
-  font-family:'Press Start 2P', monospace;
-  font-size:7px;
-  padding:6px 10px;
-  text-align:left;
-  cursor:pointer;
-}
-.ctx-item:hover { background:rgba(200,168,90,0.2); }
-.ctx-item.ctx-title { color:var(--text-orange); cursor:default; }
-.ctx-item.ctx-title:hover { background:transparent; }
-#xp-drop {
-  position:absolute;
-  top:40%;
-  left:50%;
-  transform:translateX(-50%);
-  font-size:10px;
-  color:var(--text-cyan);
-  text-shadow:1px 1px 2px #000;
-  pointer-events:none;
-  opacity:0;
-  transition: opacity 0.3s, top 0.8s;
-  z-index:5;
-}
-#xp-drop.show { opacity:1; }
-#level-flash {
-  position:absolute;
-  top:0;left:0;right:0;bottom:0;
-  background: rgba(64,128,255,0.3);
-  pointer-events:none;
-  opacity:0;
-  z-index:6;
-  transition:opacity 0.15s;
-}
-#level-flash.show { opacity:1; }
-#quest-flash {
-  position:absolute;
-  top:0;left:0;right:0;bottom:0;
-  background:rgba(200,168,90,0.25);
-  pointer-events:none;
-  opacity:0;
-  z-index:6;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-#quest-flash.show { opacity:1; }
-#quest-flash-text {
-  font-size:14px;
-  color:var(--text-gold);
-  text-shadow: 2px 2px 4px #000;
-}
-#death-flash {
-  position:absolute;
-  top:0;left:0;right:0;bottom:0;
-  background:rgba(200,0,0,0.3);
-  pointer-events:none;
-  opacity:0;
-  z-index:6;
-}
-#death-flash.show { opacity:1; }
-#docs-toggle {
-  position:fixed;
-  bottom:4px;left:4px;
-  background:var(--bg-panel);
-  border:1px solid var(--border-gold);
-  color:var(--text-gold);
-  font-family:'Press Start 2P', monospace;
-  font-size:7px;
-  padding:4px 8px;
-  border-radius:4px;
-  cursor:pointer;
-  z-index:100;
-  opacity:0.6;
-}
-#docs-toggle:hover { opacity:1; }
-#docs-panel {
-  display:none;
-  position:fixed;
-  top:0;left:0;right:0;bottom:0;
-  background:rgba(0,0,0,0.9);
-  z-index:99;
-  overflow-y:auto;
-  padding:20px;
-}
-#docs-panel.show { display:block; }
-#docs-inner {
-  max-width:700px;
-  margin:0 auto;
-  background:var(--bg-panel);
-  border:2px solid var(--border-gold);
-  border-radius:6px;
-  padding:20px;
-}
-#docs-inner h2 { font-size:10px; color:var(--text-gold); margin:16px 0 8px; }
-#docs-inner pre {
-  font-size:7px;
-  color:var(--text-white);
-  line-height:1.6;
-  white-space:pre-wrap;
-  word-break:break-word;
-}
-#docs-close {
-  float:right;
-  background:transparent;
-  border:1px solid var(--border-gold);
-  color:var(--text-gold);
-  font-family:'Press Start 2P', monospace;
-  font-size:9px;
-  padding:4px 8px;
-  cursor:pointer;
-  border-radius:4px;
-}
-footer.game-footer {
-  position:fixed;
-  bottom:0;
-  left:50%;
-  transform:translateX(-50%);
-  font-size:6px;
-  color:#555;
-  padding:2px 6px;
-  pointer-events:none;
-  z-index:50;
-}
-@media (max-width:600px) {
-  #right-panel { width:180px; }
-  .inv-grid { grid-template-columns: repeat(4,1fr); }
-}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#000;overflow:hidden;font-family:'Segoe UI',monospace;user-select:none;display:flex;align-items:center;justify-content:center;height:100vh;width:100vw;}
+#game-wrapper{position:relative;width:765px;height:503px;background:#000;border:2px solid #3a2a1a;}
+#game-canvas{display:block;width:765px;height:503px;}
+#hud{position:absolute;top:0;left:0;width:765px;height:503px;pointer-events:none;overflow:hidden;}
+#loading-screen{position:absolute;inset:0;background:#0a0500;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loader-spinner{width:32px;height:32px;border:3px solid #3a2a1a;border-top-color:#c5a028;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px;}
+#loading-screen h1{color:#c5a028;font-family:Georgia,serif;font-size:48px;text-shadow:0 0 20px #c5a028,0 0 40px #8a6a10;letter-spacing:4px;}
+#loading-screen .sub{color:#8a6a3a;font-size:14px;margin:8px 0 24px;font-style:italic;}
+#load-bar-outer{width:300px;height:20px;border:1px solid #5a4a2a;background:#0a0500;border-radius:2px;}
+#load-bar{height:100%;background:linear-gradient(90deg,#8a6a10,#c5a028);width:0%;transition:width 0.3s;border-radius:1px;}
+#load-status{color:#8a6a3a;font-size:12px;margin-top:8px;}
+#top-bar{position:absolute;top:0;left:0;right:160px;height:24px;background:rgba(0,0,0,0.8);border-bottom:1px solid #3a2a1a;display:flex;align-items:center;padding:0 8px;gap:12px;font-size:11px;font-family:monospace;pointer-events:auto;color:#ff981f;z-index:10;}
+#top-bar .title{color:#c5a028;font-weight:bold;letter-spacing:1px;}
+#top-bar span{color:#aaa;}
+#top-bar .val{color:#fff;}
+#minimap-wrap{position:absolute;top:0;right:0;width:160px;height:160px;background:#0a0a05;border:2px solid #5a4a2a;border-top:none;border-right:none;pointer-events:auto;cursor:crosshair;z-index:10;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+#minimap{width:152px;height:152px;}
+.data-orb{position:absolute;left:3px;width:52px;height:52px;border-radius:50%;border:2px solid #5a4a2a;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:9px;font-family:monospace;font-weight:bold;cursor:pointer;pointer-events:auto;z-index:10;}
+#hp-orb{top:160px;background:radial-gradient(circle,#4a0000 0%,#1a0000 100%);color:#ff4444;}
+#prayer-orb{top:216px;background:radial-gradient(circle,#001a4a 0%,#000a1a 100%);color:#44aaff;}
+#run-orb{top:272px;background:radial-gradient(circle,#1a3a00 0%,#0a1a00 100%);color:#88ff44;}
+.orb-icon{font-size:14px;line-height:1;}
+.orb-val{font-size:10px;line-height:1;}
+#chatbox{position:absolute;bottom:0;left:0;width:519px;height:142px;background:rgba(0,0,0,0.88);border-top:1px solid #3a2a1a;display:flex;flex-direction:column;pointer-events:auto;z-index:10;}
+#chat-tabs{display:flex;height:20px;background:#0a0500;border-bottom:1px solid #3a2a1a;flex-shrink:0;}
+.chat-tab{flex:1;background:#1a0f05;color:#ff981f;font-size:10px;cursor:pointer;border-right:1px solid #3a2a1a;text-align:center;padding-top:3px;font-family:monospace;}
+.chat-tab.active{background:#2a1a0a;color:#fff;}
+#chat-messages{flex:1;overflow-y:auto;padding:2px 4px;font-size:11px;font-family:monospace;scrollbar-width:thin;scrollbar-color:#3a2a1a #0a0500;}
+#chat-messages::-webkit-scrollbar{width:6px;}
+#chat-messages::-webkit-scrollbar-track{background:#0a0500;}
+#chat-messages::-webkit-scrollbar-thumb{background:#3a2a1a;}
+.chat-msg{padding:1px 0;line-height:1.3;}
+.chat-game{color:#ff981f;}.chat-player{color:#00ffff;}.chat-quest{color:#9f4fff;}.chat-combat{color:#ff4444;}.chat-item{color:#00ff00;}.chat-skill{color:#ffff00;}
+#chat-input-bar{height:22px;display:flex;background:#0a0a0a;border-top:1px solid #3a2a1a;flex-shrink:0;}
+#chat-input{flex:1;background:transparent;border:none;color:#ffff00;font-size:11px;font-family:monospace;padding:0 4px;outline:none;}
+#right-panel{position:absolute;right:0;bottom:0;width:196px;height:303px;background:rgba(15,10,5,0.95);border-left:1px solid #5a4a2a;border-top:1px solid #5a4a2a;display:flex;flex-direction:column;pointer-events:auto;z-index:10;}
+#panel-tabs{display:flex;height:30px;background:#0a0500;border-bottom:1px solid #3a2a1a;flex-shrink:0;}
+.panel-tab{flex:1;display:flex;align-items:center;justify-content:center;background:#1a0f05;color:#ff981f;font-size:13px;cursor:pointer;border-right:1px solid #2a1a0a;transition:background 0.15s;}
+.panel-tab.active{background:#2a1a0a;color:#fff;}
+.panel-tab:hover{background:#2a1a0a;}
+#panel-content{flex:1;overflow-y:auto;padding:4px;scrollbar-width:thin;scrollbar-color:#3a2a1a #0a0500;}
+#panel-content::-webkit-scrollbar{width:5px;}
+#panel-content::-webkit-scrollbar-track{background:#0a0500;}
+#panel-content::-webkit-scrollbar-thumb{background:#3a2a1a;}
+.inv-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;}
+.inv-slot{width:44px;height:34px;background:#0a0500;border:1px solid #3a2a1a;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;font-size:8px;color:#ff981f;text-align:center;overflow:hidden;transition:border-color 0.15s;}
+.inv-slot:hover{border-color:#ff981f;}
+.inv-slot .item-icon{width:32px;height:26px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:7px;color:#fff;text-shadow:0 0 2px #000;font-weight:bold;}
+.inv-slot .stack-count{position:absolute;bottom:1px;left:2px;font-size:8px;color:#ffff00;font-weight:bold;text-shadow:1px 1px 0 #000;}
+.skill-row{display:flex;align-items:center;padding:2px 4px;font-size:10px;font-family:monospace;border-bottom:1px solid #1a1208;}
+.skill-row .sk-icon{width:16px;text-align:center;margin-right:4px;}
+.skill-row .sk-name{flex:1;color:#ff981f;}
+.skill-row .sk-lvl{color:#fff;min-width:30px;text-align:right;}
+.quest-item{padding:4px;cursor:pointer;font-size:11px;font-family:monospace;border-bottom:1px solid #1a1208;}
+.quest-item .q-name{font-weight:bold;}
+.q-not_started .q-name{color:#ff0000;}
+.q-in_progress .q-name{color:#ffff00;}
+.q-complete .q-name{color:#00ff00;}
+.quest-obj{font-size:10px;color:#aaa;padding-left:12px;margin-top:2px;}
+.quest-obj.done{color:#00ff00;text-decoration:line-through;}
+.combat-styles{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;}
+.style-btn{padding:6px;background:#1a0f05;border:1px solid #3a2a1a;color:#ff981f;font-size:10px;font-family:monospace;cursor:pointer;text-align:center;border-radius:2px;}
+.style-btn.active{background:#2a1a0a;border-color:#c5a028;color:#fff;}
+.style-btn:hover{border-color:#ff981f;}
+.equip-grid{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;}
+.equip-row{display:flex;gap:2px;}
+.equip-slot{width:40px;height:34px;background:#0a0500;border:1px solid #3a2a1a;display:flex;align-items:center;justify-content:center;font-size:7px;color:#555;cursor:pointer;text-align:center;}
+.equip-slot.filled{color:#ff981f;border-color:#5a4a2a;}
+#context-menu{position:absolute;display:none;background:#1a1208;border:1px solid #5a4a2a;min-width:130px;z-index:1000;pointer-events:auto;font-size:12px;font-family:monospace;}
+.ctx-option{padding:4px 10px;color:#ff981f;cursor:pointer;}
+.ctx-option:first-child{color:#ffff00;background:#0a0500;cursor:default;font-weight:bold;font-size:11px;}
+.ctx-option:not(:first-child):hover{background:#2a1a0a;color:#fff;}
+#dialog-panel{position:absolute;bottom:142px;left:0;width:519px;background:rgba(0,0,0,0.94);border:1px solid #5a4a2a;border-bottom:none;border-left:none;padding:10px;pointer-events:auto;display:none;z-index:20;}
+#dialog-name{color:#ffff00;font-size:13px;font-weight:bold;margin-bottom:6px;font-family:monospace;}
+#dialog-text{color:#fff;font-size:12px;margin-bottom:10px;line-height:1.5;font-family:monospace;}
+#dialog-options{display:flex;flex-direction:column;gap:3px;}
+.dialog-option{color:#00ffff;font-size:11px;cursor:pointer;padding:2px 0;font-family:monospace;}
+.dialog-option:hover{color:#ffffff;}
+.dialog-option::before{content:'▶ ';}
+#bank-modal{position:absolute;inset:0;background:rgba(0,0,0,0.85);display:none;z-index:100;pointer-events:auto;flex-direction:column;align-items:center;justify-content:center;}
+#bank-inner{width:500px;background:#1a1208;border:2px solid #5a4a2a;border-radius:4px;overflow:hidden;}
+#bank-header{background:#0a0500;padding:6px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #3a2a1a;}
+#bank-header span{color:#c5a028;font-size:14px;font-weight:bold;font-family:monospace;}
+#bank-close{color:#ff4444;cursor:pointer;font-size:18px;font-weight:bold;}
+#bank-items{display:grid;grid-template-columns:repeat(8,1fr);gap:2px;padding:8px;min-height:160px;}
+.bank-slot{width:54px;height:40px;background:#0a0500;border:1px solid #3a2a1a;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;font-size:7px;color:#ff981f;text-align:center;}
+.bank-slot:hover{border-color:#ff981f;}
+.bank-slot .stack-count{position:absolute;bottom:1px;left:2px;font-size:8px;color:#ffff00;font-weight:bold;text-shadow:1px 1px 0 #000;}
+#bank-inv{border-top:1px solid #3a2a1a;padding:8px;}
+#bank-inv-label{color:#ff981f;font-size:10px;font-family:monospace;margin-bottom:4px;}
+#bank-inv-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+#bank-actions{display:flex;gap:4px;padding:4px 8px 8px;justify-content:center;}
+.bank-btn{padding:4px 12px;background:#2a1a0a;border:1px solid #5a4a2a;color:#ff981f;font-size:11px;font-family:monospace;cursor:pointer;border-radius:2px;}
+.bank-btn:hover{background:#3a2a1a;color:#fff;}
+#level-up-popup{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.95);border:2px solid #c5a028;padding:20px 30px;display:none;z-index:200;pointer-events:none;text-align:center;border-radius:4px;}
+#level-up-popup h2{color:#ffff00;font-size:16px;margin-bottom:4px;font-family:monospace;}
+#level-up-popup p{color:#fff;font-size:13px;font-family:monospace;}
+#save-indicator{position:absolute;top:28px;left:8px;color:#3a8a3a;font-size:10px;font-family:monospace;pointer-events:none;opacity:0;transition:opacity 0.5s;z-index:10;}
+#tooltip{position:absolute;display:none;background:#1a1208;border:1px solid #5a4a2a;padding:3px 6px;font-size:10px;font-family:monospace;color:#ff981f;z-index:600;pointer-events:none;white-space:nowrap;}
+footer{position:fixed;bottom:2px;right:4px;color:#3a2a1a;font-size:9px;font-family:monospace;z-index:0;}
 </style>
 </head>
 <body data-id="0">
 <app-icon data-id="1" hidden data-icon="sword" data-palette="Earth"></app-icon>
-<div data-id="2" id="game-container">
-  <div data-id="3" id="left-panel">
-    <div data-id="4" id="game-canvas-wrap">
-      <canvas data-id="5" id="game-canvas"></canvas>
-      <div data-id="6" id="dialog-overlay"><div data-id="7" id="dialog-box"><div data-id="8" id="dialog-speaker"></div><div data-id="9" id="dialog-text"></div><div data-id="10" id="dialog-options"></div></div></div>
-      <div data-id="11" id="cooking-overlay"><div data-id="12" id="cooking-box"><div data-id="13" id="cooking-title">Cooking</div><div data-id="14" id="cooking-bar-wrap"><div data-id="15" id="cooking-green-zone"></div><div data-id="16" id="cooking-needle"></div></div><button data-id="17" id="cooking-btn">Cook!</button></div></div>
-      <div data-id="18" id="xp-drop"></div>
-      <div data-id="19" id="level-flash"></div>
-      <div data-id="20" id="quest-flash"><div data-id="21" id="quest-flash-text">QUEST COMPLETE!</div></div>
-      <div data-id="22" id="death-flash"></div>
-    </div>
-    <div data-id="23" id="chatbox">
-      <div data-id="24" id="chat-messages"></div>
-      <div data-id="25" id="chat-input-wrap"><input data-id="26" id="chat-input" type="text" placeholder="Press Enter to chat..." maxlength="80"></div>
-    </div>
-  </div>
-  <div data-id="27" id="right-panel">
-    <div data-id="28" id="minimap-wrap"><canvas data-id="29" id="minimap-canvas" width="120" height="120"></canvas></div>
-    <div data-id="30" id="tab-bar">
-      <button data-id="31" class="tab-btn active" data-tab="inv">Bag</button>
-      <button data-id="32" class="tab-btn" data-tab="equip">Equip</button>
-      <button data-id="33" class="tab-btn" data-tab="skills">Stats</button>
-      <button data-id="34" class="tab-btn" data-tab="quests">Quest</button>
-      <button data-id="35" class="tab-btn" data-tab="combat">Cmbt</button>
-      <button data-id="36" class="tab-btn" data-tab="info">Info</button>
-    </div>
-    <div data-id="37" id="tab-content"></div>
-  </div>
+<div data-id="2" id="game-wrapper">
+<canvas data-id="3" id="game-canvas" width="765" height="503"></canvas>
+<div data-id="4" id="hud">
+<div data-id="5" id="loading-screen"><div data-id="6" class="loader-spinner"></div><h1 data-id="7">IRONDALE</h1><p data-id="8" class="sub">A Medieval Fantasy Adventure</p><div data-id="9" id="load-bar-outer"><div data-id="10" id="load-bar"></div></div><p data-id="11" id="load-status">Initializing world...</p></div>
+<div data-id="12" id="top-bar"><span data-id="13" class="title">⚔ Irondale</span><span data-id="14">Total: <span data-id="15" class="val" id="total-level">15</span></span><span data-id="16">QP: <span data-id="17" class="val" id="quest-points">0</span></span><span data-id="18">Deaths: <span data-id="19" class="val" id="death-count">0</span></span></div>
+<div data-id="20" id="minimap-wrap"><canvas data-id="21" id="minimap" width="152" height="152"></canvas></div>
+<div data-id="22" class="data-orb" id="hp-orb"><span data-id="23" class="orb-icon">❤</span><span data-id="24" class="orb-val" id="hp-val">10/10</span></div>
+<div data-id="25" class="data-orb" id="prayer-orb"><span data-id="26" class="orb-icon">✙</span><span data-id="27" class="orb-val" id="prayer-val">1/1</span></div>
+<div data-id="28" class="data-orb" id="run-orb"><span data-id="29" class="orb-icon">🏃</span><span data-id="30" class="orb-val" id="run-val">100%</span></div>
+<div data-id="31" id="chatbox">
+<div data-id="32" id="chat-tabs"><div data-id="33" class="chat-tab active" data-ct="all">All</div><div data-id="34" class="chat-tab" data-ct="game">Game</div><div data-id="35" class="chat-tab" data-ct="combat">Combat</div></div>
+<div data-id="36" id="chat-messages"></div>
+<div data-id="37" id="chat-input-bar"><input data-id="38" id="chat-input" type="text" placeholder="Press Enter to chat..." maxlength="80"></div>
 </div>
-<div data-id="38" id="context-menu"></div>
-<button data-id="39" id="docs-toggle">Dev</button>
-<div data-id="40" id="docs-panel">
-  <div data-id="41" id="docs-inner">
-    <button data-id="42" id="docs-close">X</button>
-    <h2 data-id="43">Lumbridge Adventure — Dev Docs</h2>
-    <pre data-id="44">
-═══ FILE TREE (Multi-file Split) ═══
-lumbridge-adventure/
-├── index.html
-├── manifest.json
-├── sw.js
-├── src/
-│   ├── constants.js
-│   ├── sprites/
-│   │   └── SpriteGenerator.js
-│   ├── world/
-│   │   ├── TileMap.js
-│   │   └── WorldData.js
-│   ├── pathfinding/
-│   │   └── AStar.js
-│   ├── entities/
-│   │   ├── Entity.js
-│   │   ├── Player.js
-│   │   ├── NPC.js
-│   │   ├── Enemy.js
-│   │   └── WorldItem.js
-│   ├── systems/
-│   │   ├── DialogEngine.js
-│   │   ├── QuestManager.js
-│   │   ├── CombatEngine.js
-│   │   ├── InventoryManager.js
-│   │   ├── SkillsManager.js
-│   │   └── CookingMinigame.js
-│   ├── rendering/
-│   │   ├── Camera.js
-│   │   ├── Renderer.js
-│   │   └── MinimapRenderer.js
-│   ├── ui/
-│   │   ├── UIManager.js
-│   │   ├── ChatBox.js
-│   │   └── TabPanels.js
-│   ├── input/
-│   │   └── InputHandler.js
-│   ├── save/
-│   │   └── SaveManager.js
-│   └── GameLoop.js
-├── assets/  (generated at build)
-└── README.md
-
-═══ QUEST STATE MACHINE ═══
-  NOT_STARTED
-      │ (talk to Cook)
-      ▼
-  ACCEPTED
-      │ (collect items)
-      ▼
-  COLLECTING ──┬─ has egg?
-               ├─ has flour?
-               └─ has milk?
-      │ (all 3 collected)
-      ▼
-  ALL_ITEMS
-      │ (talk to Cook)
-      ▼
-  TURNING_IN
-      │ (items removed, rewards given)
-      ▼
-  COMPLETE
-
-═══ ACCEPTANCE CRITERIA ═══
-[x] Procedural pixel sprites
-[x] 40x30 tilemap with zones
-[x] A* pathfinding (4-dir)
-[x] Click-to-move with path
-[x] Combat system (tick-based)
-[x] Goblin AI (wander/aggro)
-[x] Loot drops
-[x] Inventory (28 slots)
-[x] Equipment system
-[x] Skills + XP table
-[x] Quest state machine
-[x] Dialog engine
-[x] Cooking minigame
-[x] Minimap (live)
-[x] Chat system (color-coded)
-[x] Save/load (localStorage)
-[x] PWA meta tags
-[x] Keyboard shortcuts
-[x] Mobile landscape support
-    </pre>
-  </div>
+<div data-id="39" id="right-panel">
+<div data-id="40" id="panel-tabs">
+<div data-id="41" class="panel-tab" data-panel="combat" title="Combat">⚔</div>
+<div data-id="42" class="panel-tab active" data-panel="skills" title="Skills">📊</div>
+<div data-id="43" class="panel-tab" data-panel="quests" title="Quests">📜</div>
+<div data-id="44" class="panel-tab" data-panel="inventory" title="Inventory">🎒</div>
+<div data-id="45" class="panel-tab" data-panel="equipment" title="Equipment">🛡</div>
 </div>
-<footer data-id="45" class="game-footer">Made by Copilot</footer>
-
+<div data-id="46" id="panel-content"></div>
+</div>
+<div data-id="47" id="dialog-panel"><div data-id="48" id="dialog-name"></div><div data-id="49" id="dialog-text"></div><div data-id="50" id="dialog-options"></div></div>
+<div data-id="51" id="context-menu"></div>
+<div data-id="52" id="level-up-popup"><h2 data-id="53" id="lvlup-title"></h2><p data-id="54" id="lvlup-desc"></p></div>
+<div data-id="55" id="bank-modal"><div data-id="56" id="bank-inner"><div data-id="57" id="bank-header"><span data-id="58">⚔ Irondale Bank</span><div data-id="59" id="bank-close">✕</div></div><div data-id="60" id="bank-items"></div><div data-id="61" id="bank-actions"><div data-id="62" class="bank-btn" id="deposit-all-btn">Deposit All</div></div><div data-id="63" id="bank-inv"><div data-id="64" id="bank-inv-label">Inventory</div><div data-id="65" id="bank-inv-grid"></div></div></div></div>
+<div data-id="66" id="save-indicator">Game saved.</div>
+<div data-id="67" id="tooltip"></div>
+</div>
+</div>
+<footer data-id="68">Made by Copilot</footer>
 <script>
-// ═══════════════════════════════════════
-// 1. CONSTANTS & CONFIG
-// ═══════════════════════════════════════
-const TILE_W = 32, TILE_H = 32;
-const MAP_W = 40, MAP_H = 30;
-const TICK_MS = 600;
-const WALK_SPEED = 2; // tiles per second
-const SPRITE_SIZE = 32;
-const ITEM_SPRITE = 16;
-const COLORS = {
-  skin:'#c8956c', shirt:'#3a6bc8', pants:'#3d2b1f', boots:'#1a0a00',
-  hair:'#5a3010', goblinGreen:'#4a7c2b', goblinEye:'#e8e800',
-  cookWhite:'#f0f0f0', cookBlue:'#3a6bc8', hansRed:'#c83232', hansHair:'#e8c850',
-  bronze:'#c87832', steel:'#888',
+(function(){
+"use strict";
+const W=765,H=503,MAP=60,TICK_MS=600;
+const TILE_W=64,TILE_H=32,TILE_DEPTH=16;
+let tickCount=0,audioCtx=null,audioStarted=false;
+
+// ---- ISO HELPERS ----
+function tileToScreen(gx,gy){return{x:(gx-gy)*(TILE_W/2),y:(gx+gy)*(TILE_H/2)};}
+function screenToTile(sx,sy){
+const gx=Math.floor((sx/(TILE_W/2)+sy/(TILE_H/2))/2);
+const gy=Math.floor((sy/(TILE_H/2)-sx/(TILE_W/2))/2);
+return{x:gx,y:gy};
+}
+
+let camX=0,camY=0,camTargetX=0,camTargetY=0;
+let hoverTile=null;
+
+// ---- ITEMS DB ----
+const ITEMS={
+coins:{id:'coins',name:'Coins',stackable:true,examine:'Shiny gold pieces.',value:1,color:'#ffd700'},
+bones:{id:'bones',name:'Bones',stackable:false,examine:'Them old bones.',value:1,color:'#e8e8d8'},
+raw_chicken:{id:'raw_chicken',name:'Raw Chicken',stackable:false,examine:'Raw chicken meat.',value:5,color:'#e8c89a'},
+cooked_chicken:{id:'cooked_chicken',name:'Cooked Chicken',stackable:false,examine:'Mmm, chicken.',value:10,color:'#c87840',heals:3},
+raw_beef:{id:'raw_beef',name:'Raw Beef',stackable:false,examine:'Raw beef.',value:5,color:'#c87a6a'},
+cooked_meat:{id:'cooked_meat',name:'Cooked Meat',stackable:false,examine:'Nicely cooked.',value:10,color:'#8a4a2a',heals:3},
+feather:{id:'feather',name:'Feather',stackable:true,examine:'A light feather.',value:1,color:'#f0f0f0'},
+egg:{id:'egg',name:'Egg',stackable:false,examine:'A fresh egg.',value:5,color:'#f5e6c8'},
+logs:{id:'logs',name:'Logs',stackable:false,examine:'A sturdy log.',value:5,color:'#8a6a3a'},
+copper_ore:{id:'copper_ore',name:'Copper Ore',stackable:false,examine:'Copper ore.',value:5,color:'#b87a5a'},
+cowhide:{id:'cowhide',name:'Cowhide',stackable:false,examine:'The hide of a cow.',value:25,color:'#c8a87a'},
+raw_shrimps:{id:'raw_shrimps',name:'Raw Shrimps',stackable:false,examine:'A raw shrimp.',value:3,color:'#d4b4a4'},
+cooked_shrimps:{id:'cooked_shrimps',name:'Cooked Shrimps',stackable:false,examine:'Cooked shrimps.',value:6,color:'#c88060',heals:2},
+bucket_milk:{id:'bucket_milk',name:'Bucket of Milk',stackable:false,examine:'A full bucket of milk.',value:10,color:'#f0f0f8'},
+pot_flour:{id:'pot_flour',name:'Pot of Flour',stackable:false,examine:'A pot of flour.',value:10,color:'#f5f0e8'},
+bronze_sword:{id:'bronze_sword',name:'Bronze Sword',stackable:false,examine:'A bronze sword.',value:50,color:'#c8a068',type:'weapon',slot:'weapon',atkBonus:4,strBonus:4,defBonus:0},
+iron_sword:{id:'iron_sword',name:'Iron Sword',stackable:false,examine:'An iron sword.',value:200,color:'#909090',type:'weapon',slot:'weapon',atkBonus:10,strBonus:9,defBonus:0},
+iron_dagger:{id:'iron_dagger',name:'Iron Dagger',stackable:false,examine:'A sharp iron dagger.',value:100,color:'#a0a0a0',type:'weapon',slot:'weapon',atkBonus:8,strBonus:5,defBonus:0},
+research_notes:{id:'research_notes',name:'Research Notes',stackable:false,examine:'Important arcane research.',value:0,color:'#f5e6c8'},
+ghost_skull:{id:'ghost_skull',name:"Ghost's Skull",stackable:false,examine:'A ghostly skull.',value:0,color:'#d8d8c8'},
 };
 
-// ═══════════════════════════════════════
-// 2. SPRITE GENERATOR
-// ═══════════════════════════════════════
-class SpriteGenerator {
-  constructor() {
-    this.cache = {};
-    this.tileCache = {};
-    this.waterFrame = 0;
-    this.waterCanvases = [];
-    this.generateAll();
-  }
-
-  createCanvas(w, h) {
-    const c = document.createElement('canvas');
-    c.width = w; c.height = h;
-    return c;
-  }
-
-  /** Generate all sprite assets */
-  generateAll() {
-    this.generateTiles();
-    this.generatePlayerFrames();
-    this.generateGoblinFrames();
-    this.generateNPCFrames();
-    this.generateItemSprites();
-  }
-
-  /** Tile sprites */
-  generateTiles() {
-    // Grass variants
-    for (let v = 0; v < 4; v++) {
-      const c = this.createCanvas(TILE_W, TILE_H);
-      const x = c.getContext('2d');
-      x.fillStyle = '#2d6e1e';
-      x.fillRect(0,0,TILE_W,TILE_H);
-      const rng = this.seededRNG(v * 17);
-      for (let i = 0; i < 12; i++) {
-        x.fillStyle = ['#256618','#348c24','#1f5a14','#3a8a2a'][Math.floor(rng()*4)];
-        x.fillRect(Math.floor(rng()*30), Math.floor(rng()*30), 2, 2);
-      }
-      this.tileCache['grass_'+v] = c;
-    }
-    // Path
-    {
-      const c = this.createCanvas(TILE_W,TILE_H), x = c.getContext('2d');
-      x.fillStyle='#8a6a3a'; x.fillRect(0,0,TILE_W,TILE_H);
-      for(let i=0;i<8;i++){x.fillStyle='#7a5a2a';x.fillRect(Math.random()*28,Math.random()*28,3,2);}
-      this.tileCache['path'] = c;
-    }
-    // Water (2 frames)
-    for (let f = 0; f < 2; f++) {
-      const c = this.createCanvas(TILE_W,TILE_H), x = c.getContext('2d');
-      x.fillStyle='#1a4a8c'; x.fillRect(0,0,TILE_W,TILE_H);
-      for(let i=0;i<6;i++){
-        x.fillStyle = f===0 ? '#2a5a9c' : '#1a5aac';
-        x.fillRect((i*7+f*3)%28, (i*5+f*4)%28, 6, 2);
-      }
-      this.waterCanvases.push(c);
-    }
-    this.tileCache['water'] = this.waterCanvases[0];
-    // Wall
-    {
-      const c = this.createCanvas(TILE_W,TILE_H), x = c.getContext('2d');
-      x.fillStyle='#606060'; x.fillRect(0,0,TILE_W,TILE_H);
-      x.strokeStyle='#444'; x.lineWidth=1;
-      for(let r=0;r<4;r++){
-        const y = r*8;
-        x.strokeRect(0,y,16,8); x.strokeRect(16,y,16,8);
-        if(r%2){x.strokeRect(-8,y,16,8); x.strokeRect(24,y,16,8);}
-      }
-      this.tileCache['wall'] = c;
-    }
-    // Floor
-    {
-      const c = this.createCanvas(TILE_W,TILE_H), x = c.getContext('2d');
-      x.fillStyle='#6b4423'; x.fillRect(0,0,TILE_W,TILE_H);
-      x.strokeStyle='#5a3818'; x.lineWidth=1;
-      for(let i=0;i<4;i++) { x.beginPath(); x.moveTo(0,i*8); x.lineTo(32,i*8); x.stroke(); }
-      this.tileCache['floor'] = c;
-    }
-    // Tree
-    {
-      const c = this.createCanvas(TILE_W,48), x = c.getContext('2d');
-      x.fillStyle='#5a3010'; x.fillRect(12,28,8,20);
-      x.fillStyle='#1a5c0a';
-      x.beginPath(); x.arc(16,20,12,0,Math.PI*2); x.fill();
-      x.fillStyle='#147008';
-      x.beginPath(); x.arc(12,18,6,0,Math.PI*2); x.fill();
-      x.beginPath(); x.arc(20,16,7,0,Math.PI*2); x.fill();
-      this.tileCache['tree'] = c;
-    }
-    // Rock
-    {
-      const c = this.createCanvas(TILE_W,TILE_H), x = c.getContext('2d');
-      x.fillStyle='#808080';
-      x.beginPath(); x.ellipse(16,20,12,10,0,0,Math.PI*2); x.fill();
-      x.fillStyle='#909090';
-      x.beginPath(); x.ellipse(14,18,6,5,0,0,Math.PI*2); x.fill();
-      this.tileCache['rock'] = c;
-    }
-    // Door
-    {
-      const c = this.createCanvas(TILE_W,TILE_H), x = c.getContext('2d');
-      x.fillStyle='#6b4423'; x.fillRect(4,2,24,30);
-      x.fillStyle='#c8a85a'; x.fillRect(22,14,4,4);
-      x.strokeStyle='#5a3818'; x.lineWidth=1; x.strokeRect(4,2,24,30);
-      this.tileCache['door'] = c;
-    }
-    // Cooking range
-    {
-      const c = this.createCanvas(TILE_W,TILE_H), x = c.getContext('2d');
-      x.fillStyle='#808080'; x.fillRect(2,2,28,28);
-      x.fillStyle='#606060'; x.fillRect(4,4,24,24);
-      x.fillStyle='#f07800'; x.fillRect(10,12,12,8);
-      x.fillStyle='#ff9900'; x.fillRect(12,14,8,4);
-      this.tileCache['range'] = c;
-    }
-  }
-
-  seededRNG(seed) {
-    let s = seed;
-    return () => { s = (s * 16807 + 0) % 2147483647; return (s - 1) / 2147483646; };
-  }
-
-  /** Player walk frames - 4 directions x 4 frames */
-  generatePlayerFrames() {
-    const dirs = ['south','west','east','north'];
-    dirs.forEach((dir, di) => {
-      for (let f = 0; f < 4; f++) {
-        const c = this.createCanvas(SPRITE_SIZE, SPRITE_SIZE);
-        const x = c.getContext('2d');
-        this.drawPlayerFrame(x, dir, f);
-        this.cache['player_'+dir+'_'+f] = c;
-      }
-    });
-  }
-
-  drawPlayerFrame(x, dir, frame) {
-    const legOffset = [0, -1, 0, 1][frame];
-    // Shadow
-    x.fillStyle = 'rgba(0,0,0,0.2)';
-    x.beginPath(); x.ellipse(16, 30, 8, 3, 0, 0, Math.PI*2); x.fill();
-    // Legs
-    x.fillStyle = COLORS.pants;
-    x.fillRect(10, 20+legOffset, 4, 8);
-    x.fillRect(18, 20-legOffset, 4, 8);
-    // Boots
-    x.fillStyle = COLORS.boots;
-    x.fillRect(10, 26+legOffset, 4, 3);
-    x.fillRect(18, 26-legOffset, 4, 3);
-    // Body
-    x.fillStyle = COLORS.shirt;
-    x.fillRect(11, 10, 10, 12);
-    // Arms
-    const armColor = '#a07850';
-    x.fillStyle = armColor;
-    if (dir === 'east') {
-      x.fillRect(21, 12, 3, 8);
-    } else if (dir === 'west') {
-      x.fillRect(8, 12, 3, 8);
-    } else {
-      x.fillRect(8, 12, 3, 8);
-      x.fillRect(21, 12, 3, 8);
-    }
-    // Head
-    x.fillStyle = COLORS.skin;
-    x.fillRect(12, 2, 8, 8);
-    // Eyes
-    x.fillStyle = '#000';
-    if (dir === 'south' || dir === 'east' || dir === 'west') {
-      if (dir !== 'west') x.fillRect(17, 5, 2, 2);
-      if (dir !== 'east') x.fillRect(13, 5, 2, 2);
-    }
-    // Hair
-    x.fillStyle = COLORS.hair;
-    x.fillRect(12, 2, 8, 2);
-    if (dir === 'west') x.fillRect(12, 2, 2, 4);
-    if (dir === 'east') x.fillRect(18, 2, 2, 4);
-  }
-
-  /** Goblin frames */
-  generateGoblinFrames() {
-    for (let f = 0; f < 4; f++) {
-      const c = this.createCanvas(SPRITE_SIZE, SPRITE_SIZE);
-      const x = c.getContext('2d');
-      const bob = f < 2 ? 0 : 1;
-      const attacking = f >= 2;
-      // Shadow
-      x.fillStyle = 'rgba(0,0,0,0.2)';
-      x.beginPath(); x.ellipse(16, 30, 8, 3, 0, 0, Math.PI*2); x.fill();
-      // Body
-      x.fillStyle = COLORS.goblinGreen;
-      x.fillRect(11, 12-bob, 10, 12);
-      // Legs
-      x.fillRect(12, 24-bob, 3, 6); x.fillRect(17, 24-bob, 3, 6);
-      // Head
-      x.fillRect(10, 4-bob, 12, 9);
-      // Ears
-      x.fillRect(6, 5-bob, 4, 3); x.fillRect(22, 5-bob, 4, 3);
-      // Eyes
-      x.fillStyle = COLORS.goblinEye;
-      x.fillRect(12, 6-bob, 3, 3); x.fillRect(17, 6-bob, 3, 3);
-      x.fillStyle = '#000';
-      x.fillRect(13, 7-bob, 1, 1); x.fillRect(18, 7-bob, 1, 1);
-      // Snout
-      x.fillStyle = '#5a8c30';
-      x.fillRect(14, 10-bob, 4, 2);
-      // Mouth (open when attacking)
-      if (attacking) {
-        x.fillStyle = '#300';
-        x.fillRect(14, 11-bob, 4, 2);
-      }
-      // Club
-      x.fillStyle = '#5a3010';
-      if (attacking) {
-        x.fillRect(22, 8-bob, 2, 10);
-      } else {
-        x.fillRect(22, 12-bob, 2, 8);
-      }
-      this.cache['goblin_'+f] = c;
-    }
-  }
-
-  /** NPC frames */
-  generateNPCFrames() {
-    // Cook
-    for (let f = 0; f < 2; f++) {
-      const c = this.createCanvas(SPRITE_SIZE, SPRITE_SIZE);
-      const x = c.getContext('2d');
-      const bob = f === 0 ? 0 : 1;
-      x.fillStyle = 'rgba(0,0,0,0.2)';
-      x.beginPath(); x.ellipse(16, 30, 8, 3, 0, 0, Math.PI*2); x.fill();
-      // Legs
-      x.fillStyle = '#444'; x.fillRect(12, 22-bob, 3, 7); x.fillRect(17, 22-bob, 3, 7);
-      // Body (apron)
-      x.fillStyle = COLORS.cookWhite; x.fillRect(10, 10-bob, 12, 14);
-      x.fillStyle = COLORS.cookBlue; x.fillRect(10, 10-bob, 12, 4);
-      // Arms
-      x.fillStyle = COLORS.skin; x.fillRect(7, 12-bob, 3, 7); x.fillRect(22, 12-bob, 3, 7);
-      // Head
-      x.fillStyle = COLORS.skin; x.fillRect(12, 2-bob, 8, 8);
-      // Chef hat
-      x.fillStyle = COLORS.cookWhite; x.fillRect(11, -2-bob, 10, 5); x.fillRect(13, -4-bob, 6, 3);
-      // Face
-      x.fillStyle = '#000'; x.fillRect(13, 5-bob, 2, 2); x.fillRect(17, 5-bob, 2, 2);
-      // Rosy cheeks
-      x.fillStyle = '#e08080'; x.fillRect(12, 7-bob, 2, 1); x.fillRect(18, 7-bob, 2, 1);
-      this.cache['cook_'+f] = c;
-    }
-    // Hans
-    for (let f = 0; f < 2; f++) {
-      const c = this.createCanvas(SPRITE_SIZE, SPRITE_SIZE);
-      const x = c.getContext('2d');
-      const bob = f === 0 ? 0 : 1;
-      x.fillStyle = 'rgba(0,0,0,0.2)';
-      x.beginPath(); x.ellipse(16, 30, 8, 3, 0, 0, Math.PI*2); x.fill();
-      x.fillStyle = '#444'; x.fillRect(12, 22-bob, 3, 7); x.fillRect(17, 22-bob, 3, 7);
-      x.fillStyle = COLORS.hansRed; x.fillRect(10, 10-bob, 12, 14);
-      x.fillStyle = COLORS.skin; x.fillRect(7, 12-bob, 3, 7); x.fillRect(22, 12-bob, 3, 7);
-      x.fillStyle = COLORS.skin; x.fillRect(12, 2-bob, 8, 8);
-      x.fillStyle = COLORS.hansHair; x.fillRect(12, 1-bob, 8, 3);
-      x.fillStyle = '#000'; x.fillRect(13, 5-bob, 2, 2); x.fillRect(17, 5-bob, 2, 2);
-      this.cache['hans_'+f] = c;
-    }
-  }
-
-  /** Item sprites (16x16) */
-  generateItemSprites() {
-    const items = {
-      egg: (x) => {
-        x.fillStyle='#f0f0e0';
-        x.beginPath(); x.ellipse(8,8,5,6,0,0,Math.PI*2); x.fill();
-        x.fillStyle='#d8d8c8';
-        x.beginPath(); x.ellipse(8,10,4,3,0,0,Math.PI*2); x.fill();
-      },
-      flour: (x) => {
-        x.fillStyle='#d8d8c8'; x.fillRect(4,4,8,10);
-        x.fillStyle='#c0c0b0'; x.fillRect(5,2,6,3);
-        x.fillStyle='#aaa'; x.fillRect(6,3,4,1);
-      },
-      milk: (x) => {
-        x.fillStyle='#888'; x.fillRect(4,4,8,10);
-        x.fillRect(3,4,2,2); x.fillRect(11,4,2,2);
-        x.fillStyle='#f0f0f0'; x.fillRect(5,5,6,3);
-      },
-      raw_chicken: (x) => {
-        x.fillStyle='#e0b898';
-        x.beginPath(); x.ellipse(8,9,5,4,0,0,Math.PI*2); x.fill();
-        x.fillRect(10,4,3,5);
-        x.fillStyle='#c8a080'; x.fillRect(10,3,3,2);
-      },
-      cooked_chicken: (x) => {
-        x.fillStyle='#c87832';
-        x.beginPath(); x.ellipse(8,9,5,4,0,0,Math.PI*2); x.fill();
-        x.fillRect(10,4,3,5);
-        x.fillStyle='#a06020'; x.fillRect(10,3,3,2);
-      },
-      bones: (x) => {
-        x.fillStyle='#f0f0f0';
-        x.fillRect(6,3,2,10);
-        x.fillRect(4,2,6,2); x.fillRect(4,12,6,2);
-        x.fillRect(8,6,2,4);
-      },
-      coins: (x) => {
-        x.fillStyle='#c8a85a';
-        x.beginPath(); x.arc(8,8,6,0,Math.PI*2); x.fill();
-        x.fillStyle='#a08840';
-        x.beginPath(); x.arc(8,8,4,0,Math.PI*2); x.fill();
-        x.fillStyle='#c8a85a';
-        x.font='8px sans-serif'; x.fillText('$',5,11);
-      },
-      bronze_sword: (x) => {
-        x.fillStyle='#c87832';
-        x.fillRect(3,3,2,10);
-        x.fillRect(1,11,6,2);
-        x.fillStyle='#a06020';
-        x.fillRect(2,12,4,3);
-      },
-      bronze_shield: (x) => {
-        x.fillStyle='#c87832';
-        x.beginPath(); x.ellipse(8,8,6,7,0,0,Math.PI*2); x.fill();
-        x.fillStyle='#a06020';
-        x.beginPath(); x.arc(8,8,3,0,Math.PI*2); x.fill();
-        x.fillStyle='#c87832';
-        x.beginPath(); x.arc(8,8,1.5,0,Math.PI*2); x.fill();
-      },
-      bronze_helm: (x) => {
-        x.fillStyle='#c87832';
-        x.beginPath(); x.ellipse(8,8,6,5,0,0,Math.PI*2); x.fill();
-        x.fillStyle='#a06020';
-        x.fillRect(3,8,10,4);
-        x.fillStyle='#c87832';
-        x.fillRect(5,9,6,2);
-      },
-      bread: (x) => {
-        x.fillStyle='#c87832';
-        x.beginPath(); x.ellipse(8,9,6,4,0,0,Math.PI*2); x.fill();
-        x.fillStyle='#a06020';
-        x.fillRect(5,7,6,1);x.fillRect(4,9,8,1);
-      },
-      burnt_chicken: (x) => {
-        x.fillStyle='#333';
-        x.beginPath(); x.ellipse(8,9,5,4,0,0,Math.PI*2); x.fill();
-        x.fillRect(10,4,3,5);
-        x.fillStyle='#222'; x.fillRect(10,3,3,2);
-      }
-    };
-    for (const [name, drawFn] of Object.entries(items)) {
-      const c = this.createCanvas(ITEM_SPRITE, ITEM_SPRITE);
-      drawFn(c.getContext('2d'));
-      this.cache['item_'+name] = c;
-    }
-  }
-
-  getTile(id, tileX, tileY) {
-    if (id === 0) return this.tileCache['grass_'+((tileX*7+tileY*13)%4)];
-    if (id === 1) return this.tileCache['path'];
-    if (id === 2) return this.waterCanvases[this.waterFrame];
-    if (id === 3) return this.tileCache['wall'];
-    if (id === 4) return this.tileCache['floor'];
-    if (id === 5) return this.tileCache['tree'];
-    if (id === 6) return this.tileCache['rock'];
-    if (id === 7) return this.tileCache['door'];
-    if (id === 8) return this.tileCache['range'];
-    return this.tileCache['grass_0'];
-  }
-
-  getSprite(key) { return this.cache[key]; }
-}
-
-// ═══════════════════════════════════════
-// 3. TILEMAP & WORLD DATA
-// ═══════════════════════════════════════
-function generateTileMap() {
-  const m = [];
-  for (let y = 0; y < MAP_H; y++) {
-    m[y] = [];
-    for (let x = 0; x < MAP_W; x++) {
-      m[y][x] = 0; // default grass
-    }
-  }
-  // River (rows 0-4)
-  for (let y = 0; y < 5; y++)
-    for (let x = 0; x < MAP_W; x++)
-      m[y][x] = 2;
-  // River banks - grass already set
-  for (let x = 0; x < MAP_W; x++) m[5][x] = 0;
-
-  // Castle (rows 6-14, cols 2-12)
-  // Walls
-  for (let y = 6; y <= 14; y++) {
-    for (let x = 2; x <= 12; x++) {
-      if (y === 6 || y === 14 || x === 2 || x === 12) {
-        m[y][x] = 3; // wall
-      } else {
-        m[y][x] = 4; // floor
-      }
-    }
-  }
-  // Castle door
-  m[14][7] = 7; m[14][8] = 7;
-  m[6][7] = 7; m[6][8] = 7; // north doors
-  // Cooking range
-  m[10][5] = 8;
-  // Inner walls for rooms
-  for (let x = 3; x <= 11; x++) m[9][x] = x === 7 || x === 8 ? 4 : 3;
-  m[9][7] = 7; // door between rooms
-
-  // Path from castle gate south
-  for (let y = 15; y <= 22; y++) { m[y][8] = 1; m[y][9] = 1; }
-  // Path bends east
-  for (let x = 9; x <= 20; x++) { m[22][x] = 1; m[23][x] = 1; }
-
-  // Trees scattered
-  const treePositions = [
-    [15,2],[16,3],[17,1],[15,14],[16,16],[17,15],[18,3],[19,5],
-    [20,2],[21,4],[22,1],[23,3],[24,2],[25,1],[26,3],[27,2],
-    [15,35],[16,37],[17,36],[18,38],[19,34],[20,36],[21,38],[22,35],
-    [17,25],[18,27],[19,26],[25,15],[26,17],[27,16],[28,14],[29,15],
-    [8,18],[9,20],[7,22],[8,25],[10,24],[6,30],[7,32],[8,34],
-    [25,5],[26,7],[27,5],[28,8],[29,4],[16,30],[17,32],[18,31],
-  ];
-  treePositions.forEach(([ty,tx]) => { if(ty<MAP_H&&tx<MAP_W) m[ty][tx]=5; });
-
-  // Rocks
-  const rockPositions = [[16,20],[19,18],[21,30],[24,25],[26,10],[28,20],[15,28],[20,14]];
-  rockPositions.forEach(([ry,rx]) => { if(ry<MAP_H&&rx<MAP_W) m[ry][rx]=6; });
-
-  // Pond (cols 25-29, rows 22-25)
-  for (let y = 23; y <= 25; y++)
-    for (let x = 26; x <= 29; x++)
-      m[y][x] = 2;
-  m[22][27] = 2; m[22][28] = 2;
-  m[26][27] = 2; m[26][28] = 2;
-
-  return m;
-}
-
-const COLLISION = new Set([2, 3, 5, 6]); // water, wall, tree, rock
-function isWalkable(tx, ty, tileMap) {
-  if (tx < 0 || ty < 0 || tx >= MAP_W || ty >= MAP_H) return false;
-  return !COLLISION.has(tileMap[ty][tx]);
-}
-
-// ═══════════════════════════════════════
-// 4. A* PATHFINDING
-// ═══════════════════════════════════════
-function aStar(startX, startY, endX, endY, tileMap) {
-  if (!isWalkable(endX, endY, tileMap)) return null;
-  const key = (x,y) => x+','+y;
-  const open = []; // min-heap by f
-  const closed = new Set();
-  const gScore = {};
-  const cameFrom = {};
-  const start = key(startX, startY);
-  const goal = key(endX, endY);
-  gScore[start] = 0;
-  open.push({ x:startX, y:startY, f: Math.abs(endX-startX)+Math.abs(endY-startY) });
-
-  while (open.length > 0) {
-    open.sort((a,b) => a.f - b.f);
-    const curr = open.shift();
-    const ck = key(curr.x, curr.y);
-    if (ck === goal) {
-      const path = [];
-      let k = goal;
-      while (k) { const [px,py] = k.split(',').map(Number); path.unshift({x:px,y:py}); k = cameFrom[k]; }
-      return path;
-    }
-    closed.add(ck);
-    const dirs = [[0,-1],[0,1],[-1,0],[1,0]];
-    for (const [dx,dy] of dirs) {
-      const nx = curr.x+dx, ny = curr.y+dy;
-      const nk = key(nx, ny);
-      if (closed.has(nk) || !isWalkable(nx, ny, tileMap)) continue;
-      const ng = gScore[ck] + 1;
-      if (gScore[nk] === undefined || ng < gScore[nk]) {
-        gScore[nk] = ng;
-        cameFrom[nk] = ck;
-        const h = Math.abs(endX-nx)+Math.abs(endY-ny);
-        open.push({ x:nx, y:ny, f:ng+h });
-      }
-    }
-    if (closed.size > 800) return null; // safety cutoff
-  }
-  return null;
-}
-
-// ═══════════════════════════════════════
-// 5. ITEM DATA
-// ═══════════════════════════════════════
-const ITEM_DB = {
-  egg: { id:'egg', name:'Egg', sprite:'item_egg', stackable:false, equipSlot:null, attackBonus:0, defenceBonus:0, examine:'A freshly laid egg.' },
-  flour: { id:'flour', name:'Pot of flour', sprite:'item_flour', stackable:false, equipSlot:null, attackBonus:0, defenceBonus:0, examine:'A pot of flour.' },
-  milk: { id:'milk', name:'Bucket of milk', sprite:'item_milk', stackable:false, equipSlot:null, attackBonus:0, defenceBonus:0, examine:'A bucket of fresh milk.' },
-  raw_chicken: { id:'raw_chicken', name:'Raw chicken', sprite:'item_raw_chicken', stackable:false, equipSlot:null, attackBonus:0, defenceBonus:0, examine:'I should cook this.' },
-  cooked_chicken: { id:'cooked_chicken', name:'Cooked chicken', sprite:'item_cooked_chicken', stackable:false, equipSlot:null, attackBonus:0, defenceBonus:0, examine:'Mmm, looks delicious.', heals:4 },
-  bones: { id:'bones', name:'Bones', sprite:'item_bones', stackable:false, equipSlot:null, attackBonus:0, defenceBonus:0, examine:'The remains of a foe.' },
-  coins: { id:'coins', name:'Coins', sprite:'item_coins', stackable:true, equipSlot:null, attackBonus:0, defenceBonus:0, examine:'Lovely money!' },
-  bronze_sword: { id:'bronze_sword', name:'Bronze sword', sprite:'item_bronze_sword', stackable:false, equipSlot:'weapon', attackBonus:4, defenceBonus:0, examine:'A somewhat blunt sword.' },
-  bronze_shield: { id:'bronze_shield', name:'Bronze shield', sprite:'item_bronze_shield', stackable:false, equipSlot:'shield', attackBonus:0, defenceBonus:3, examine:'A basic bronze shield.' },
-  bronze_helm: { id:'bronze_helm', name:'Bronze helm', sprite:'item_bronze_helm', stackable:false, equipSlot:'head', attackBonus:0, defenceBonus:2, examine:'A simple bronze helmet.' },
-  bread: { id:'bread', name:'Bread', sprite:'item_bread', stackable:false, equipSlot:null, attackBonus:0, defenceBonus:0, examine:'A loaf of bread.', heals:3 },
-  burnt_chicken: { id:'burnt_chicken', name:'Burnt chicken', sprite:'item_burnt_chicken', stackable:false, equipSlot:null, attackBonus:0, defenceBonus:0, examine:'Oops, it is totally burnt.' },
+// ---- PLAYER STATE ----
+const player={
+tile:{x:30,y:30},path:[],target:null,
+skills:{attack:{level:1,xp:0},strength:{level:1,xp:0},defence:{level:1,xp:0},hitpoints:{level:10,xp:1154},
+prayer:{level:1,xp:0},cooking:{level:1,xp:0},woodcutting:{level:1,xp:0},fishing:{level:1,xp:0},
+mining:{level:1,xp:0},firemaking:{level:1,xp:0},crafting:{level:1,xp:0},smithing:{level:1,xp:0}},
+currentHp:10,maxHp:10,prayer:1,maxPrayer:1,runEnergy:100,isRunning:false,
+inventory:[],equipment:{head:null,body:null,legs:null,weapon:null,shield:null},
+gold:25,attackStyle:'accurate',inCombat:false,combatTarget:null,attackCooldown:0,
+quests:{feast_assistant:'not_started',arcane_mystery:'not_started',restless_spirit:'not_started'},
+questFlags:{milkDone:false,eggDone:false,flourDone:false,notesReceived:false,notesDelivered:false,skullFound:false,skullReturned:false},
+respawnTile:{x:30,y:42},deathCount:0,skillingAction:null,skillingTicks:0,
+lerpX:30,lerpY:30
 };
 
-// ═══════════════════════════════════════
-// 6. XP TABLE
-// ═══════════════════════════════════════
-function buildXPTable() {
-  const table = [0];
-  let total = 0;
-  for (let lvl = 1; lvl < 99; lvl++) {
-    total += Math.floor(lvl + 300 * Math.pow(2, lvl/7)) / 4;
-    table.push(Math.floor(total));
-  }
-  return table;
+// ---- XP SYSTEM ----
+function xpForLevel(lvl){let p=0;for(let l=1;l<lvl;l++)p+=Math.floor(l+300*Math.pow(2,l/7));return Math.floor(p/4);}
+function levelFromXP(xp){for(let l=98;l>=1;l--)if(xp>=xpForLevel(l+1))return l+1;return 1;}
+function getTotalLevel(){let t=0;for(let s in player.skills)t+=player.skills[s].level;return t;}
+
+// ---- MAP ----
+const TILE_TYPES={GRASS:0,STONE:1,WATER:2,WALL:3,FLOOR:4,DOOR:5,SAND:6,BLOCKED:7,SWAMP:8};
+const TILE_WALK=[true,true,false,false,true,true,true,false,true];
+const tileMap=new Array(MAP*MAP).fill(0);
+const clipFlags=new Array(MAP*MAP).fill(0);
+function tIdx(x,y){return y*MAP+x;}
+function setTile(x,y,t){if(x>=0&&x<MAP&&y>=0&&y<MAP){tileMap[tIdx(x,y)]=t;clipFlags[tIdx(x,y)]=TILE_WALK[t]?0:1;}}
+function getTile(x,y){if(x<0||x>=MAP||y<0||y>=MAP)return TILE_TYPES.BLOCKED;return tileMap[tIdx(x,y)];}
+function isWalkable(x,y){if(x<0||x>=MAP||y<0||y>=MAP)return false;return clipFlags[tIdx(x,y)]===0;}
+
+// Tile color palette for iso rendering
+const ISO_TILE_COLORS=[
+{top:'#4a7c3f',left:'#2d5228',right:'#3a6333'},// GRASS
+{top:'#7a7069',left:'#4a4542',right:'#5c5450'},// STONE
+{top:'#1a4a8a',left:'#0f2d57',right:'#143a6e'},// WATER
+{top:'#6a5a4a',left:'#3d3329',right:'#52432e',raised:true,boxH:28},// WALL
+{top:'#8a7a6a',left:'#5c5248',right:'#6e6052'},// FLOOR
+{top:'#8a6a3a',left:'#5c4527',right:'#6e5430'},// DOOR
+{top:'#c8b878',left:'#8a7c50',right:'#a08e5e'},// SAND
+{top:'#3a3a3a',left:'#222222',right:'#2e2e2e'},// BLOCKED
+{top:'#2a4a2a',left:'#182e18',right:'#213921'},// SWAMP
+];
+const MINIMAP_COLORS=['#4a7c3f','#7a7069','#1a4a8a','#5c4a3a','#8a7a6a','#7a5a3a','#c8b878','#3a3a3a','#2a4a2a'];
+
+function buildMap(){
+for(let x=0;x<MAP;x++)for(let y=0;y<MAP;y++)setTile(x,y,TILE_TYPES.GRASS);
+for(let x=0;x<MAP;x++)for(let y=10;y<=12;y++)setTile(x,y,TILE_TYPES.WATER);
+for(let y=10;y<=12;y++)for(let x=29;x<=31;x++)setTile(x,y,TILE_TYPES.STONE);
+for(let x=24;x<=36;x++){setTile(x,22,TILE_TYPES.WALL);setTile(x,34,TILE_TYPES.WALL);}
+for(let y=22;y<=34;y++){setTile(24,y,TILE_TYPES.WALL);setTile(36,y,TILE_TYPES.WALL);}
+for(let x=25;x<=35;x++)for(let y=23;y<=33;y++)setTile(x,y,TILE_TYPES.STONE);
+for(let x=28;x<=32;x++){setTile(x,25,TILE_TYPES.WALL);setTile(x,29,TILE_TYPES.WALL);}
+for(let y=25;y<=29;y++){setTile(28,y,TILE_TYPES.WALL);setTile(32,y,TILE_TYPES.WALL);}
+for(let x=29;x<=31;x++)for(let y=26;y<=28;y++)setTile(x,y,TILE_TYPES.FLOOR);
+setTile(30,25,TILE_TYPES.DOOR);setTile(30,29,TILE_TYPES.DOOR);
+setTile(29,34,TILE_TYPES.STONE);setTile(30,34,TILE_TYPES.STONE);setTile(31,34,TILE_TYPES.STONE);
+for(let y=34;y<=55;y++){setTile(29,y,TILE_TYPES.STONE);setTile(30,y,TILE_TYPES.STONE);setTile(31,y,TILE_TYPES.STONE);}
+for(let x=20;x<=40;x++){setTile(x,43,TILE_TYPES.STONE);setTile(x,44,TILE_TYPES.STONE);}
+const buildings=[{x:22,y:40,w:5,h:4},{x:34,y:40,w:5,h:4},{x:23,y:46,w:4,h:4},{x:34,y:46,w:5,h:4},{x:22,y:51,w:4,h:3}];
+buildings.forEach(b=>{
+for(let bx=b.x;bx<b.x+b.w;bx++)for(let by=b.y;by<b.y+b.h;by++){
+if(bx===b.x||bx===b.x+b.w-1||by===b.y||by===b.y+b.h-1)setTile(bx,by,TILE_TYPES.WALL);
+else setTile(bx,by,TILE_TYPES.FLOOR);
 }
-const XP_TABLE = buildXPTable();
-function levelForXP(xp) {
-  for (let i = XP_TABLE.length-1; i >= 0; i--) {
-    if (xp >= XP_TABLE[i]) return i + 1;
-  }
-  return 1;
+setTile(b.x+Math.floor(b.w/2),b.y+b.h-1,TILE_TYPES.DOOR);
+});
+for(let x=40;x<=50;x++){setTile(x,40,TILE_TYPES.WALL);setTile(x,50,TILE_TYPES.WALL);}
+for(let y=40;y<=50;y++){setTile(40,y,TILE_TYPES.WALL);setTile(50,y,TILE_TYPES.WALL);}
+setTile(45,50,TILE_TYPES.DOOR);setTile(40,45,TILE_TYPES.DOOR);
+for(let x=41;x<=49;x++)for(let y=41;y<=49;y++)setTile(x,y,TILE_TYPES.GRASS);
+for(let x=5;x<=18;x++)for(let y=48;y<=58;y++){if(Math.random()<0.7)setTile(x,y,TILE_TYPES.SWAMP);}
+for(let x=37;x<=55;x++){setTile(x,35,TILE_TYPES.SAND);setTile(x,36,TILE_TYPES.SAND);}
+setTile(10,52,TILE_TYPES.SWAMP);
+setTile(25,48,TILE_TYPES.STONE);
 }
+buildMap();
 
-// ═══════════════════════════════════════
-// 7. GAME STATE
-// ═══════════════════════════════════════
-const SKILLS = ['attack','strength','defence','hitpoints','prayer','magic','cooking'];
-function createGameState() {
-  const skills = {};
-  SKILLS.forEach(s => { skills[s] = { xp: 0, level: 1 }; });
-  skills.hitpoints.xp = XP_TABLE[9]; // start at level 10
-  skills.hitpoints.level = 10;
-
-  return {
-    player: {
-      tileX:8, tileY:12, pixelX:8*TILE_W, pixelY:12*TILE_H,
-      hp:10, maxHp:10, name:'Cameron',
-      dir:'south', animFrame:0, animTimer:0,
-      path:null, pathIndex:0,
-      inCombat:false, combatTarget:null,
-      moving:false,
-    },
-    skills,
-    inventory: [], // {item, count}
-    equipment: { head:null, cape:null, neck:null, ammo:null, weapon:null, body:null, shield:null, legs:null, feet:null },
-    quests: { cooksProblem: 'NOT_STARTED' },
-    npcs: [],
-    enemies: [],
-    worldItems: [],
-    camera: { x:0, y:0 },
-    tick: 0,
-    tickTimer: 0,
-    chatLog: [],
-    splats: [],
-    xpDrops: [],
-    playTime: 0,
-    totalXP: 0,
-  };
+// ---- WORLD OBJECTS ----
+const worldObjects=[];
+const treePositions=[];
+for(let i=0;i<35;i++){
+let tx,ty;do{tx=Math.floor(Math.random()*MAP);ty=Math.floor(Math.random()*10);}while(!isWalkable(tx,ty)||treePositions.some(p=>Math.abs(p[0]-tx)<2&&Math.abs(p[1]-ty)<2));
+treePositions.push([tx,ty]);worldObjects.push({type:'tree',tile:{x:tx,y:ty},alive:true,respawnAt:0});
+clipFlags[tIdx(tx,ty)]=1;
 }
-
-let GS = createGameState();
-let tileMap = generateTileMap();
-let sprites;
-
-// ═══════════════════════════════════════
-// 8. ENTITIES
-// ═══════════════════════════════════════
-function createNPC(id, name, type, tileX, tileY) {
-  return {
-    id, name, type, tileX, tileY,
-    pixelX: tileX*TILE_W, pixelY: tileY*TILE_H,
-    animFrame:0, animTimer:0, dir:'south',
-    wanderTimer: Math.random()*3, wanderRadius:3,
-    originX:tileX, originY:tileY,
-  };
+for(let i=0;i<20;i++){
+let tx,ty;do{tx=2+Math.floor(Math.random()*15);ty=14+Math.floor(Math.random()*20);}while(!isWalkable(tx,ty));
+treePositions.push([tx,ty]);worldObjects.push({type:'tree',tile:{x:tx,y:ty},alive:true,respawnAt:0});
+clipFlags[tIdx(tx,ty)]=1;
 }
+const rockPositions=[[5,6],[7,4],[12,7],[14,5],[8,8]];
+rockPositions.forEach(([rx,ry])=>{worldObjects.push({type:'rock',tile:{x:rx,y:ry},alive:true,respawnAt:0});clipFlags[tIdx(rx,ry)]=1;});
+[[28,10],[32,10],[25,11]].forEach(([fx,fy])=>worldObjects.push({type:'fish',tile:{x:fx,y:fy}}));
+worldObjects.push({type:'range',tile:{x:23,y:41}});
+worldObjects.push({type:'coffin',tile:{x:25,y:48}});
+worldObjects.push({type:'ground_item',tile:{x:10,y:52},itemId:'ghost_skull',qty:1,taken:false,respawnAt:0});
+worldObjects.push({type:'dairy',tile:{x:45,y:45}});
 
-function createEnemy(id, name, tileX, tileY, maxHp, attackLvl, strLvl, defLvl) {
-  return {
-    id, name, tileX, tileY,
-    pixelX: tileX*TILE_W, pixelY: tileY*TILE_H,
-    hp:maxHp, maxHp, attackLvl, strLvl, defLvl,
-    animFrame:0, animTimer:0, dir:'south',
-    state:'idle', wanderTimer: Math.random()*3,
-    originX:tileX, originY:tileY,
-    dead:false, respawnTimer:0,
-    path:null, pathIndex:0,
-    combatTarget:null,
-    aggroRange:5,
-  };
+// ---- GROUND ITEMS ----
+const groundItems=[
+{id:'bronze_sword',tile:{x:26,y:27},qty:1,respawn:80,taken:false,respawnAt:0},
+{id:'coins',tile:{x:33,y:26},qty:15,respawn:60,taken:false,respawnAt:0},
+];
+
+// ---- NPCs ----
+const NPCS=[
+{id:'edgar',name:'Edgar the Servant',tile:{x:30,y:26},color:'#8a7a6a',level:0,wander:3,aggressive:false,
+dialog:[{text:"I've worked in this castle for many years, traveller.",opts:[{t:"How long?",next:1},{t:"Goodbye.",next:null}]},{text:"Oh, longer than I can remember! The Duke keeps me busy.",opts:[{t:"Farewell.",next:null}]}]},
+{id:'duke',name:'Duke Aldric',tile:{x:30,y:27},color:'#2a4a8a',level:0,wander:0,aggressive:false,
+dialog:[{text:"Ah, adventurer! I have a matter of great importance. Take these research notes to the scholar east of town.",opts:[{t:"I will do it.",next:1},{t:"Not now.",next:null}]},{text:"Excellent. Return when you have delivered them.",opts:[{t:"Understood.",next:null}]}],questStart:'arcane_mystery'},
+{id:'cook',name:'Gareth the Cook',tile:{x:23,y:41},color:'#c87a3a',level:0,wander:0,aggressive:false,
+dialog:[{text:"The Duke's feast is tonight and I need: a bucket of milk, an egg, and flour. Can you help?",opts:[{t:"I'll get them!",next:1},{t:"Maybe later.",next:null}]},{text:"The dairy farm is east. The mill is south-west. Hurry!",opts:[{t:"On my way.",next:null}]}],questStart:'feast_assistant'},
+{id:'guard1',name:'Castle Guard',tile:{x:30,y:35},color:'#4a4a7a',level:9,wander:0,aggressive:false,
+dialog:[{text:"Welcome to the castle, traveller. Stay out of trouble.",opts:[{t:"Thanks.",next:null}]}]},
+{id:'blacksmith',name:"Bob the Smith",tile:{x:35,y:42},color:'#6a3a2a',level:0,wander:0,aggressive:false,
+dialog:[{text:"Finest blades in Irondale! I sell bronze and iron swords.",opts:[{t:"Show me.",next:1},{t:"No thanks.",next:null}]},{text:"Bronze sword: 50gp. Iron sword: 200gp. What'll it be?",opts:[{t:"Buy Bronze (50gp)",next:'BUY_BRONZE'},{t:"Buy Iron (200gp)",next:'BUY_IRON'},{t:"Nothing.",next:null}]}]},
+{id:'priest',name:'Father Aldwin',tile:{x:24,y:47},color:'#e8e8e8',level:0,wander:0,aggressive:false,
+dialog:[{text:"Peace be with you. A troubled spirit haunts the old graveyard. Find its skull in the swamp and return it to the coffin nearby.",opts:[{t:"I'll do it.",next:1},{t:"Goodbye.",next:null}]},{text:"Bless you. The swamp is to the south-west. Be careful!",opts:[{t:"On my way.",next:null}]}],questStart:'restless_spirit'},
+{id:'farmer',name:'Fred the Farmer',tile:{x:44,y:44},color:'#8a6a3a',level:0,wander:2,aggressive:false,
+dialog:[{text:"Watch out for them cows! Got a spare egg if you need one for the cook.",opts:[{t:"Thanks!",next:null}]}]},
+{id:'millie',name:'Millie the Miller',tile:{x:23,y:52},color:'#c8a87a',level:0,wander:0,aggressive:false,
+dialog:[{text:"The mill's running well! I can give you flour if you need it.",opts:[{t:"I need flour.",next:1},{t:"Thanks.",next:null}]},{text:"Here you go - a pot of flour!",opts:[{t:"Thank you!",next:'GIVE_FLOUR'}]}]},
+{id:'guide',name:'Town Guide',tile:{x:31,y:43},color:'#3a8a3a',level:0,wander:0,aggressive:false,
+dialog:[{text:"Welcome to Irondale! Castle is north. Click on trees to chop, fish to catch, monsters to fight!",opts:[{t:"Combat tips?",next:1},{t:"Skilling tips?",next:2},{t:"Bye.",next:null}]},{text:"Click monsters to attack. Check your combat tab to change styles. Eat food to heal!",opts:[{t:"Thanks!",next:null}]},{text:"Chop trees for Woodcutting XP, fish for Fishing XP, mine rocks for Mining. Cook food on ranges!",opts:[{t:"Thanks!",next:null}]}]},
+{id:'banker',name:'Banker Rowan',tile:{x:35,y:47},color:'#2a6a4a',level:0,wander:0,aggressive:false,
+dialog:[{text:"Welcome to Irondale Bank! Would you like to access your bank?",opts:[{t:"Open bank.",next:'OPEN_BANK'},{t:"No thanks.",next:null}]}]},
+{id:'scholar',name:'Scholar Elara',tile:{x:42,y:36},color:'#6a3a8a',level:0,wander:0,aggressive:false,
+dialog:[{text:"Greetings. I study the arcane arts here. Do you bring something for me?",opts:[{t:"I have notes.",next:'DELIVER_NOTES'},{t:"Just looking.",next:null}]}]},
+];
+
+// ---- MONSTERS ----
+const MONSTER_DEFS=[
+{id:'goblin',name:'Goblin',color:'#4a6a2a',level:2,hp:7,maxHit:1,atkSpeed:4,xpPerDmg:4,spawnArea:[20,37,35,55],count:4,aggressive:false,aggroRange:0,drops:[{id:'coins',qty:[1,5],rate:0.8},{id:'bones',qty:1,rate:1.0}]},
+{id:'goblin_warrior',name:'Goblin Warrior',color:'#3a5a1a',level:5,hp:15,maxHit:2,atkSpeed:4,xpPerDmg:4,spawnArea:[20,37,35,55],count:2,aggressive:true,aggroRange:4,drops:[{id:'coins',qty:[3,15],rate:0.8},{id:'bones',qty:1,rate:1.0},{id:'bronze_sword',qty:1,rate:0.1}]},
+{id:'chicken',name:'Chicken',color:'#e8e8c8',level:1,hp:3,maxHit:1,atkSpeed:4,xpPerDmg:4,spawnArea:[41,41,49,49],count:4,aggressive:false,aggroRange:0,drops:[{id:'raw_chicken',qty:1,rate:1.0},{id:'feather',qty:[5,10],rate:1.0},{id:'egg',qty:1,rate:0.25}]},
+{id:'cow',name:'Cow',color:'#d4c8b4',level:2,hp:8,maxHit:1,atkSpeed:5,xpPerDmg:4,spawnArea:[41,41,49,49],count:3,aggressive:false,aggroRange:0,drops:[{id:'raw_beef',qty:1,rate:1.0},{id:'cowhide',qty:1,rate:1.0}]},
+{id:'rat',name:'Giant Rat',color:'#7a6a5a',level:3,hp:6,maxHit:1,atkSpeed:4,xpPerDmg:4,spawnArea:[5,48,18,58],count:3,aggressive:true,aggroRange:3,drops:[{id:'bones',qty:1,rate:1.0}]},
+];
+
+const npcInstances=[];
+const monsterInstances=[];
+
+// ---- CANVAS 2D SETUP ----
+const canvas=document.getElementById('game-canvas');
+const ctx=canvas.getContext('2d');
+canvas.width=W;canvas.height=H;
+
+// ---- ISO DRAWING PRIMITIVES ----
+function drawIsoTile(cx,sx,sy,topColor,leftColor,rightColor,raised){
+const hw=TILE_W/2,hh=TILE_H/2;
+const depth=raised?TILE_DEPTH:4;
+cx.beginPath();cx.moveTo(sx,sy);cx.lineTo(sx+hw,sy+hh);cx.lineTo(sx,sy+TILE_H);cx.lineTo(sx-hw,sy+hh);cx.closePath();
+cx.fillStyle=topColor;cx.fill();
+if(raised){
+cx.beginPath();cx.moveTo(sx-hw,sy+hh);cx.lineTo(sx,sy+TILE_H);cx.lineTo(sx,sy+TILE_H+depth);cx.lineTo(sx-hw,sy+hh+depth);cx.closePath();
+cx.fillStyle=leftColor;cx.fill();
+cx.beginPath();cx.moveTo(sx,sy+TILE_H);cx.lineTo(sx+hw,sy+hh);cx.lineTo(sx+hw,sy+hh+depth);cx.lineTo(sx,sy+TILE_H+depth);cx.closePath();
+cx.fillStyle=rightColor;cx.fill();
 }
-
-function createWorldItem(id, itemId, tileX, tileY) {
-  return {
-    id, itemId, tileX, tileY,
-    pixelX: tileX*TILE_W, pixelY: tileY*TILE_H,
-    collected:false, sparkleTimer:0,
-  };
 }
-
-function initEntities() {
-  GS.npcs = [
-    createNPC('cook', 'Cook', 'cook', 6, 10),
-    createNPC('hans', 'Hans', 'hans', 4, 12),
-  ];
-  GS.enemies = [
-    createEnemy('gob1','Goblin',18,20,7,1,1,1),
-    createEnemy('gob2','Goblin',22,22,7,1,1,1),
-    createEnemy('gob3','Goblin',25,19,7,2,1,1),
-    createEnemy('gob4','Goblin',20,26,9,2,2,1),
-  ];
-  GS.worldItems = [
-    createWorldItem('wi_egg','egg',30,18),
-    createWorldItem('wi_flour','flour',32,20),
-    createWorldItem('wi_milk','milk',28,22),
-  ];
-}
-
-// ═══════════════════════════════════════
-// 9. CHAT SYSTEM
-// ═══════════════════════════════════════
-function addChat(text, type='system') {
-  const colors = {
-    system:'#f0e8d0', combat_good:'#00c800', combat_bad:'#c80000',
-    quest:'#00c8c8', npc:'#e8e800', action:'#f07800', xp:'#c8a85a',
-    player:'#ffffff', loot:'#c8a85a',
-  };
-  GS.chatLog.push({ text, color: colors[type]||'#f0e8d0' });
-  if (GS.chatLog.length > 200) GS.chatLog.shift();
-  renderChat();
-}
-
-function renderChat() {
-  const el = document.getElementById('chat-messages');
-  // Only render last 50 for performance
-  const msgs = GS.chatLog.slice(-50);
-  el.innerHTML = msgs.map(m => `<div style="color:${m.color}">${m.text}</div>`).join('');
-  el.scrollTop = el.scrollHeight;
-}
-
-// ═══════════════════════════════════════
-// 10. INVENTORY MANAGER
-// ═══════════════════════════════════════
-function addToInventory(itemId, count=1) {
-  if (!ITEM_DB[itemId]) return false;
-  const item = ITEM_DB[itemId];
-  if (item.stackable) {
-    const existing = GS.inventory.find(i => i.item === itemId);
-    if (existing) { existing.count += count; return true; }
-  }
-  if (GS.inventory.length >= 28) {
-    addChat('Your inventory is full!', 'system');
-    return false;
-  }
-  GS.inventory.push({ item: itemId, count });
-  return true;
-}
-
-function removeFromInventory(itemId, count=1) {
-  const idx = GS.inventory.findIndex(i => i.item === itemId);
-  if (idx === -1) return false;
-  GS.inventory[idx].count -= count;
-  if (GS.inventory[idx].count <= 0) GS.inventory.splice(idx, 1);
-  return true;
+function drawIsoWall(cx,sx,sy,topColor,leftColor,rightColor,boxH){
+const hw=TILE_W/2,hh=TILE_H/2;
+const bsy=sy-boxH;
+cx.beginPath();cx.moveTo(sx,bsy);cx.lineTo(sx+hw,bsy+hh);cx.lineTo(sx,bsy+TILE_H);cx.lineTo(sx-hw,bsy+hh);cx.closePath();
+cx.fillStyle=topColor;cx.fill();
+cx.beginPath();cx.moveTo(sx-hw,bsy+hh);cx.lineTo(sx,bsy+TILE_H);cx.lineTo(sx,sy+TILE_H);cx.lineTo(sx-hw,sy+hh);cx.closePath();
+cx.fillStyle=leftColor;cx.fill();
+cx.beginPath();cx.moveTo(sx,bsy+TILE_H);cx.lineTo(sx+hw,bsy+hh);cx.lineTo(sx+hw,sy+hh);cx.lineTo(sx,sy+TILE_H);cx.closePath();
+cx.fillStyle=rightColor;cx.fill();
 }
 
-function hasItem(itemId) {
-  return GS.inventory.some(i => i.item === itemId);
+// ---- SPRITE DRAWING ----
+function drawTree2D(cx,sx,sy){
+if(!sx&&sx!==0)return;
+cx.fillStyle='#5c3a1a';cx.fillRect(sx-3,sy-4,6,18);
+cx.fillStyle='#2d6a2d';cx.beginPath();cx.arc(sx,sy-12,14,0,Math.PI*2);cx.fill();
+cx.fillStyle='#3a8a3a';cx.beginPath();cx.arc(sx-4,sy-16,9,0,Math.PI*2);cx.fill();
+}
+function drawRock2D(cx,sx,sy){
+cx.fillStyle='#6a6a6a';cx.beginPath();cx.ellipse(sx,sy+8,12,8,0,0,Math.PI*2);cx.fill();
+cx.fillStyle='#888';cx.beginPath();cx.ellipse(sx-2,sy+4,8,6,-0.3,0,Math.PI*2);cx.fill();
+}
+function drawFish2D(cx,sx,sy,tick){
+const alpha=0.4+0.4*Math.abs(Math.sin(tick*0.05));
+cx.save();cx.globalAlpha=alpha;cx.fillStyle='#44aaff';cx.beginPath();cx.arc(sx,sy+10,8,0,Math.PI*2);cx.fill();cx.restore();
+cx.fillStyle='#88ccff';cx.font='11px monospace';cx.textAlign='center';cx.fillText('≈',sx,sy+4);
+}
+function drawRange2D(cx,sx,sy){
+cx.fillStyle='#4a2a0a';cx.fillRect(sx-10,sy-8,20,16);
+cx.fillStyle='#cc4400';cx.beginPath();cx.arc(sx,sy,6,0,Math.PI*2);cx.fill();
+cx.fillStyle='#ff8844';cx.beginPath();cx.arc(sx,sy,3,0,Math.PI*2);cx.fill();
+}
+function drawCoffin2D(cx,sx,sy){
+cx.fillStyle='#5a4a3a';cx.fillRect(sx-12,sy-4,24,10);
+cx.fillStyle='#7a6a5a';cx.fillRect(sx-10,sy-3,20,8);
+}
+function drawGroundItemDot(cx,sx,sy,color){
+cx.fillStyle=color||'#d8d8c8';cx.beginPath();cx.arc(sx,sy+6,5,0,Math.PI*2);cx.fill();
+cx.fillStyle='#ffffff';cx.beginPath();cx.arc(sx-1,sy+4,2,0,Math.PI*2);cx.fill();
+}
+function drawDairy2D(cx,sx,sy){
+cx.fillStyle='#d4c8b4';cx.fillRect(sx-10,sy-6,20,14);
+cx.fillStyle='#f0f0f0';cx.fillRect(sx-6,sy-2,12,6);
+}
+function drawHumanoid2D(cx,sx,sy,bodyColor,headColor,nameLabel,hpFrac,lvl){
+const bx=sx,by=sy-4;
+cx.save();cx.globalAlpha=0.35;cx.fillStyle='#000';cx.beginPath();cx.ellipse(bx,by+20,10,5,0,0,Math.PI*2);cx.fill();cx.restore();
+cx.fillStyle='#3a2a1a';cx.fillRect(bx-5,by+16,4,10);cx.fillRect(bx+1,by+16,4,10);
+cx.fillStyle=bodyColor;cx.fillRect(bx-7,by+4,14,14);
+cx.fillStyle=bodyColor;cx.fillRect(bx-11,by+5,4,10);cx.fillRect(bx+7,by+5,4,10);
+cx.fillStyle=headColor;cx.beginPath();cx.arc(bx,by,7,0,Math.PI*2);cx.fill();
+if(nameLabel){
+cx.font='9px monospace';cx.textAlign='center';
+const tw=cx.measureText(nameLabel).width;
+cx.fillStyle='rgba(0,0,0,0.6)';cx.fillRect(bx-tw/2-2,by-22,tw+4,12);
+cx.fillStyle='#ffff00';cx.fillText(nameLabel,bx,by-12);
+}
+if(hpFrac!==undefined&&hpFrac!==null&&hpFrac<1){
+const bw=28;cx.fillStyle='#440000';cx.fillRect(bx-bw/2,by-28,bw,4);
+cx.fillStyle=hpFrac>0.5?'#00cc00':hpFrac>0.25?'#cccc00':'#cc0000';
+cx.fillRect(bx-bw/2,by-28,bw*hpFrac,4);
+}
+}
+function drawChicken2D(cx,sx,sy){
+cx.fillStyle='#e8e8c8';cx.beginPath();cx.ellipse(sx,sy+6,8,6,0,0,Math.PI*2);cx.fill();
+cx.fillStyle='#ff8844';cx.beginPath();cx.moveTo(sx+8,sy+6);cx.lineTo(sx+12,sy+8);cx.lineTo(sx+8,sy+10);cx.closePath();cx.fill();
+cx.fillStyle='#ff3333';cx.fillRect(sx-2,sy-2,4,4);
+}
+function drawCow2D(cx,sx,sy){
+cx.fillStyle='#d4c8b4';cx.fillRect(sx-14,sy-2,28,14);
+cx.fillStyle='#3a2a1a';cx.fillRect(sx-12,sy+10,5,8);cx.fillRect(sx+7,sy+10,5,8);
+cx.fillStyle='#e8d8c8';cx.beginPath();cx.arc(sx+14,sy+2,8,0,Math.PI*2);cx.fill();
+}
+function drawPlayer2D(cx,sx,sy){
+const bx=sx,by=sy-4;
+cx.save();cx.globalAlpha=0.4;cx.fillStyle='#000';cx.beginPath();cx.ellipse(bx,by+20,11,5,0,0,Math.PI*2);cx.fill();cx.restore();
+cx.fillStyle='#2a3a6a';cx.fillRect(bx-5,by+16,4,11);cx.fillRect(bx+1,by+16,4,11);
+cx.fillStyle='#5a6a9a';cx.fillRect(bx-8,by+4,16,14);
+cx.fillStyle='#8a6a2a';cx.fillRect(bx-8,by+14,16,3);
+cx.fillStyle='#5a6a9a';cx.fillRect(bx-12,by+5,4,10);cx.fillRect(bx+8,by+5,4,10);
+cx.fillStyle='#e8b89a';cx.beginPath();cx.arc(bx,by,7,0,Math.PI*2);cx.fill();
+cx.fillStyle='#8a5a2a';cx.beginPath();cx.arc(bx,by-3,7,Math.PI,0);cx.fill();
+// weapon
+if(player.equipment.weapon){
+const wc=ITEMS[player.equipment.weapon];
+cx.fillStyle=wc?wc.color:'#aaa';
+cx.save();cx.translate(bx+12,by+4);cx.rotate(-0.5);cx.fillRect(-2,-14,4,16);cx.restore();
+}
+const hpFrac=player.currentHp/player.maxHp;
+const bw=30;cx.fillStyle='#440000';cx.fillRect(bx-bw/2,by-28,bw,4);
+cx.fillStyle=hpFrac>0.5?'#00cc00':hpFrac>0.25?'#cccc00':'#cc0000';
+cx.fillRect(bx-bw/2,by-28,bw*hpFrac,4);
+cx.font='bold 10px monospace';cx.textAlign='center';cx.fillStyle='#ffffff';cx.fillText('You',bx,by-32);
 }
 
-function equipItem(invIdx) {
-  const slot = GS.inventory[invIdx];
-  if (!slot) return;
-  const item = ITEM_DB[slot.item];
-  if (!item.equipSlot) return;
-  // Unequip current
-  const current = GS.equipment[item.equipSlot];
-  GS.equipment[item.equipSlot] = slot.item;
-  GS.inventory.splice(invIdx, 1);
-  if (current) addToInventory(current);
-  addChat(`You equip the ${item.name}.`, 'action');
-  renderTab();
+// ---- HITSPLATS & XP DROPS (canvas-based) ----
+const hitsplats=[];
+const xpDrops=[];
+function spawnHitsplat(tx,ty,dmg,miss){hitsplats.push({tx,ty,damage:dmg,isHit:!miss,life:60});}
+function spawnXPDrop(skillName,amount){
+xpDrops.push({text:'+'+Math.round(amount)+' '+skillName,life:80,tx:player.tile.x,ty:player.tile.y});
+}
+function drawHitsplats(){
+for(let i=hitsplats.length-1;i>=0;i--){
+const h=hitsplats[i];h.life--;
+if(h.life<=0){hitsplats.splice(i,1);continue;}
+const s=tileToScreen(h.tx,h.ty);
+const sx=s.x+camX,sy=s.y+camY-(60-h.life)*0.5;
+const alpha=Math.min(1,h.life/20);
+ctx.save();ctx.globalAlpha=alpha;
+ctx.fillStyle=h.isHit?'#cc0000':'#3333cc';
+ctx.beginPath();ctx.arc(sx,sy,12,0,Math.PI*2);ctx.fill();
+ctx.fillStyle='#fff';ctx.font='bold 11px monospace';ctx.textAlign='center';ctx.fillText(h.damage,sx,sy+4);
+ctx.restore();
+}
+}
+function drawXPDrops(){
+for(let i=xpDrops.length-1;i>=0;i--){
+const d=xpDrops[i];d.life--;
+if(d.life<=0){xpDrops.splice(i,1);continue;}
+const s=tileToScreen(d.tx,d.ty);
+const sx=s.x+camX+15,sy=s.y+camY-(80-d.life)*0.5-20;
+ctx.save();ctx.globalAlpha=Math.min(1,d.life/20);
+ctx.font='bold 11px monospace';ctx.textAlign='center';
+ctx.fillStyle='#000';ctx.fillText(d.text,sx+1,sy+1);
+ctx.fillStyle='#ffff00';ctx.fillText(d.text,sx,sy);
+ctx.restore();
+}
 }
 
-function getAttackBonus() {
-  let b = 0;
-  for (const [, eqId] of Object.entries(GS.equipment)) {
-    if (eqId && ITEM_DB[eqId]) b += ITEM_DB[eqId].attackBonus;
-  }
-  return b;
+// ---- SPAWN NPCs ----
+NPCS.forEach(def=>{
+const npc={...def,currentTile:{...def.tile},homeTile:{...def.tile},wanderTimer:0,lerpX:def.tile.x,lerpY:def.tile.y};
+npcInstances.push(npc);
+});
+
+// ---- SPAWN MONSTERS ----
+MONSTER_DEFS.forEach(def=>{
+for(let i=0;i<def.count;i++){
+const [x1,y1,x2,y2]=def.spawnArea;
+let sx2,sy2,attempts=0;
+do{sx2=x1+Math.floor(Math.random()*(x2-x1));sy2=y1+Math.floor(Math.random()*(y2-y1));attempts++;}while(!isWalkable(sx2,sy2)&&attempts<50);
+const inst={...def,currentTile:{x:sx2,y:sy2},spawnTile:{x:sx2,y:sy2},currentHp:def.hp,alive:true,respawnAt:0,wanderTimer:0,target:null,atkCooldown:0,idx:monsterInstances.length,lerpX:sx2,lerpY:sy2};
+monsterInstances.push(inst);
+}
+});
+
+// ---- A* PATHFINDING ----
+function findPath(sx,sy,ex,ey){
+if(!isWalkable(ex,ey)){
+let best=null,bestD=Infinity;
+for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++){
+const nx=ex+dx,ny=ey+dy;
+if(isWalkable(nx,ny)){const dd=Math.abs(nx-sx)+Math.abs(ny-sy);if(dd<bestD){bestD=dd;best={x:nx,y:ny};}}
+}
+if(best){ex=best.x;ey=best.y;}else return[];
+}
+if(sx===ex&&sy===ey)return[];
+const open=[],closed=new Set();
+const gS={},fS={},par={};
+const k=(x,y)=>x+','+y;
+const h=(x,y)=>Math.abs(x-ex)+Math.abs(y-ey);
+const sk=k(sx,sy);
+gS[sk]=0;fS[sk]=h(sx,sy);
+open.push({x:sx,y:sy,f:fS[sk]});
+let iters=0;
+while(open.length>0&&iters<2000){
+iters++;open.sort((a,b)=>a.f-b.f);
+const cur=open.shift();const ck=k(cur.x,cur.y);
+if(cur.x===ex&&cur.y===ey){
+const path=[];let p=ck;
+while(p){const[px,py]=p.split(',').map(Number);path.unshift({x:px,y:py});p=par[p];}
+return path.slice(1);
+}
+closed.add(ck);
+const dirs=[[0,1],[0,-1],[1,0],[-1,0]];
+for(const[ddx,ddy]of dirs){
+const nx=cur.x+ddx,ny=cur.y+ddy;const nk=k(nx,ny);
+if(closed.has(nk)||!isWalkable(nx,ny))continue;
+const ng=(gS[ck]||0)+1;
+if(gS[nk]===undefined||ng<gS[nk]){
+gS[nk]=ng;fS[nk]=ng+h(nx,ny);par[nk]=ck;
+if(!open.some(o=>o.x===nx&&o.y===ny))open.push({x:nx,y:ny,f:fS[nk]});
+}
+}
+}
+return[];
 }
 
-function getDefenceBonus() {
-  let b = 0;
-  for (const [, eqId] of Object.entries(GS.equipment)) {
-    if (eqId && ITEM_DB[eqId]) b += ITEM_DB[eqId].defenceBonus;
-  }
-  return b;
+// ---- INVENTORY ----
+function addInventoryItem(item){
+if(player.inventory.length>=28&&!item.stackable){addChat('Your inventory is full.','game');return false;}
+if(item.stackable||item.id==='coins'){
+const existing=player.inventory.find(i=>i.id===item.id);
+if(existing){existing.qty+=(item.qty||1);updateInventoryPanel();return true;}
+}
+if(player.inventory.length>=28){addChat('Your inventory is full.','game');return false;}
+player.inventory.push({id:item.id,qty:item.qty||1});
+updateInventoryPanel();return true;
+}
+function removeInventoryItem(idx,qty){
+qty=qty||1;const item=player.inventory[idx];if(!item)return;
+item.qty-=qty;if(item.qty<=0)player.inventory.splice(idx,1);
+updateInventoryPanel();
+}
+function hasItem(id){return player.inventory.some(i=>i.id===id);}
+function countItem(id){const i=player.inventory.find(x=>x.id===id);return i?i.qty:0;}
+
+// ---- XP helpers ----
+function addXP(skill,amount){
+amount=Math.floor(amount);if(amount<=0)return;
+player.skills[skill].xp+=amount;
+const nl=levelFromXP(player.skills[skill].xp);
+if(nl>player.skills[skill].level){player.skills[skill].level=nl;showLevelUp(skill,nl);if(skill==='hitpoints'){player.maxHp=nl;player.currentHp=Math.min(player.currentHp+1,player.maxHp);}playLevelUp();}
+updateStatsPanel();spawnXPDrop(skill.charAt(0).toUpperCase()+skill.slice(1),amount);
 }
 
-// ═══════════════════════════════════════
-// 11. SKILLS MANAGER
-// ═══════════════════════════════════════
-function addXP(skillName, amount) {
-  const skill = GS.skills[skillName];
-  if (!skill) return;
-  const oldLevel = skill.level;
-  skill.xp += amount;
-  skill.level = levelForXP(skill.xp);
-  GS.totalXP += amount;
-  if (skillName === 'hitpoints') {
-    GS.player.maxHp = skill.level;
-    GS.player.hp = Math.min(GS.player.hp + (skill.level - oldLevel), GS.player.maxHp);
-  }
-  if (skill.level > oldLevel) {
-    addChat(`${skillName.charAt(0).toUpperCase()+skillName.slice(1)} level up! You are now level ${skill.level}!`, 'quest');
-    showLevelFlash();
-  }
-  showXPDrop(`+${amount} ${skillName.charAt(0).toUpperCase()+skillName.slice(1)} XP`);
+// ---- COMBAT ----
+function getEffectiveLevel(base,skill){
+let bonus=0;
+if(player.attackStyle==='accurate'&&skill==='attack')bonus=3;
+if(player.attackStyle==='aggressive'&&skill==='strength')bonus=3;
+if(player.attackStyle==='defensive'&&skill==='defence')bonus=3;
+if(player.attackStyle==='controlled')bonus=1;
+return Math.floor(base+bonus+8);
+}
+function getEquipBonus(type){
+let b=0;for(let slot in player.equipment){
+const eid=player.equipment[slot];
+if(eid){const itm=ITEMS[eid];if(itm){if(type==='atk')b+=(itm.atkBonus||0);if(type==='str')b+=(itm.strBonus||0);if(type==='def')b+=(itm.defBonus||0);}}
+}return b;
+}
+function calcMaxHit(){
+const effStr=getEffectiveLevel(player.skills.strength.level,'strength');
+const strBonus=getEquipBonus('str');
+return Math.max(1,Math.floor(effStr*(strBonus+64)/640+0.5));
+}
+function calcHitChance(effAtk,atkBonus,effDef,defBonus){
+const ar=effAtk*(atkBonus+64),dr=effDef*(defBonus+64);
+if(ar>dr)return 1-(dr+2)/(2*(ar+1));return ar/(2*(dr+1));
+}
+function playerAttackMonster(mon){
+const effAtk=getEffectiveLevel(player.skills.attack.level,'attack');
+const atkBonus=getEquipBonus('atk');const effDef=Math.floor(mon.level+8);
+const hitChance=calcHitChance(effAtk,atkBonus,effDef,0);
+if(Math.random()<hitChance){
+const maxHit=calcMaxHit();const dmg=Math.floor(Math.random()*(maxHit+1));
+if(dmg===0){spawnHitsplat(mon.currentTile.x,mon.currentTile.y,0,true);return;}
+mon.currentHp=Math.max(0,mon.currentHp-dmg);
+spawnHitsplat(mon.currentTile.x,mon.currentTile.y,dmg,false);
+playSwordSwing();
+if(player.attackStyle==='accurate')addXP('attack',dmg*4);
+else if(player.attackStyle==='aggressive')addXP('strength',dmg*4);
+else if(player.attackStyle==='defensive')addXP('defence',dmg*4);
+else{addXP('attack',Math.floor(dmg*4/3));addXP('strength',Math.floor(dmg*4/3));addXP('defence',Math.floor(dmg*4/3));}
+addXP('hitpoints',Math.floor(dmg*1.33));
+if(mon.currentHp<=0)killMonster(mon);
+}else{spawnHitsplat(mon.currentTile.x,mon.currentTile.y,0,true);}
+}
+function monsterAttackPlayer(mon){
+const effAtk=Math.floor(mon.level+8);
+const effDef=getEffectiveLevel(player.skills.defence.level,'defence');
+const defBonus=getEquipBonus('def');
+const hitChance=calcHitChance(effAtk,0,effDef,defBonus);
+if(Math.random()<hitChance){
+const dmg=Math.floor(Math.random()*(mon.maxHit+1));
+if(dmg===0){spawnHitsplat(player.tile.x,player.tile.y,0,true);return;}
+player.currentHp=Math.max(0,player.currentHp-dmg);
+spawnHitsplat(player.tile.x,player.tile.y,dmg,false);
+updateOrbs();if(player.currentHp<=0)playerDeath();
+}else{spawnHitsplat(player.tile.x,player.tile.y,0,true);}
+}
+function killMonster(mon){
+mon.alive=false;mon.respawnAt=tickCount+50+Math.floor(Math.random()*30);
+addChat('You defeated the '+mon.name+'!','combat');
+mon.drops.forEach(drop=>{
+if(Math.random()<drop.rate){
+const qty=Array.isArray(drop.qty)?drop.qty[0]+Math.floor(Math.random()*(drop.qty[1]-drop.qty[0]+1)):drop.qty;
+if(drop.id==='coins'){player.gold+=qty;addChat('You received '+qty+' coins.','item');}
+else{const def=ITEMS[drop.id];if(def)addInventoryItem({id:drop.id,qty});}
+}
+});
+player.inCombat=false;player.combatTarget=null;
+}
+function playerDeath(){
+addChat('Oh dear, you are dead!','game');
+player.inCombat=false;player.combatTarget=null;player.path=[];player.skillingAction=null;
+const sorted=[...player.inventory].sort((a,b)=>(ITEMS[b.id]?.value||0)-(ITEMS[a.id]?.value||0));
+player.inventory=sorted.slice(0,3);
+player.tile={...player.respawnTile};player.lerpX=player.tile.x;player.lerpY=player.tile.y;
+player.currentHp=Math.max(3,Math.floor(player.maxHp*0.15));
+player.deathCount++;document.getElementById('death-count').textContent=player.deathCount;
+updateOrbs();updateInventoryPanel();
+addChat('You respawn in Irondale town.','game');
 }
 
-function getCombatLevel() {
-  const s = GS.skills;
-  const base = 0.25 * (s.defence.level + s.hitpoints.level + Math.floor(s.prayer.level/2) + Math.floor(s.magic.level/2));
-  const melee = 0.325 * (s.attack.level + s.strength.level);
-  return Math.floor(base + melee);
+// ---- AUDIO ----
+function initAudio(){if(audioStarted)return;try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();audioStarted=true;}catch(e){}}
+function playFootstep(){if(!audioCtx)return;try{const buf=audioCtx.createBuffer(1,audioCtx.sampleRate*0.04,audioCtx.sampleRate);const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.exp(-i/800)*0.15;const src=audioCtx.createBufferSource();src.buffer=buf;const f=audioCtx.createBiquadFilter();f.frequency.value=150;src.connect(f);f.connect(audioCtx.destination);src.start();}catch(e){}}
+function playSwordSwing(){if(!audioCtx)return;try{const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.type='sawtooth';osc.frequency.setValueAtTime(500,audioCtx.currentTime);osc.frequency.exponentialRampToValueAtTime(80,audioCtx.currentTime+0.12);gain.gain.setValueAtTime(0.15,audioCtx.currentTime);gain.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.12);osc.connect(gain);gain.connect(audioCtx.destination);osc.start();osc.stop(audioCtx.currentTime+0.12);}catch(e){}}
+function playLevelUp(){if(!audioCtx)return;try{[261,329,392,523].forEach((freq,i)=>{const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.frequency.value=freq;gain.gain.setValueAtTime(0.2,audioCtx.currentTime+i*0.1);gain.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+i*0.1+0.18);osc.connect(gain);gain.connect(audioCtx.destination);osc.start(audioCtx.currentTime+i*0.1);osc.stop(audioCtx.currentTime+i*0.1+0.2);});}catch(e){}}
+function playPickup(){if(!audioCtx)return;try{const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.type='sine';osc.frequency.setValueAtTime(600,audioCtx.currentTime);osc.frequency.exponentialRampToValueAtTime(1200,audioCtx.currentTime+0.08);gain.gain.setValueAtTime(0.12,audioCtx.currentTime);gain.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.1);osc.connect(gain);gain.connect(audioCtx.destination);osc.start();osc.stop(audioCtx.currentTime+0.1);}catch(e){}}
+
+// ---- CHATBOX ----
+let chatFilter='all';
+function addChat(text,type){
+type=type||'game';
+const msgs=document.getElementById('chat-messages');
+const div=document.createElement('div');div.className='chat-msg chat-'+type;div.textContent=text;
+msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;
 }
 
-// ═══════════════════════════════════════
-// 12. COMBAT ENGINE
-// ═══════════════════════════════════════
-function processCombatTick() {
-  if (!GS.player.inCombat || !GS.player.combatTarget) return;
-  const enemy = GS.enemies.find(e => e.id === GS.player.combatTarget);
-  if (!enemy || enemy.dead) {
-    GS.player.inCombat = false;
-    GS.player.combatTarget = null;
-    return;
-  }
-  // Check distance
-  const dist = Math.abs(GS.player.tileX - enemy.tileX) + Math.abs(GS.player.tileY - enemy.tileY);
-  if (dist > 1) {
-    // Walk toward enemy
-    const path = aStar(GS.player.tileX, GS.player.tileY, enemy.tileX, enemy.tileY, tileMap);
-    if (path && path.length > 1) {
-      GS.player.path = path;
-      GS.player.pathIndex = 1;
-    }
-    return;
-  }
-  // Player attacks enemy
-  const maxHit = Math.floor(GS.skills.attack.level * 0.8 + getAttackBonus() + GS.skills.strength.level * 0.5);
-  const atkRoll = Math.floor(Math.random() * (maxHit + 1));
-  const defRoll = Math.floor(Math.random() * (enemy.defLvl * 0.3 + 1));
-  let dmg = 0;
-  let splatColor = '#4080ff'; // blue for miss
-  if (atkRoll > defRoll) {
-    dmg = Math.max(1, atkRoll - defRoll);
-    if (atkRoll > defRoll * 2 && defRoll > 0) {
-      dmg = Math.floor(dmg * 1.5);
-      splatColor = '#f07800'; // orange for crit
-    } else {
-      splatColor = '#00c800'; // green for hit
-    }
-  }
-  enemy.hp -= dmg;
-  enemy.animFrame = 2; // attack anim
-  GS.player.animFrame = 2;
-  addSplat(enemy.pixelX, enemy.pixelY, dmg, splatColor);
-  if (dmg > 0) {
-    addChat(`You hit the ${enemy.name} for ${dmg} damage!`, 'combat_good');
-  } else {
-    addChat(`You miss the ${enemy.name}.`, 'combat_bad');
-  }
+// ---- DIALOG ----
+let currentDialog=null;
+function openDialog(npcId,nodeIdx){
+nodeIdx=nodeIdx||0;
+const npc=NPCS.find(n=>n.id===npcId);if(!npc)return;
+const node=npc.dialog[nodeIdx];if(!node)return;
+currentDialog={npcId,nodeIdx};
+const panel=document.getElementById('dialog-panel');
+document.getElementById('dialog-name').textContent=npc.name;
+document.getElementById('dialog-text').textContent=node.text;
+const opts=document.getElementById('dialog-options');opts.innerHTML='';
+(node.opts||[]).forEach((opt)=>{
+const d=document.createElement('div');d.className='dialog-option';d.textContent=opt.t;
+d.addEventListener('click',()=>handleDialogOption(npcId,opt));
+opts.appendChild(d);
+});
+panel.style.display='block';
+if(npc.questStart&&player.quests[npc.questStart]==='not_started'){
+player.quests[npc.questStart]='in_progress';
+addChat('Quest started: '+getQuestName(npc.questStart),'quest');
+if(npc.questStart==='arcane_mystery'){addInventoryItem({id:'research_notes',qty:1});player.questFlags.notesReceived=true;}
+}
+}
+function handleDialogOption(npcId,opt){
+if(opt.next===null){closeDialog();return;}
+if(opt.next==='OPEN_BANK'){closeDialog();openBank();return;}
+if(opt.next==='BUY_BRONZE'){closeDialog();if(player.gold>=50){player.gold-=50;addInventoryItem({id:'bronze_sword',qty:1});addChat('You bought a Bronze Sword for 50gp.','item');}else addChat("You don't have enough gold.",'game');return;}
+if(opt.next==='BUY_IRON'){closeDialog();if(player.gold>=200){player.gold-=200;addInventoryItem({id:'iron_sword',qty:1});addChat('You bought an Iron Sword for 200gp.','item');}else addChat("You don't have enough gold.",'game');return;}
+if(opt.next==='GIVE_FLOUR'){closeDialog();if(player.quests.feast_assistant==='in_progress'&&!player.questFlags.flourDone){addInventoryItem({id:'pot_flour',qty:1});player.questFlags.flourDone=true;addChat('You received a pot of flour!','item');playPickup();checkFeastQuest();}else addChat('Millie smiles at you.','game');return;}
+if(opt.next==='DELIVER_NOTES'){closeDialog();if(player.quests.arcane_mystery==='in_progress'&&hasItem('research_notes')){const idx=player.inventory.findIndex(i=>i.id==='research_notes');if(idx>=0)removeInventoryItem(idx);player.questFlags.notesDelivered=true;player.quests.arcane_mystery='complete';player.gold+=100;addChat('Quest complete: Arcane Mystery! +100gp','quest');playLevelUp();updateQuestPoints();}else addChat("You don't have any notes for me.",'game');return;}
+const npc=NPCS.find(n=>n.id===npcId);
+if(npc&&npc.dialog[opt.next])openDialog(npcId,opt.next);else closeDialog();
+}
+function closeDialog(){document.getElementById('dialog-panel').style.display='none';currentDialog=null;}
+function getQuestName(id){const names={feast_assistant:"The Duke's Feast",arcane_mystery:'Arcane Mystery',restless_spirit:'The Restless Spirit'};return names[id]||id;}
+function checkFeastQuest(){if(player.questFlags.milkDone&&player.questFlags.eggDone&&player.questFlags.flourDone){if(hasItem('bucket_milk')&&hasItem('egg')&&hasItem('pot_flour'))addChat('You have all the ingredients! Talk to Gareth the Cook.','quest');}}
+function updateQuestPoints(){let qp=0;for(let q in player.quests)if(player.quests[q]==='complete')qp++;document.getElementById('quest-points').textContent=qp;}
 
-  if (enemy.hp <= 0) {
-    enemyDeath(enemy);
-    return;
-  }
-
-  // Enemy attacks player
-  const eMaxHit = Math.floor(enemy.attackLvl * 0.8 + enemy.strLvl * 0.5);
-  const eAtk = Math.floor(Math.random() * (eMaxHit + 1));
-  const pDef = Math.floor(Math.random() * (GS.skills.defence.level * 0.3 + getDefenceBonus() + 1));
-  let eDmg = 0;
-  let eSplatColor = '#4080ff';
-  if (eAtk > pDef) {
-    eDmg = Math.max(1, eAtk - pDef);
-    eSplatColor = '#c80000';
-  }
-  GS.player.hp -= eDmg;
-  addSplat(GS.player.pixelX, GS.player.pixelY, eDmg, eSplatColor);
-  if (eDmg > 0) {
-    addChat(`The ${enemy.name} hits you for ${eDmg} damage!`, 'combat_bad');
-  } else {
-    addChat(`The ${enemy.name} misses you.`, 'combat_good');
-  }
-
-  if (GS.player.hp <= 0) {
-    GS.player.hp = 1;
-    GS.player.inCombat = false;
-    GS.player.combatTarget = null;
-    addChat('You have been defeated! You barely escape with your life.', 'combat_bad');
-    showDeathFlash();
-  }
-
-  // XP gains
-  if (dmg > 0) {
-    addXP('attack', 4);
-    addXP('strength', 4);
-    addXP('hitpoints', 2);
-    addXP('defence', 2);
-  }
+// ---- BANK ----
+const bank={items:[],isOpen:false};
+function openBank(){bank.isOpen=true;document.getElementById('bank-modal').style.display='flex';renderBank();}
+function closeBank(){bank.isOpen=false;document.getElementById('bank-modal').style.display='none';}
+function depositItem(invIdx){const item=player.inventory[invIdx];if(!item)return;const existing=bank.items.find(b=>b.id===item.id);if(existing)existing.qty+=item.qty;else bank.items.push({id:item.id,qty:item.qty});player.inventory.splice(invIdx,1);renderBank();updateInventoryPanel();}
+function depositAll(){while(player.inventory.length>0)depositItem(0);}
+function withdrawItem(bankIdx){const item=bank.items[bankIdx];if(!item)return;const def=ITEMS[item.id];if(player.inventory.length>=28&&!(def&&def.stackable&&player.inventory.find(i=>i.id===item.id))){addChat('Inventory full.','game');return;}if(addInventoryItem({id:item.id,qty:1})){item.qty--;if(item.qty<=0)bank.items.splice(bankIdx,1);}renderBank();}
+function renderBank(){
+const grid=document.getElementById('bank-items');grid.innerHTML='';
+bank.items.forEach((item,i)=>{const def=ITEMS[item.id];const slot=document.createElement('div');slot.className='bank-slot';const icon=document.createElement('div');icon.className='item-icon';icon.style.background=def?def.color:'#555';icon.style.width='40px';icon.style.height='28px';icon.style.borderRadius='2px';icon.textContent=def?def.name.substring(0,5):'?';icon.style.fontSize='7px';icon.style.color='#fff';icon.style.display='flex';icon.style.alignItems='center';icon.style.justifyContent='center';slot.appendChild(icon);if(item.qty>1){const sc=document.createElement('span');sc.className='stack-count';sc.textContent=item.qty;slot.appendChild(sc);}slot.addEventListener('click',()=>withdrawItem(i));grid.appendChild(slot);});
+for(let i=bank.items.length;i<40;i++){const slot=document.createElement('div');slot.className='bank-slot';grid.appendChild(slot);}
+const invGrid=document.getElementById('bank-inv-grid');invGrid.innerHTML='';
+player.inventory.forEach((item,i)=>{const def=ITEMS[item.id];const slot=document.createElement('div');slot.className='inv-slot';slot.style.width='44px';slot.style.height='34px';const icon=document.createElement('div');icon.className='item-icon';icon.style.background=def?def.color:'#555';icon.textContent=def?def.name.substring(0,5):'?';slot.appendChild(icon);if(item.qty>1){const sc=document.createElement('span');sc.className='stack-count';sc.textContent=item.qty;slot.appendChild(sc);}slot.addEventListener('click',()=>{depositItem(i);});invGrid.appendChild(slot);});
 }
 
-function enemyDeath(enemy) {
-  enemy.dead = true;
-  enemy.respawnTimer = 30;
-  GS.player.inCombat = false;
-  GS.player.combatTarget = null;
-  addChat(`You have defeated the ${enemy.name}!`, 'combat_good');
-
-  // Loot
-  addToInventory('bones');
-  addChat('The goblin drops some bones.', 'loot');
-  if (Math.random() < 0.8) {
-    const coinAmt = Math.floor(Math.random()*10)+1;
-    addToInventory('coins', coinAmt);
-    addChat(`The goblin drops ${coinAmt} coins.`, 'loot');
-  }
-  if (Math.random() < 0.3) {
-    addToInventory('raw_chicken');
-    addChat('The goblin drops raw chicken.', 'loot');
-  }
-  if (Math.random() < 0.05) {
-    const items = ['bronze_sword','bronze_shield','bronze_helm'];
-    const drop = items[Math.floor(Math.random()*items.length)];
-    addToInventory(drop);
-    addChat(`The goblin drops a ${ITEM_DB[drop].name}!`, 'loot');
-  }
-
-  addXP('attack', 6);
-  addXP('strength', 4);
-  addXP('hitpoints', 4);
-  addXP('defence', 2);
-  renderTab();
+// ---- LEVEL UP POPUP ----
+function showLevelUp(skill,level){
+const popup=document.getElementById('level-up-popup');
+document.getElementById('lvlup-title').textContent='Level Up!';
+document.getElementById('lvlup-desc').textContent=skill.charAt(0).toUpperCase()+skill.slice(1)+' is now level '+level+'!';
+popup.style.display='block';addChat('Congratulations! Your '+skill+' level is now '+level+'!','skill');
+setTimeout(()=>{popup.style.display='none';},2500);
 }
 
-function addSplat(px, py, dmg, color) {
-  GS.splats.push({ px, py, dmg, color, timer:1.0, startY:py });
+// ---- UI PANELS ----
+let activePanel='skills';
+function renderPanel(){
+const c=document.getElementById('panel-content');c.innerHTML='';
+if(activePanel==='skills')renderSkillsPanel(c);
+else if(activePanel==='inventory')renderInventoryPanel(c);
+else if(activePanel==='quests')renderQuestsPanel(c);
+else if(activePanel==='combat')renderCombatPanel(c);
+else if(activePanel==='equipment')renderEquipmentPanel(c);
+}
+function renderSkillsPanel(c){
+const skills=['attack','strength','defence','hitpoints','prayer','cooking','woodcutting','fishing','mining','firemaking','crafting','smithing'];
+const icons=['⚔','💪','🛡','❤','✙','🍳','🪓','🐟','⛏','🔥','🔨','⚒'];
+skills.forEach((s,i)=>{
+const row=document.createElement('div');row.className='skill-row';
+const icon=document.createElement('span');icon.className='sk-icon';icon.textContent=icons[i];
+const name=document.createElement('span');name.className='sk-name';name.textContent=s.charAt(0).toUpperCase()+s.slice(1);
+const lvl=document.createElement('span');lvl.className='sk-lvl';
+const lv=player.skills[s].level;lvl.textContent=lv;
+if(lv>=99)lvl.style.color='#00ffff';else if(lv>=61)lvl.style.color='#ffa500';else if(lv>=31)lvl.style.color='#ffff00';
+const xp=player.skills[s].xp;const nextLvXp=xpForLevel(lv+1);const curLvXp=xpForLevel(lv);
+const pct=lv>=99?100:Math.floor((xp-curLvXp)/(nextLvXp-curLvXp)*100);
+row.title=s+': '+xp+' XP ('+pct+'% to next)';
+row.appendChild(icon);row.appendChild(name);row.appendChild(lvl);c.appendChild(row);
+});
+const total=document.createElement('div');total.className='skill-row';total.style.borderTop='1px solid #3a2a1a';
+total.innerHTML='<span class="sk-icon">Σ</span><span class="sk-name" style="color:#c5a028">Total</span><span class="sk-lvl" style="color:#c5a028">'+getTotalLevel()+'</span>';
+c.appendChild(total);
+const gold=document.createElement('div');gold.className='skill-row';
+gold.innerHTML='<span class="sk-icon">💰</span><span class="sk-name" style="color:#ffd700">Gold</span><span class="sk-lvl" style="color:#ffd700">'+player.gold+'</span>';
+c.appendChild(gold);
+}
+function renderInventoryPanel(c){
+const grid=document.createElement('div');grid.className='inv-grid';
+for(let i=0;i<28;i++){
+const slot=document.createElement('div');slot.className='inv-slot';
+if(i<player.inventory.length){
+const item=player.inventory[i];const def=ITEMS[item.id];
+const icon=document.createElement('div');icon.className='item-icon';icon.style.background=def?def.color:'#555';icon.textContent=def?def.name.substring(0,6):'?';slot.appendChild(icon);
+if(item.qty>1){const sc=document.createElement('span');sc.className='stack-count';sc.textContent=item.qty;slot.appendChild(sc);}
+slot.addEventListener('contextmenu',(e)=>{e.preventDefault();showItemContextMenu(e,i);});
+slot.addEventListener('click',()=>{useInventoryItem(i);});
+}
+grid.appendChild(slot);
+}c.appendChild(grid);
+}
+function renderQuestsPanel(c){
+const quests=[
+{id:'feast_assistant',name:"The Duke's Feast",objs:['Get bucket of milk','Get an egg','Get pot of flour','Return to Cook'],checks:[player.questFlags.milkDone,player.questFlags.eggDone,player.questFlags.flourDone,false]},
+{id:'arcane_mystery',name:'Arcane Mystery',objs:['Get notes from Duke','Deliver to Scholar Elara'],checks:[player.questFlags.notesReceived,player.questFlags.notesDelivered]},
+{id:'restless_spirit',name:'The Restless Spirit',objs:['Speak to Father Aldwin','Find skull in swamp','Return skull to coffin'],checks:[player.quests.restless_spirit!=='not_started',player.questFlags.skullFound,player.questFlags.skullReturned]},
+];
+quests.forEach(q=>{
+const status=player.quests[q.id];const div=document.createElement('div');div.className='quest-item q-'+status;
+const name=document.createElement('div');name.className='q-name';
+name.textContent=(status==='complete'?'✓ ':status==='in_progress'?'◯ ':'✗ ')+q.name;div.appendChild(name);
+if(status!=='not_started'){q.objs.forEach((obj,i)=>{const od=document.createElement('div');od.className='quest-obj'+(q.checks[i]?' done':'');od.textContent=(q.checks[i]?'☑ ':'☐ ')+obj;div.appendChild(od);});}
+c.appendChild(div);
+});
+}
+function renderCombatPanel(c){
+const styles=['accurate','aggressive','defensive','controlled'];
+const div=document.createElement('div');div.className='combat-styles';
+styles.forEach(s=>{const btn=document.createElement('div');btn.className='style-btn'+(player.attackStyle===s?' active':'');btn.textContent=s.charAt(0).toUpperCase()+s.slice(1);btn.addEventListener('click',()=>{player.attackStyle=s;renderPanel();addChat('Attack style: '+s,'game');});div.appendChild(btn);});
+c.appendChild(div);
+const stats=document.createElement('div');stats.style.cssText='padding:6px;font-size:10px;font-family:monospace;color:#ff981f;';
+stats.innerHTML='<div>Atk Bonus: +'+getEquipBonus('atk')+'</div><div>Str Bonus: +'+getEquipBonus('str')+'</div><div>Def Bonus: +'+getEquipBonus('def')+'</div><div>Max Hit: '+calcMaxHit()+'</div>';
+c.appendChild(stats);
+}
+function renderEquipmentPanel(c){
+const slots=['head','body','legs','weapon','shield'];const labels=['Head','Body','Legs','Weapon','Shield'];
+const grid=document.createElement('div');grid.className='equip-grid';
+slots.forEach((s,i)=>{const row=document.createElement('div');row.className='equip-row';const slot=document.createElement('div');
+slot.className='equip-slot'+(player.equipment[s]?' filled':'');const eid=player.equipment[s];
+if(eid){const def=ITEMS[eid];slot.textContent=def?def.name.substring(0,8):'?';slot.style.color='#ff981f';slot.style.background=def?def.color+'33':'#0a0500';slot.addEventListener('click',()=>unequipItem(s));}else{slot.textContent=labels[i];}
+row.appendChild(slot);grid.appendChild(row);});c.appendChild(grid);
+}
+function updateStatsPanel(){document.getElementById('total-level').textContent=getTotalLevel();if(activePanel==='skills'||activePanel==='combat'||activePanel==='equipment')renderPanel();}
+function updateInventoryPanel(){if(activePanel==='inventory')renderPanel();}
+function updateOrbs(){
+document.getElementById('hp-val').textContent=player.currentHp+'/'+player.maxHp;
+document.getElementById('prayer-val').textContent=player.prayer+'/'+player.maxPrayer;
+document.getElementById('run-val').textContent=Math.floor(player.runEnergy)+'%';
 }
 
-// ═══════════════════════════════════════
-// 13. QUEST MANAGER
-// ═══════════════════════════════════════
-function getQuestObjective() {
-  const state = GS.quests.cooksProblem;
-  switch(state) {
-    case 'NOT_STARTED': return 'Talk to the Cook in the castle.';
-    case 'ACCEPTED': case 'COLLECTING':
-      const need = [];
-      if (!hasItem('egg')) need.push('1 egg');
-      if (!hasItem('flour')) need.push('1 flour');
-      if (!hasItem('milk')) need.push('1 milk');
-      return need.length ? 'Collect: '+need.join(', ') : 'Return to the Cook!';
-    case 'ALL_ITEMS': return 'Return items to the Cook.';
-    case 'COMPLETE': return 'Quest Complete!';
-    default: return '';
-  }
+// ---- ITEM INTERACTIONS ----
+function useInventoryItem(idx){
+const item=player.inventory[idx];if(!item)return;const def=ITEMS[item.id];if(!def)return;
+if(def.type==='weapon'){const old=player.equipment.weapon;player.equipment.weapon=item.id;player.inventory.splice(idx,1);if(old)addInventoryItem({id:old,qty:1});addChat('You equip the '+def.name+'.','item');renderPanel();return;}
+if(def.heals){if(player.currentHp>=player.maxHp){addChat('You are already at full health.','game');return;}player.currentHp=Math.min(player.maxHp,player.currentHp+def.heals);removeInventoryItem(idx);addChat('You eat the '+def.name+'. It heals '+def.heals+'.','game');updateOrbs();return;}
+if(item.id==='bones'){removeInventoryItem(idx);addXP('prayer',5);addChat('You bury the bones.','game');return;}
+addChat(def.examine,'game');
+}
+function unequipItem(slot){const eid=player.equipment[slot];if(!eid)return;if(player.inventory.length>=28){addChat('Inventory full.','game');return;}player.equipment[slot]=null;addInventoryItem({id:eid,qty:1});addChat('You unequip the '+ITEMS[eid].name+'.','item');renderPanel();}
+function showItemContextMenu(e,idx){
+const item=player.inventory[idx];if(!item)return;const def=ITEMS[item.id];if(!def)return;
+const menu=document.getElementById('context-menu');menu.innerHTML='';
+const header=document.createElement('div');header.className='ctx-option';header.textContent=def.name;menu.appendChild(header);
+if(def.type==='weapon'){const eq=document.createElement('div');eq.className='ctx-option';eq.textContent='Wield';eq.addEventListener('click',()=>{useInventoryItem(idx);menu.style.display='none';});menu.appendChild(eq);}
+if(def.heals){const eat=document.createElement('div');eat.className='ctx-option';eat.textContent='Eat';eat.addEventListener('click',()=>{useInventoryItem(idx);menu.style.display='none';});menu.appendChild(eat);}
+if(item.id.startsWith('raw_')){const cook=document.createElement('div');cook.className='ctx-option';cook.textContent='Cook (use on range)';cook.addEventListener('click',()=>{addChat('Go to a range and click it to cook.','game');menu.style.display='none';});menu.appendChild(cook);}
+const examine=document.createElement('div');examine.className='ctx-option';examine.textContent='Examine';examine.addEventListener('click',()=>{addChat(def.examine,'game');menu.style.display='none';});menu.appendChild(examine);
+const drop=document.createElement('div');drop.className='ctx-option';drop.textContent='Drop';drop.addEventListener('click',()=>{removeInventoryItem(idx);addChat('You drop the '+def.name+'.','game');menu.style.display='none';});menu.appendChild(drop);
+const rect=document.getElementById('game-wrapper').getBoundingClientRect();
+menu.style.left=Math.min(e.clientX-rect.left,W-140)+'px';menu.style.top=Math.min(e.clientY-rect.top,H-100)+'px';menu.style.display='block';
 }
 
-function getQuestStatus() {
-  const s = GS.quests.cooksProblem;
-  if (s === 'NOT_STARTED') return 'Not started';
-  if (s === 'COMPLETE') return 'Complete';
-  return 'In progress';
+// ---- SKILLING ----
+function startSkilling(action,objRef){player.skillingAction=action;player.skillingTicks=0;player.skillingObj=objRef;player.path=[];player.inCombat=false;player.combatTarget=null;}
+function processSkilling(){
+if(!player.skillingAction)return;player.skillingTicks++;
+const action=player.skillingAction;
+if(action==='chop_tree'){
+if(player.skillingTicks>=4){player.skillingTicks=0;
+if(Math.random()<0.6){if(addInventoryItem({id:'logs',qty:1})){addXP('woodcutting',25);addChat('You get some logs.','game');playPickup();}
+if(player.skillingObj){player.skillingObj.alive=false;player.skillingObj.respawnAt=tickCount+50+Math.floor(Math.random()*30);clipFlags[tIdx(player.skillingObj.tile.x,player.skillingObj.tile.y)]=0;}player.skillingAction=null;}}
+}else if(action==='fish'){
+if(player.skillingTicks>=5){player.skillingTicks=0;if(Math.random()<0.5){if(addInventoryItem({id:'raw_shrimps',qty:1})){addXP('fishing',10);addChat('You catch some shrimps.','game');playPickup();}}if(player.inventory.length>=28)player.skillingAction=null;}
+}else if(action==='mine'){
+if(player.skillingTicks>=5){player.skillingTicks=0;if(Math.random()<0.5){if(addInventoryItem({id:'copper_ore',qty:1})){addXP('mining',18);addChat('You mine some copper ore.','game');playPickup();}if(player.skillingObj){player.skillingObj.alive=false;player.skillingObj.respawnAt=tickCount+40+Math.floor(Math.random()*20);clipFlags[tIdx(player.skillingObj.tile.x,player.skillingObj.tile.y)]=0;}player.skillingAction=null;}}
+}else if(action==='cook'){
+if(player.skillingTicks>=3){player.skillingTicks=0;
+const rawIdx=player.inventory.findIndex(i=>i.id==='raw_chicken'||i.id==='raw_beef'||i.id==='raw_shrimps');
+if(rawIdx>=0){const raw=player.inventory[rawIdx];const burnChance=Math.max(0,(50-player.skills.cooking.level)/100);const cookedMap={raw_chicken:'cooked_chicken',raw_beef:'cooked_meat',raw_shrimps:'cooked_shrimps'};removeInventoryItem(rawIdx);if(Math.random()<burnChance)addChat('You accidentally burn the food.','game');else{const cookedId=cookedMap[raw.id]||'cooked_meat';addInventoryItem({id:cookedId,qty:1});addXP('cooking',30);addChat('You cook the food successfully.','game');}}player.skillingAction=null;}
+}
 }
 
-function checkQuestItems() {
-  if (GS.quests.cooksProblem === 'ACCEPTED' || GS.quests.cooksProblem === 'COLLECTING') {
-    if (hasItem('egg') && hasItem('flour') && hasItem('milk')) {
-      GS.quests.cooksProblem = 'ALL_ITEMS';
-      addChat('You have all the ingredients! Return to the Cook.', 'quest');
-    }
-  }
+// ---- GAME TICK ----
+function gameTick(){
+tickCount++;
+if(player.path.length>0&&!player.inCombat){
+const next=player.path[0];
+if(isWalkable(next.x,next.y)){
+player.tile={...next};player.path.shift();
+if(player.isRunning&&player.runEnergy>0&&player.path.length>0){
+player.runEnergy=Math.max(0,player.runEnergy-0.6);
+const next2=player.path[0];
+if(next2&&isWalkable(next2.x,next2.y)){player.tile={...next2};player.path.shift();}
+}
+playFootstep();
+}else{player.path=[];}
+}
+if(!player.isRunning||player.path.length===0)player.runEnergy=Math.min(100,player.runEnergy+0.3);
+if(tickCount%15===0&&player.currentHp<player.maxHp&&!player.inCombat){player.currentHp=Math.min(player.maxHp,player.currentHp+1);updateOrbs();}
+if(player.inCombat&&player.combatTarget!==null){
+const mon=monsterInstances[player.combatTarget];
+if(!mon||!mon.alive){player.inCombat=false;player.combatTarget=null;}
+else{
+const dist=Math.abs(player.tile.x-mon.currentTile.x)+Math.abs(player.tile.y-mon.currentTile.y);
+if(dist>1){const p=findPath(player.tile.x,player.tile.y,mon.currentTile.x,mon.currentTile.y);if(p.length>0){player.tile={...p[0]};if(p.length>1&&player.isRunning)player.tile={...p[1]};}else{player.inCombat=false;player.combatTarget=null;}}
+else{player.attackCooldown--;if(player.attackCooldown<=0){playerAttackMonster(mon);player.attackCooldown=4;}mon.atkCooldown--;if(mon.atkCooldown<=0&&mon.alive){monsterAttackPlayer(mon);mon.atkCooldown=mon.atkSpeed;}}
+}
+}
+monsterInstances.forEach(mon=>{
+if(!mon.alive){if(tickCount>=mon.respawnAt){mon.alive=true;mon.currentHp=mon.hp;mon.currentTile={...mon.spawnTile};mon.lerpX=mon.spawnTile.x;mon.lerpY=mon.spawnTile.y;}return;}
+if(mon.aggressive&&mon.aggroRange>0&&!player.inCombat){const dist=Math.abs(player.tile.x-mon.currentTile.x)+Math.abs(player.tile.y-mon.currentTile.y);if(dist<=mon.aggroRange){player.inCombat=true;player.combatTarget=mon.idx;player.path=[];player.skillingAction=null;player.attackCooldown=1;mon.atkCooldown=1;addChat('The '+mon.name+' attacks you!','combat');}}
+if(!mon.target){mon.wanderTimer--;if(mon.wanderTimer<=0){mon.wanderTimer=8+Math.floor(Math.random()*10);const dx=Math.floor(Math.random()*3)-1,dy=Math.floor(Math.random()*3)-1;const nx=mon.currentTile.x+dx,ny=mon.currentTile.y+dy;if(isWalkable(nx,ny)&&Math.abs(nx-mon.spawnTile.x)<5&&Math.abs(ny-mon.spawnTile.y)<5)mon.currentTile={x:nx,y:ny};}}
+});
+npcInstances.forEach(npc=>{
+if(npc.wander>0){npc.wanderTimer--;if(npc.wanderTimer<=0){npc.wanderTimer=10+Math.floor(Math.random()*15);const dx=Math.floor(Math.random()*3)-1,dy=Math.floor(Math.random()*3)-1;const nx=npc.currentTile.x+dx,ny=npc.currentTile.y+dy;if(isWalkable(nx,ny)&&Math.abs(nx-npc.homeTile.x)<=npc.wander&&Math.abs(ny-npc.homeTile.y)<=npc.wander)npc.currentTile={x:nx,y:ny};}}
+});
+processSkilling();
+worldObjects.forEach(obj=>{
+if((obj.type==='tree'||obj.type==='rock')&&!obj.alive&&tickCount>=obj.respawnAt){obj.alive=true;clipFlags[tIdx(obj.tile.x,obj.tile.y)]=1;}
+if(obj.type==='ground_item'&&obj.taken&&tickCount>=obj.respawnAt){obj.taken=false;}
+});
+groundItems.forEach(gi=>{if(gi.taken&&tickCount>=gi.respawnAt){gi.taken=false;}});
+updateOrbs();
 }
 
-// ═══════════════════════════════════════
-// 14. DIALOG ENGINE
-// ═══════════════════════════════════════
-let currentDialog = null;
-let dialogTyping = false;
-let dialogText = '';
-let dialogCharIndex = 0;
-let dialogTypeTimer = 0;
-
-function openDialog(npcType) {
-  const overlay = document.getElementById('dialog-overlay');
-  overlay.classList.add('show');
-  if (npcType === 'cook') {
-    showCookDialog();
-  } else if (npcType === 'hans') {
-    showHansDialog();
-  }
+// ---- OBJECT CLICK HANDLER ----
+function handleObjectClick(obj){
+const dist=Math.abs(player.tile.x-obj.tile.x)+Math.abs(player.tile.y-obj.tile.y);
+if(dist>2){
+player.path=findPath(player.tile.x,player.tile.y,obj.tile.x,obj.tile.y);player.skillingAction=null;
+const objRef=obj;const ci=setInterval(()=>{const d2=Math.abs(player.tile.x-objRef.tile.x)+Math.abs(player.tile.y-objRef.tile.y);if(d2<=2){clearInterval(ci);handleObjectInteraction(objRef);}if(player.path.length===0)clearInterval(ci);},300);
+return;
+}
+handleObjectInteraction(obj);
+}
+function handleObjectInteraction(obj){
+if(obj.type==='tree'&&obj.alive){addChat('You begin chopping the tree...','game');startSkilling('chop_tree',obj);}
+else if(obj.type==='rock'&&obj.alive){addChat('You begin mining the rock...','game');startSkilling('mine',obj);}
+else if(obj.type==='fish'){addChat('You begin fishing...','game');startSkilling('fish',obj);}
+else if(obj.type==='range'){const rawIdx=player.inventory.findIndex(i=>i.id==='raw_chicken'||i.id==='raw_beef'||i.id==='raw_shrimps');if(rawIdx>=0){addChat('You begin cooking...','game');startSkilling('cook',obj);}else addChat('You need raw food to cook.','game');}
+else if(obj.type==='coffin'){if(player.quests.restless_spirit==='in_progress'&&hasItem('ghost_skull')&&!player.questFlags.skullReturned){const idx=player.inventory.findIndex(i=>i.id==='ghost_skull');if(idx>=0){removeInventoryItem(idx);player.questFlags.skullReturned=true;player.quests.restless_spirit='complete';addXP('prayer',1125);player.gold+=50;addChat('Quest complete: The Restless Spirit! +1125 Prayer XP','quest');playLevelUp();updateQuestPoints();}}else addChat('An old stone coffin.','game');}
+else if(obj.type==='ground_item'&&!obj.taken){if(addInventoryItem({id:obj.itemId,qty:obj.qty})){obj.taken=true;obj.respawnAt=tickCount+200;addChat('You pick up: '+ITEMS[obj.itemId].name,'item');playPickup();if(obj.itemId==='ghost_skull')player.questFlags.skullFound=true;}}
+else if(obj.type==='dairy'){if(player.quests.feast_assistant==='in_progress'&&!player.questFlags.milkDone){addInventoryItem({id:'bucket_milk',qty:1});player.questFlags.milkDone=true;addChat('You milk the cow into a bucket.','item');playPickup();checkFeastQuest();}else addChat('A dairy cow.','game');}
+}
+function pickupGroundItem(gi){
+const def=ITEMS[gi.id];if(!def)return;
+if(gi.id==='coins'){player.gold+=gi.qty;addChat('You pick up '+gi.qty+' coins.','item');}
+else{if(!addInventoryItem({id:gi.id,qty:gi.qty}))return;}
+gi.taken=true;gi.respawnAt=tickCount+gi.respawn;playPickup();
 }
 
-function closeDialog() {
-  document.getElementById('dialog-overlay').classList.remove('show');
-  currentDialog = null;
-  dialogTyping = false;
+// ---- INPUT: Click detection (iso) ----
+canvas.addEventListener('mousemove',(e)=>{
+const rect=canvas.getBoundingClientRect();
+const scaleX=W/rect.width,scaleY=H/rect.height;
+const mx=(e.clientX-rect.left)*scaleX,my=(e.clientY-rect.top)*scaleY;
+const t=screenToTile(mx-camX,my-camY-TILE_H/2);
+if(t.x>=0&&t.x<MAP&&t.y>=0&&t.y<MAP)hoverTile=t;else hoverTile=null;
+});
+
+canvas.addEventListener('mousedown',(e)=>{
+initAudio();
+document.getElementById('context-menu').style.display='none';
+if(e.button===2){handleRightClick(e);return;}
+if(bank.isOpen||currentDialog)return;
+const rect=canvas.getBoundingClientRect();
+const scaleX=W/rect.width,scaleY=H/rect.height;
+const mx=(e.clientX-rect.left)*scaleX,my=(e.clientY-rect.top)*scaleY;
+
+// Check NPCs
+for(const npc of npcInstances){
+const ns=tileToScreen(npc.lerpX,npc.lerpY);
+const nsx=ns.x+camX,nsy=ns.y+camY;
+if(Math.abs(mx-nsx)<18&&Math.abs(my-(nsy-6))<28){
+player.path=findPath(player.tile.x,player.tile.y,npc.currentTile.x,npc.currentTile.y);
+player.skillingAction=null;
+const nRef=npc;
+setTimeout(()=>{if(Math.abs(player.tile.x-nRef.currentTile.x)<=1&&Math.abs(player.tile.y-nRef.currentTile.y)<=1)openDialog(nRef.id);},800);
+return;
+}
+}
+// Check Monsters
+for(const mon of monsterInstances){
+if(!mon.alive)continue;
+const ms=tileToScreen(mon.lerpX,mon.lerpY);
+const msx=ms.x+camX,msy=ms.y+camY;
+if(Math.abs(mx-msx)<18&&Math.abs(my-(msy-2))<28){
+player.inCombat=true;player.combatTarget=mon.idx;player.path=[];player.skillingAction=null;
+player.attackCooldown=1;mon.atkCooldown=mon.atkSpeed;addChat('You attack the '+mon.name+'.','combat');
+return;
+}
+}
+// Check world objects
+for(const obj of worldObjects){
+if(obj.type==='tree'&&!obj.alive)continue;
+if(obj.type==='rock'&&!obj.alive)continue;
+if(obj.type==='ground_item'&&obj.taken)continue;
+const os=tileToScreen(obj.tile.x,obj.tile.y);
+const osx=os.x+camX,osy=os.y+camY;
+if(Math.abs(mx-osx)<20&&my>osy-30&&my<osy+TILE_H){
+handleObjectClick(obj);return;
+}
+}
+// Check ground items
+for(const gi of groundItems){
+if(gi.taken)continue;
+const gs=tileToScreen(gi.tile.x,gi.tile.y);
+const gsx=gs.x+camX,gsy=gs.y+camY+TILE_H*0.5;
+if(Math.abs(mx-gsx)<12&&Math.abs(my-gsy)<12){
+player.path=findPath(player.tile.x,player.tile.y,gi.tile.x,gi.tile.y);
+player.skillingAction=null;
+const giRef=gi;
+setTimeout(()=>{if(player.tile.x===giRef.tile.x&&player.tile.y===giRef.tile.y)pickupGroundItem(giRef);},600);
+return;
+}
+}
+// Walk to tile
+const t=screenToTile(mx-camX,my-camY-TILE_H/2);
+if(t.x>=0&&t.x<MAP&&t.y>=0&&t.y<MAP){
+player.path=findPath(player.tile.x,player.tile.y,t.x,t.y);
+player.inCombat=false;player.combatTarget=null;player.skillingAction=null;closeDialog();
+}
+});
+
+function handleRightClick(e){
+e.preventDefault();
+const rect=canvas.getBoundingClientRect();
+const scaleX=W/rect.width,scaleY=H/rect.height;
+const mx=(e.clientX-rect.left)*scaleX,my=(e.clientY-rect.top)*scaleY;
+for(const npc of npcInstances){
+const ns=tileToScreen(npc.lerpX,npc.lerpY);const nsx=ns.x+camX,nsy=ns.y+camY;
+if(Math.abs(mx-nsx)<18&&Math.abs(my-(nsy-6))<28){showEntityContextMenu(e,'npc',npc);return;}
+}
+for(const mon of monsterInstances){
+if(!mon.alive)continue;const ms=tileToScreen(mon.lerpX,mon.lerpY);const msx=ms.x+camX,msy=ms.y+camY;
+if(Math.abs(mx-msx)<18&&Math.abs(my-(msy-2))<28){showEntityContextMenu(e,'monster',mon);return;}
+}
+}
+function showEntityContextMenu(e,type,entity){
+const menu=document.getElementById('context-menu');menu.innerHTML='';
+const header=document.createElement('div');header.className='ctx-option';
+header.textContent=entity.name+(entity.level?' (Lv '+entity.level+')':'');menu.appendChild(header);
+if(type==='npc'){const talk=document.createElement('div');talk.className='ctx-option';talk.textContent='Talk-to '+entity.name;talk.addEventListener('click',()=>{openDialog(entity.id);menu.style.display='none';});menu.appendChild(talk);}
+if(type==='monster'||(type==='npc'&&entity.level>0)){const atk=document.createElement('div');atk.className='ctx-option';atk.textContent='Attack '+entity.name;atk.addEventListener('click',()=>{if(type==='monster'){player.inCombat=true;player.combatTarget=entity.idx;player.path=[];player.skillingAction=null;player.attackCooldown=1;entity.atkCooldown=entity.atkSpeed;addChat('You attack '+entity.name+'.','combat');}menu.style.display='none';});menu.appendChild(atk);}
+const examine=document.createElement('div');examine.className='ctx-option';examine.textContent='Examine';examine.addEventListener('click',()=>{addChat(entity.name+(entity.level?' - Combat level '+entity.level:' - A friendly NPC'),'game');menu.style.display='none';});menu.appendChild(examine);
+const wr=document.getElementById('game-wrapper').getBoundingClientRect();
+menu.style.left=Math.min(e.clientX-wr.left,W-140)+'px';menu.style.top=Math.min(e.clientY-wr.top,H-100)+'px';menu.style.display='block';
 }
 
-function showCookDialog() {
-  const state = GS.quests.cooksProblem;
-  const speaker = document.getElementById('dialog-speaker');
-  const textEl = document.getElementById('dialog-text');
-  const optEl = document.getElementById('dialog-options');
-  speaker.textContent = 'Cook';
+canvas.addEventListener('contextmenu',(e)=>e.preventDefault());
+document.addEventListener('click',(e)=>{if(!e.target.closest('#context-menu'))document.getElementById('context-menu').style.display='none';});
 
-  if (state === 'NOT_STARTED') {
-    textEl.textContent = "Oh wonderful, an adventurer! I'm in a right pickle. I need to bake a special cake for the Duke's feast but I've run out of ingredients. Could you help me gather them? I need one egg, a bucket of milk, and a pot of flour.";
-    optEl.innerHTML = '';
-    const opt1 = document.createElement('button');
-    opt1.className = 'dialog-opt';
-    opt1.textContent = "Yes, I'll help you!";
-    opt1.addEventListener('click', () => {
-      GS.quests.cooksProblem = 'ACCEPTED';
-      addChat("Quest started: The Cook's Problem", 'quest');
-      showCookDialog();
-    });
-    const opt2 = document.createElement('button');
-    opt2.className = 'dialog-opt';
-    opt2.textContent = 'Maybe later.';
-    opt2.addEventListener('click', closeDialog);
-    optEl.appendChild(opt1);
-    optEl.appendChild(opt2);
-  } else if (state === 'ACCEPTED' || state === 'COLLECTING') {
-    checkQuestItems();
-    if (GS.quests.cooksProblem === 'ALL_ITEMS') {
-      showCookDialog();
-      return;
-    }
-    textEl.textContent = "You'll find eggs in the field south-east, milk from the dairy area, and flour near the pond. Come back when you have all three!";
-    optEl.innerHTML = '';
-    const opt1 = document.createElement('button');
-    opt1.className = 'dialog-opt';
-    opt1.textContent = "I'll get right on it.";
-    opt1.addEventListener('click', closeDialog);
-    optEl.appendChild(opt1);
-  } else if (state === 'ALL_ITEMS') {
-    textEl.textContent = "You've got everything! Wonderful! Hand them over and I'll get baking right away!";
-    optEl.innerHTML = '';
-    const opt1 = document.createElement('button');
-    opt1.className = 'dialog-opt';
-    opt1.textContent = 'Here are the ingredients.';
-    opt1.addEventListener('click', () => {
-      removeFromInventory('egg');
-      removeFromInventory('flour');
-      removeFromInventory('milk');
-      addToInventory('coins', 500);
-      addToInventory('cooked_chicken');
-      addXP('cooking', 100);
-      GS.quests.cooksProblem = 'COMPLETE';
-      addChat("Quest complete: The Cook's Problem!", 'quest');
-      addChat('Reward: 500 coins, Cooked chicken, 100 Cooking XP', 'xp');
-      showQuestFlash();
-      showCookDialog();
-      renderTab();
-    });
-    optEl.appendChild(opt1);
-  } else if (state === 'COMPLETE') {
-    textEl.textContent = "Thanks to you, the feast was a great success! The Duke was most pleased. Feel free to use my cooking range anytime!";
-    optEl.innerHTML = '';
-    const opt1 = document.createElement('button');
-    opt1.className = 'dialog-opt';
-    opt1.textContent = 'Glad I could help!';
-    opt1.addEventListener('click', closeDialog);
-    optEl.appendChild(opt1);
-  }
+// Keyboard
+document.addEventListener('keydown',(e)=>{
+if(e.key==='Escape'){closeDialog();closeBank();document.getElementById('context-menu').style.display='none';}
+if(e.key==='Enter'){const input=document.getElementById('chat-input');if(document.activeElement===input&&input.value.trim()){addChat(input.value,'player');input.value='';}else{input.focus();}}
+if(e.key==='Shift')player.isRunning=!player.isRunning;
+const fkeys={F1:'combat',F2:'skills',F3:'quests',F4:'inventory',F5:'equipment'};
+if(fkeys[e.key]){e.preventDefault();activePanel=fkeys[e.key];document.querySelectorAll('.panel-tab').forEach(t=>t.classList.toggle('active',t.dataset.panel===activePanel));renderPanel();}
+});
+
+// ---- PANEL TAB CLICKS ----
+document.querySelectorAll('.panel-tab').forEach(tab=>{tab.addEventListener('click',()=>{activePanel=tab.dataset.panel;document.querySelectorAll('.panel-tab').forEach(t=>t.classList.toggle('active',t===tab));renderPanel();});});
+document.querySelectorAll('.chat-tab').forEach(tab=>{tab.addEventListener('click',()=>{chatFilter=tab.dataset.ct;document.querySelectorAll('.chat-tab').forEach(t=>t.classList.toggle('active',t===tab));});});
+document.getElementById('bank-close').addEventListener('click',closeBank);
+document.getElementById('deposit-all-btn').addEventListener('click',depositAll);
+document.getElementById('run-orb').addEventListener('click',()=>{player.isRunning=!player.isRunning;addChat('Running: '+(player.isRunning?'ON':'OFF'),'game');});
+
+// ---- MINIMAP ----
+const minimapCanvas=document.getElementById('minimap');
+const mCtx=minimapCanvas.getContext('2d');
+let lastMinimapTile={x:-1,y:-1};
+function renderMinimap(){
+if(player.tile.x===lastMinimapTile.x&&player.tile.y===lastMinimapTile.y)return;
+lastMinimapTile={...player.tile};
+mCtx.fillStyle='#0a1a0a';mCtx.fillRect(0,0,152,152);
+const scale=2.5;const ox=76-player.tile.x*scale,oy=76-player.tile.y*scale;
+for(let y=0;y<MAP;y++)for(let x=0;x<MAP;x++){
+const px=ox+x*scale,py=oy+y*scale;
+if(px<-3||px>155||py<-3||py>155)continue;
+mCtx.fillStyle=MINIMAP_COLORS[tileMap[tIdx(x,y)]];mCtx.fillRect(px,py,scale,scale);
+}
+mCtx.fillStyle='#ffff00';npcInstances.forEach(n=>{const px=ox+n.currentTile.x*scale,py=oy+n.currentTile.y*scale;mCtx.fillRect(px,py,3,3);});
+mCtx.fillStyle='#ff3333';monsterInstances.forEach(m=>{if(m.alive){const px=ox+m.currentTile.x*scale,py=oy+m.currentTile.y*scale;mCtx.fillRect(px,py,2,2);}});
+mCtx.fillStyle='#ffffff';mCtx.fillRect(76-1,76-1,3,3);
+}
+minimapCanvas.addEventListener('click',(e)=>{
+const rect=minimapCanvas.getBoundingClientRect();const mx=e.clientX-rect.left,my=e.clientY-rect.top;
+const scale=2.5;const tx=Math.round(player.tile.x+(mx-76)/scale),ty=Math.round(player.tile.y+(my-76)/scale);
+if(tx>=0&&tx<MAP&&ty>=0&&ty<MAP){player.path=findPath(player.tile.x,player.tile.y,tx,ty);player.inCombat=false;player.combatTarget=null;player.skillingAction=null;}
+});
+
+// ---- SAVE / LOAD ----
+function saveGame(){
+const save={v:2,tile:player.tile,skills:player.skills,currentHp:player.currentHp,maxHp:player.maxHp,
+prayer:player.prayer,maxPrayer:player.maxPrayer,runEnergy:player.runEnergy,
+inventory:player.inventory,equipment:player.equipment,
+bank:bank.items,gold:player.gold,quests:player.quests,questFlags:player.questFlags,
+deathCount:player.deathCount,attackStyle:player.attackStyle,ts:Date.now()};
+try{localStorage.setItem('irondale_save_v2',JSON.stringify(save));}catch(e){}
+const si=document.getElementById('save-indicator');si.style.opacity='1';setTimeout(()=>si.style.opacity='0',1500);
+}
+function loadGame(){
+try{const raw=localStorage.getItem('irondale_save_v2');if(!raw)return false;
+const s=JSON.parse(raw);
+player.tile={...s.tile};player.skills={...player.skills,...s.skills};
+player.currentHp=s.currentHp;player.maxHp=s.maxHp;
+player.prayer=s.prayer||1;player.maxPrayer=s.maxPrayer||1;player.runEnergy=s.runEnergy||100;
+player.inventory=s.inventory||[];player.equipment=s.equipment||player.equipment;
+bank.items=s.bank||[];player.gold=s.gold||0;
+player.quests={...player.quests,...(s.quests||{})};player.questFlags={...player.questFlags,...(s.questFlags||{})};
+player.deathCount=s.deathCount||0;player.attackStyle=s.attackStyle||'accurate';
+player.lerpX=player.tile.x;player.lerpY=player.tile.y;
+document.getElementById('death-count').textContent=player.deathCount;
+updateOrbs();updateStatsPanel();updateQuestPoints();
+return true;}catch(e){return false;}
+}
+setInterval(saveGame,30000);
+window.addEventListener('beforeunload',saveGame);
+
+// ---- FEAST QUEST TURN-IN ----
+const origOpenDialog=openDialog;
+function patchedOpenDialog(npcId,nodeIdx){
+nodeIdx=nodeIdx||0;
+if(npcId==='cook'&&player.quests.feast_assistant==='in_progress'){
+if(hasItem('bucket_milk')&&hasItem('egg')&&hasItem('pot_flour')){
+const mi=player.inventory.findIndex(i=>i.id==='bucket_milk');if(mi>=0)removeInventoryItem(mi);
+const ei=player.inventory.findIndex(i=>i.id==='egg');if(ei>=0)removeInventoryItem(ei);
+const fi=player.inventory.findIndex(i=>i.id==='pot_flour');if(fi>=0)removeInventoryItem(fi);
+player.quests.feast_assistant='complete';addXP('cooking',300);player.gold+=50;
+addChat("Quest complete: The Duke's Feast! +300 Cooking XP, +50gp",'quest');playLevelUp();updateQuestPoints();
+const panel=document.getElementById('dialog-panel');
+document.getElementById('dialog-name').textContent='Gareth the Cook';
+document.getElementById('dialog-text').textContent="You've done it! The feast is saved! Here's your reward.";
+document.getElementById('dialog-options').innerHTML='';
+const dd=document.createElement('div');dd.className='dialog-option';dd.textContent='Farewell.';
+dd.addEventListener('click',closeDialog);document.getElementById('dialog-options').appendChild(dd);
+panel.style.display='block';currentDialog={npcId:'cook',nodeIdx:0};return;
+}
+}
+if(npcId==='farmer'&&player.quests.feast_assistant==='in_progress'&&!player.questFlags.eggDone){
+addInventoryItem({id:'egg',qty:1});player.questFlags.eggDone=true;
+addChat('Fred gives you an egg!','item');playPickup();checkFeastQuest();
+}
+origOpenDialog(npcId,nodeIdx);
+}
+openDialog=patchedOpenDialog;
+
+// ---- MAIN RENDER LOOP (Canvas 2D Isometric) ----
+let renderTick=0;
+
+function updateCamera(){
+const ps=tileToScreen(player.lerpX,player.lerpY);
+camTargetX=W/2-ps.x;camTargetY=H/2-ps.y-80;
+camX+=(camTargetX-camX)*0.12;camY+=(camTargetY-camY)*0.12;
 }
 
-function showHansDialog() {
-  const speaker = document.getElementById('dialog-speaker');
-  const textEl = document.getElementById('dialog-text');
-  const optEl = document.getElementById('dialog-options');
-  speaker.textContent = 'Hans';
-  textEl.textContent = "Welcome to Lumbridge Castle, adventurer! I'm Hans, the castle steward. If you're looking for something to do, speak with the Cook - he could use some help.";
-  optEl.innerHTML = '';
-  const opt1 = document.createElement('button');
-  opt1.className = 'dialog-opt';
-  opt1.textContent = 'Thanks for the tip!';
-  opt1.addEventListener('click', closeDialog);
-  optEl.appendChild(opt1);
+function render(){
+requestAnimationFrame(render);
+renderTick++;
+
+// Lerp positions
+player.lerpX+=(player.tile.x-player.lerpX)*0.15;
+player.lerpY+=(player.tile.y-player.lerpY)*0.15;
+npcInstances.forEach(n=>{n.lerpX+=(n.currentTile.x-n.lerpX)*0.1;n.lerpY+=(n.currentTile.y-n.lerpY)*0.1;});
+monsterInstances.forEach(m=>{if(m.alive){m.lerpX+=(m.currentTile.x-m.lerpX)*0.1;m.lerpY+=(m.currentTile.y-m.lerpY)*0.1;}});
+
+updateCamera();
+
+ctx.fillStyle='#0a0a05';ctx.fillRect(0,0,W,H);
+
+// Determine visible range
+const centerTile=screenToTile(W/2-camX,H/2-camY);
+const viewRange=18;
+const minX=Math.max(0,centerTile.x-viewRange),maxX=Math.min(MAP-1,centerTile.x+viewRange);
+const minY=Math.max(0,centerTile.y-viewRange),maxY=Math.min(MAP-1,centerTile.y+viewRange);
+
+// Build draw list
+const drawList=[];
+
+// Tiles
+for(let gx=minX;gx<=maxX;gx++){for(let gy=minY;gy<=maxY;gy++){
+const t=tileMap[tIdx(gx,gy)];
+const s=tileToScreen(gx,gy);
+const sx=s.x+camX,sy=s.y+camY;
+if(sx<-TILE_W||sx>W+TILE_W||sy<-80||sy>H+60)continue;
+drawList.push({sortKey:gx+gy,type:'tile',gx,gy,sx,sy,tileType:t});
+}}
+
+// World objects
+worldObjects.forEach(obj=>{
+if(obj.type==='tree'&&!obj.alive)return;
+if(obj.type==='rock'&&!obj.alive)return;
+if(obj.type==='ground_item'&&obj.taken)return;
+const gx=obj.tile.x,gy=obj.tile.y;
+if(gx<minX-2||gx>maxX+2||gy<minY-2||gy>maxY+2)return;
+const s=tileToScreen(gx,gy);
+drawList.push({sortKey:gx+gy+0.5,type:'object',obj,sx:s.x+camX,sy:s.y+camY});
+});
+
+// Ground items
+groundItems.forEach(gi=>{
+if(gi.taken)return;
+const s=tileToScreen(gi.tile.x,gi.tile.y);
+drawList.push({sortKey:gi.tile.x+gi.tile.y+0.3,type:'groundItem',gi,sx:s.x+camX,sy:s.y+camY});
+});
+
+// NPCs
+npcInstances.forEach(npc=>{
+const s=tileToScreen(npc.lerpX,npc.lerpY);
+drawList.push({sortKey:npc.lerpX+npc.lerpY+0.6,type:'npc',npc,sx:s.x+camX,sy:s.y+camY});
+});
+
+// Monsters
+monsterInstances.forEach(mon=>{
+if(!mon.alive)return;
+const s=tileToScreen(mon.lerpX,mon.lerpY);
+drawList.push({sortKey:mon.lerpX+mon.lerpY+0.6,type:'monster',mon,sx:s.x+camX,sy:s.y+camY});
+});
+
+// Player
+const ps=tileToScreen(player.lerpX,player.lerpY);
+drawList.push({sortKey:player.lerpX+player.lerpY+0.7,type:'player',sx:ps.x+camX,sy:ps.y+camY});
+
+drawList.sort((a,b)=>a.sortKey-b.sortKey);
+
+// Draw
+for(const item of drawList){
+switch(item.type){
+case 'tile':{
+const col=ISO_TILE_COLORS[item.tileType]||ISO_TILE_COLORS[0];
+if(item.tileType===TILE_TYPES.WATER){
+const bright=0.3+Math.sin(renderTick*0.04+item.gx*0.3)*0.1;
+const r=Math.floor(26*bright),g=Math.floor(74*bright),b2=Math.floor(138*bright);
+const wTop='rgb('+r+','+g+','+b2+')';
+drawIsoTile(ctx,item.sx,item.sy,wTop,col.left,col.right,false);
+}else if(col.raised){
+drawIsoWall(ctx,item.sx,item.sy,col.top,col.left,col.right,col.boxH||28);
+}else{
+drawIsoTile(ctx,item.sx,item.sy,col.top,col.left,col.right,false);
+}
+if(hoverTile&&hoverTile.x===item.gx&&hoverTile.y===item.gy){
+ctx.save();ctx.globalAlpha=0.25;drawIsoTile(ctx,item.sx,item.sy,'#ffffff','#cccccc','#dddddd',false);ctx.restore();
+}
+break;
+}
+case 'object':{
+const o=item.obj;
+if(o.type==='tree')drawTree2D(ctx,item.sx,item.sy-4);
+else if(o.type==='rock')drawRock2D(ctx,item.sx,item.sy-4);
+else if(o.type==='fish')drawFish2D(ctx,item.sx,item.sy-4,renderTick);
+else if(o.type==='range')drawRange2D(ctx,item.sx,item.sy);
+else if(o.type==='coffin')drawCoffin2D(ctx,item.sx,item.sy);
+else if(o.type==='ground_item')drawGroundItemDot(ctx,item.sx,item.sy,ITEMS[o.itemId]?ITEMS[o.itemId].color:'#ddd');
+else if(o.type==='dairy')drawDairy2D(ctx,item.sx,item.sy);
+break;
+}
+case 'groundItem':{
+const def=ITEMS[item.gi.id];
+ctx.fillStyle=def?def.color:'#00ffcc';ctx.beginPath();ctx.arc(item.sx,item.sy+TILE_H*0.5,5,0,Math.PI*2);ctx.fill();
+ctx.fillStyle='#00ffff';ctx.font='9px monospace';ctx.textAlign='center';
+ctx.fillText(def?def.name.slice(0,6):'?',item.sx,item.sy+TILE_H*0.5-8);
+break;
+}
+case 'npc':{
+const n=item.npc;
+drawHumanoid2D(ctx,item.sx,item.sy,n.color,'#e8b89a',n.name,null,n.level);
+break;
+}
+case 'monster':{
+const m=item.mon;const hpFrac=m.currentHp/m.hp;
+if(m.id==='chicken'){drawChicken2D(ctx,item.sx,item.sy);
+}else if(m.id==='cow'){drawCow2D(ctx,item.sx,item.sy);
+}else{drawHumanoid2D(ctx,item.sx,item.sy,m.color,'#c8a888',null,hpFrac<1?hpFrac:null);}
+if(hpFrac<1){const bw=28;ctx.fillStyle='#440000';ctx.fillRect(item.sx-bw/2,item.sy-28,bw,4);ctx.fillStyle=hpFrac>0.5?'#00cc00':hpFrac>0.25?'#cccc00':'#cc0000';ctx.fillRect(item.sx-bw/2,item.sy-28,bw*hpFrac,4);}
+ctx.font='10px monospace';ctx.textAlign='center';ctx.fillStyle='#ff6644';ctx.fillText(m.name+(m.level?' (Lv'+m.level+')':''),item.sx,item.sy-32);
+break;
+}
+case 'player':drawPlayer2D(ctx,item.sx,item.sy);break;
+}
 }
 
-// ═══════════════════════════════════════
-// 15. COOKING MINIGAME
-// ═══════════════════════════════════════
-let cookingActive = false;
-let cookingNeedle = 0;
-let cookingSpeed = 2;
-let cookingDir = 1;
-
-function openCooking() {
-  if (!hasItem('raw_chicken')) {
-    addChat('You need raw chicken to cook.', 'system');
-    return;
-  }
-  cookingActive = true;
-  cookingNeedle = 0;
-  cookingSpeed = 1.5 + Math.random();
-  cookingDir = 1;
-  document.getElementById('cooking-overlay').classList.add('show');
-  const greenZone = document.getElementById('cooking-green-zone');
-  greenZone.style.left = '35%';
-  greenZone.style.width = '30%';
+drawHitsplats();
+drawXPDrops();
 }
 
-function closeCooking() {
-  cookingActive = false;
-  document.getElementById('cooking-overlay').classList.remove('show');
+// ---- MINIMAP INTERVAL ----
+setInterval(renderMinimap,500);
+// ---- GAME TICK INTERVAL ----
+setInterval(gameTick,TICK_MS);
+
+// ---- LOADING SEQUENCE ----
+const loadBar=document.getElementById('load-bar');
+const loadStatus=document.getElementById('load-status');
+const loadSteps=['Initializing world...','Building Irondale...','Spawning NPCs...','Forging weapons...','Ready!'];
+let loadStep=0;
+function advanceLoading(){
+if(loadStep<loadSteps.length){
+loadBar.style.width=(loadStep+1)/loadSteps.length*100+'%';
+loadStatus.textContent=loadSteps[loadStep];loadStep++;
+if(loadStep<loadSteps.length)setTimeout(advanceLoading,350);
+else{setTimeout(()=>{
+document.getElementById('loading-screen').style.display='none';
+const loaded=loadGame();
+if(loaded)addChat('Welcome back to Irondale, adventurer!','game');
+else{addChat('Welcome to Irondale! Talk to the Town Guide for help.','game');addChat('Right-click entities for options. Left-click to move/interact.','game');}
+renderPanel();renderMinimap();updateOrbs();updateQuestPoints();
+},400);}
 }
-
-function doCook() {
-  const pos = cookingNeedle;
-  removeFromInventory('raw_chicken');
-  if (pos >= 0.35 && pos <= 0.65) {
-    // Success
-    const perfect = pos >= 0.45 && pos <= 0.55;
-    addToInventory('cooked_chicken');
-    addChat('You successfully cook the chicken!', 'action');
-    addXP('cooking', perfect ? 75 : 50);
-    if (perfect) addChat('Perfect cook! Bonus XP!', 'xp');
-  } else {
-    addToInventory('burnt_chicken');
-    addChat('You burn the chicken. Oops!', 'combat_bad');
-  }
-  closeCooking();
-  renderTab();
 }
+setTimeout(advanceLoading,200);
 
-// ═══════════════════════════════════════
-// 16. UI EFFECTS
-// ═══════════════════════════════════════
-function showXPDrop(text) {
-  const el = document.getElementById('xp-drop');
-  el.textContent = text;
-  el.style.top = '40%';
-  el.classList.add('show');
-  setTimeout(() => { el.style.top = '30%'; }, 50);
-  setTimeout(() => { el.classList.remove('show'); }, 1500);
-}
+// Start render loop
+render();
 
-function showLevelFlash() {
-  const el = document.getElementById('level-flash');
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 300);
-}
-
-function showQuestFlash() {
-  const el = document.getElementById('quest-flash');
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 2000);
-}
-
-function showDeathFlash() {
-  const el = document.getElementById('death-flash');
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 500);
-}
-
-// ═══════════════════════════════════════
-// 17. UI TABS
-// ═══════════════════════════════════════
-let activeTab = 'inv';
-
-function renderTab() {
-  const content = document.getElementById('tab-content');
-  switch(activeTab) {
-    case 'inv': renderInventoryTab(content); break;
-    case 'equip': renderEquipTab(content); break;
-    case 'skills': renderSkillsTab(content); break;
-    case 'quests': renderQuestsTab(content); break;
-    case 'combat': renderCombatTab(content); break;
-    case 'info': renderInfoTab(content); break;
-  }
-}
-
-function renderInventoryTab(el) {
-  let html = '<div class="panel-section"><div class="panel-title">Inventory</div><div class="inv-grid">';
-  for (let i = 0; i < 28; i++) {
-    const slot = GS.inventory[i];
-    if (slot) {
-      const item = ITEM_DB[slot.item];
-      html += `<div class="inv-slot" data-inv-idx="${i}" data-inv-item="${slot.item}">`;
-      html += `<canvas width="16" height="16" data-sprite="${item.sprite}"></canvas>`;
-      if (slot.count > 1) html += `<span class="stack-count">${slot.count}</span>`;
-      html += '</div>';
-    } else {
-      html += '<div class="inv-slot"></div>';
-    }
-  }
-  html += '</div></div>';
-  el.innerHTML = html;
-  // Draw item sprites
-  el.querySelectorAll('.inv-slot canvas').forEach(c => {
-    const spr = sprites.getSprite(c.dataset.sprite);
-    if (spr) c.getContext('2d').drawImage(spr, 0, 0);
-  });
-  // Right-click context menu
-  el.querySelectorAll('.inv-slot[data-inv-idx]').forEach(slot => {
-    slot.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
-      showContextMenu(e, parseInt(slot.dataset.invIdx));
-    });
-    slot.addEventListener('click', () => {
-      const idx = parseInt(slot.dataset.invIdx);
-      const invSlot = GS.inventory[idx];
-      if (!invSlot) return;
-      const item = ITEM_DB[invSlot.item];
-      if (item.heals) {
-        useFood(idx);
-      } else if (item.equipSlot) {
-        equipItem(idx);
-      } else {
-        addChat(item.examine, 'system');
-      }
-    });
-  });
-}
-
-function useFood(idx) {
-  const slot = GS.inventory[idx];
-  if (!slot) return;
-  const item = ITEM_DB[slot.item];
-  if (!item.heals) return;
-  GS.player.hp = Math.min(GS.player.hp + item.heals, GS.player.maxHp);
-  addChat(`You eat the ${item.name}. It heals ${item.heals} hitpoints.`, 'action');
-  removeFromInventory(slot.item);
-  renderTab();
-}
-
-function showContextMenu(e, invIdx) {
-  const menu = document.getElementById('context-menu');
-  const slot = GS.inventory[invIdx];
-  if (!slot) return;
-  const item = ITEM_DB[slot.item];
-  let html = `<button class="ctx-item ctx-title">${item.name}</button>`;
-  if (item.heals) html += `<button class="ctx-item" data-action="use" data-idx="${invIdx}">Eat</button>`;
-  if (item.equipSlot) html += `<button class="ctx-item" data-action="equip" data-idx="${invIdx}">Equip</button>`;
-  html += `<button class="ctx-item" data-action="examine" data-idx="${invIdx}">Examine</button>`;
-  html += `<button class="ctx-item" data-action="drop" data-idx="${invIdx}">Drop</button>`;
-  menu.innerHTML = html;
-  menu.style.display = 'block';
-  menu.style.left = Math.min(e.clientX, window.innerWidth - 120) + 'px';
-  menu.style.top = Math.min(e.clientY, window.innerHeight - 100) + 'px';
-  menu.querySelectorAll('.ctx-item[data-action]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const action = btn.dataset.action;
-      const idx = parseInt(btn.dataset.idx);
-      if (action === 'use') useFood(idx);
-      else if (action === 'equip') equipItem(idx);
-      else if (action === 'examine') addChat(ITEM_DB[GS.inventory[idx]?.item]?.examine || '', 'system');
-      else if (action === 'drop') {
-        const s = GS.inventory[idx];
-        if (s) { addChat(`You drop the ${ITEM_DB[s.item].name}.`, 'action'); GS.inventory.splice(idx, 1); }
-      }
-      menu.style.display = 'none';
-      renderTab();
-    });
-  });
-}
-
-function renderEquipTab(el) {
-  const slots = [
-    [null,'head',null],
-    ['cape','body','ammo'],
-    ['weapon','legs','shield'],
-  ];
-  let html = '<div class="panel-section"><div class="panel-title">Equipment</div><div class="equip-grid">';
-  const slotNames = {head:'Head',cape:'Cape',neck:'Neck',ammo:'Ammo',weapon:'Weapon',body:'Body',shield:'Shield',legs:'Legs',feet:'Feet'};
-  for (const row of slots) {
-    for (const s of row) {
-      if (s === null) {
-        html += '<div class="equip-slot" style="visibility:hidden"></div>';
-      } else {
-        const equipped = GS.equipment[s];
-        if (equipped) {
-          const item = ITEM_DB[equipped];
-          html += `<div class="equip-slot" data-equip="${s}"><canvas width="16" height="16" data-sprite="${item.sprite}"></canvas></div>`;
-        } else {
-          html += `<div class="equip-slot" data-equip="${s}"><span>${slotNames[s]||s}</span></div>`;
-        }
-      }
-    }
-  }
-  html += '</div></div>';
-  html += '<div class="panel-section"><div class="panel-title">Bonuses</div>';
-  html += `<div class="stat-row"><span>Attack bonus:</span><span class="stat-val">+${getAttackBonus()}</span></div>`;
-  html += `<div class="stat-row"><span>Defence bonus:</span><span class="stat-val">+${getDefenceBonus()}</span></div>`;
-  html += '</div>';
-  el.innerHTML = html;
-  el.querySelectorAll('.equip-slot canvas').forEach(c => {
-    const spr = sprites.getSprite(c.dataset.sprite);
-    if (spr) c.getContext('2d').drawImage(spr, 0, 0);
-  });
-  el.querySelectorAll('.equip-slot[data-equip]').forEach(slot => {
-    slot.addEventListener('click', () => {
-      const slotName = slot.dataset.equip;
-      const equipped = GS.equipment[slotName];
-      if (equipped) {
-        GS.equipment[slotName] = null;
-        addToInventory(equipped);
-        addChat(`You unequip the ${ITEM_DB[equipped].name}.`, 'action');
-        renderTab();
-      }
-    });
-  });
-}
-
-function renderSkillsTab(el) {
-  let html = '<div class="panel-section"><div class="panel-title">Skills</div>';
-  SKILLS.forEach(s => {
-    const skill = GS.skills[s];
-    const currXP = skill.xp;
-    const currLvlXP = XP_TABLE[skill.level - 1] || 0;
-    const nextLvlXP = XP_TABLE[skill.level] || currXP;
-    const pct = nextLvlXP > currLvlXP ? ((currXP - currLvlXP) / (nextLvlXP - currLvlXP)) * 100 : 100;
-    html += `<div class="skill-row">
-      <span class="skill-name">${s.charAt(0).toUpperCase()+s.slice(1)}</span>
-      <span class="skill-level">${skill.level}</span>
-      <div class="skill-xp-bar"><div class="skill-xp-fill" style="width:${pct}%"></div></div>
-    </div>`;
-  });
-  html += '</div>';
-  el.innerHTML = html;
-}
-
-function renderQuestsTab(el) {
-  let html = '<div class="panel-section"><div class="panel-title">Quest Log</div>';
-  html += '<div class="quest-item">';
-  html += `<div class="quest-name">The Cook's Problem</div>`;
-  html += `<div class="quest-status">${getQuestStatus()}</div>`;
-  html += `<div class="quest-obj">${getQuestObjective()}</div>`;
-  html += '</div></div>';
-  el.innerHTML = html;
-}
-
-function renderCombatTab(el) {
-  let html = '<div class="panel-section"><div class="panel-title">Combat Stats</div>';
-  html += `<div class="stat-row"><span>Combat Level:</span><span class="stat-val">${getCombatLevel()}</span></div>`;
-  html += `<div class="stat-row"><span>HP:</span><span class="stat-val">${GS.player.hp}/${GS.player.maxHp}</span></div>`;
-  html += `<div class="stat-row"><span>Attack Lvl:</span><span class="stat-val">${GS.skills.attack.level}</span></div>`;
-  html += `<div class="stat-row"><span>Strength Lvl:</span><span class="stat-val">${GS.skills.strength.level}</span></div>`;
-  html += `<div class="stat-row"><span>Defence Lvl:</span><span class="stat-val">${GS.skills.defence.level}</span></div>`;
-  html += `<div class="stat-row"><span>Attack Bonus:</span><span class="stat-val">+${getAttackBonus()}</span></div>`;
-  html += `<div class="stat-row"><span>Defence Bonus:</span><span class="stat-val">+${getDefenceBonus()}</span></div>`;
-  html += '</div>';
-  el.innerHTML = html;
-}
-
-function renderInfoTab(el) {
-  const mins = Math.floor(GS.playTime / 60);
-  const secs = Math.floor(GS.playTime % 60);
-  let html = '<div class="panel-section"><div class="panel-title">Player Info</div>';
-  html += `<div class="info-line"><span class="info-label">Name:</span> ${GS.player.name}</div>`;
-  html += `<div class="info-line"><span class="info-label">Combat Lvl:</span> ${getCombatLevel()}</div>`;
-  html += `<div class="info-line"><span class="info-label">Total XP:</span> ${GS.totalXP}</div>`;
-  const coins = GS.inventory.find(i => i.item === 'coins');
-  html += `<div class="info-line"><span class="info-label">Coins:</span> ${coins ? coins.count : 0}</div>`;
-  html += `<div class="info-line"><span class="info-label">Play Time:</span> ${mins}m ${secs}s</div>`;
-  html += '</div>';
-  html += '<div class="panel-section"><div class="panel-title">Controls</div>';
-  html += '<div class="info-line">Click = Move/Interact</div>';
-  html += '<div class="info-line">I = Inventory</div>';
-  html += '<div class="info-line">Q = Quest Log</div>';
-  html += '<div class="info-line">S = Skills</div>';
-  html += '<div class="info-line">ESC = Close overlay</div>';
-  html += '<div class="info-line">Enter = Chat</div>';
-  html += '</div>';
-  html += '<div class="panel-section"><div class="panel-title">Minimap Legend</div>';
-  html += '<div class="info-line" style="color:#2d6e1e">■ Grass</div>';
-  html += '<div class="info-line" style="color:#1a4a8c">■ Water</div>';
-  html += '<div class="info-line" style="color:#8a6a3a">■ Path</div>';
-  html += '<div class="info-line" style="color:#606060">■ Wall</div>';
-  html += '<div class="info-line" style="color:#fff">● You</div>';
-  html += '<div class="info-line" style="color:#ff0">● NPC</div>';
-  html += '<div class="info-line" style="color:#f00">● Enemy</div>';
-  html += '</div>';
-  el.innerHTML = html;
-}
-
-// ═══════════════════════════════════════
-// 18. SAVE MANAGER
-// ═══════════════════════════════════════
-function saveGame() {
-  try {
-    const data = {
-      player: { tileX:GS.player.tileX, tileY:GS.player.tileY, hp:GS.player.hp, maxHp:GS.player.maxHp, dir:GS.player.dir },
-      skills: GS.skills,
-      inventory: GS.inventory,
-      equipment: GS.equipment,
-      quests: GS.quests,
-      playTime: GS.playTime,
-      totalXP: GS.totalXP,
-      chatLog: GS.chatLog.slice(-50),
-    };
-    localStorage.setItem('lumbridge_save', JSON.stringify(data));
-  } catch(e) { /* storage full */ }
-}
-
-function loadGame() {
-  try {
-    const raw = localStorage.getItem('lumbridge_save');
-    if (!raw) return false;
-    const data = JSON.parse(raw);
-    GS.player.tileX = data.player.tileX;
-    GS.player.tileY = data.player.tileY;
-    GS.player.pixelX = data.player.tileX * TILE_W;
-    GS.player.pixelY = data.player.tileY * TILE_H;
-    GS.player.hp = data.player.hp;
-    GS.player.maxHp = data.player.maxHp;
-    GS.player.dir = data.player.dir || 'south';
-    GS.skills = data.skills;
-    GS.inventory = data.inventory || [];
-    GS.equipment = data.equipment || {};
-    GS.quests = data.quests || { cooksProblem: 'NOT_STARTED' };
-    GS.playTime = data.playTime || 0;
-    GS.totalXP = data.totalXP || 0;
-    GS.chatLog = data.chatLog || [];
-    // Recalculate HP from hitpoints level
-    GS.player.maxHp = GS.skills.hitpoints.level;
-    GS.player.hp = Math.min(GS.player.hp, GS.player.maxHp);
-    return true;
-  } catch(e) { return false; }
-}
-
-// ═══════════════════════════════════════
-// 19. RENDERER
-// ═══════════════════════════════════════
-let canvas, ctx, canvasW, canvasH;
-let minimapCanvas, minimapCtx;
-let hoverTileX = -1, hoverTileY = -1;
-
-function resizeCanvas() {
-  const wrap = document.getElementById('game-canvas-wrap');
-  canvas.width = wrap.clientWidth;
-  canvas.height = wrap.clientHeight;
-  canvasW = canvas.width;
-  canvasH = canvas.height;
-}
-
-function updateCamera() {
-  GS.camera.x = GS.player.pixelX - canvasW/2 + TILE_W/2;
-  GS.camera.y = GS.player.pixelY - canvasH/2 + TILE_H/2;
-  // Clamp
-  GS.camera.x = Math.max(0, Math.min(GS.camera.x, MAP_W*TILE_W - canvasW));
-  GS.camera.y = Math.max(0, Math.min(GS.camera.y, MAP_H*TILE_H - canvasH));
-}
-
-function render() {
-  if (!ctx) return;
-  ctx.fillStyle = '#4a7c9e';
-  ctx.fillRect(0, 0, canvasW, canvasH);
-
-  const camX = GS.camera.x;
-  const camY = GS.camera.y;
-  const startTX = Math.max(0, Math.floor(camX / TILE_W) - 1);
-  const startTY = Math.max(0, Math.floor(camY / TILE_H) - 1);
-  const endTX = Math.min(MAP_W, startTX + Math.ceil(canvasW / TILE_W) + 3);
-  const endTY = Math.min(MAP_H, startTY + Math.ceil(canvasH / TILE_H) + 3);
-
-  // Draw tiles
-  for (let ty = startTY; ty < endTY; ty++) {
-    for (let tx = startTX; tx < endTX; tx++) {
-      const tid = tileMap[ty][tx];
-      const spr = sprites.getTile(tid, tx, ty);
-      const dx = tx * TILE_W - camX;
-      const dy = ty * TILE_H - camY;
-      if (spr) {
-        if (tid === 5) {
-          // Tree is taller
-          ctx.drawImage(spr, dx, dy - 16);
-        } else {
-          ctx.drawImage(spr, dx, dy);
-        }
-      }
-    }
-  }
-
-  // Hover tile highlight
-  if (hoverTileX >= 0 && hoverTileY >= 0) {
-    const hx = hoverTileX * TILE_W - camX;
-    const hy = hoverTileY * TILE_H - camY;
-    ctx.strokeStyle = 'rgba(200,168,90,0.6)';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(hx, hy, TILE_W, TILE_H);
-  }
-
-  // Collect all entities for y-sort
-  const entities = [];
-
-  // World items
-  GS.worldItems.forEach(wi => {
-    if (!wi.collected) {
-      entities.push({ type:'worldItem', data:wi, sortY:wi.tileY });
-    }
-  });
-
-  // NPCs
-  GS.npcs.forEach(npc => {
-    entities.push({ type:'npc', data:npc, sortY:npc.tileY });
-  });
-
-  // Enemies
-  GS.enemies.forEach(en => {
-    if (!en.dead) {
-      entities.push({ type:'enemy', data:en, sortY:en.tileY });
-    }
-  });
-
-  // Player
-  entities.push({ type:'player', data:GS.player, sortY:GS.player.tileY });
-
-  // Sort by Y
-  entities.sort((a,b) => a.sortY - b.sortY);
-
-  // Draw entities
-  entities.forEach(ent => {
-    const d = ent.data;
-    const dx = d.pixelX - camX;
-    const dy = d.pixelY - camY;
-    // Cull offscreen
-    if (dx < -TILE_W*2 || dx > canvasW+TILE_W || dy < -TILE_H*2 || dy > canvasH+TILE_H) return;
-
-    if (ent.type === 'worldItem') {
-      // Draw sparkle + item
-      const item = ITEM_DB[d.itemId];
-      if (item) {
-        // Sparkle effect
-        const sparkle = Math.sin(d.sparkleTimer * 4) * 0.3 + 0.7;
-        ctx.globalAlpha = sparkle;
-        ctx.fillStyle = '#ffe080';
-        ctx.beginPath();
-        ctx.arc(dx + 16, dy + 12, 10, 0, Math.PI*2);
-        ctx.fill();
-        ctx.globalAlpha = 1;
-        const spr = sprites.getSprite(item.sprite);
-        if (spr) ctx.drawImage(spr, dx + 8, dy + 8);
-      }
-    } else if (ent.type === 'player') {
-      const sprKey = 'player_'+d.dir+'_'+d.animFrame;
-      const spr = sprites.getSprite(sprKey);
-      if (spr) ctx.drawImage(spr, dx, dy);
-      // Name
-      ctx.fillStyle = '#c8a85a';
-      ctx.font = '8px "Press Start 2P"';
-      ctx.textAlign = 'center';
-      ctx.fillText(d.name, dx+16, dy-4);
-      // HP bar
-      if (d.hp < d.maxHp) {
-        drawHPBar(dx, dy-10, d.hp, d.maxHp);
-      }
-    } else if (ent.type === 'npc') {
-      const sprKey = d.type + '_' + d.animFrame;
-      const spr = sprites.getSprite(sprKey);
-      if (spr) ctx.drawImage(spr, dx, dy);
-      ctx.fillStyle = '#e8e800';
-      ctx.font = '7px "Press Start 2P"';
-      ctx.textAlign = 'center';
-      ctx.fillText(d.name, dx+16, dy-4);
-    } else if (ent.type === 'enemy') {
-      const sprKey = 'goblin_' + d.animFrame;
-      const spr = sprites.getSprite(sprKey);
-      if (spr) ctx.drawImage(spr, dx, dy);
-      ctx.fillStyle = '#c80000';
-      ctx.font = '7px "Press Start 2P"';
-      ctx.textAlign = 'center';
-      const lvlText = `${d.name} (Lvl ${d.attackLvl+d.strLvl})`;
-      ctx.fillText(lvlText, dx+16, dy-12);
-      drawHPBar(dx, dy-6, d.hp, d.maxHp);
-    }
-  });
-
-  // Draw splats
-  GS.splats.forEach(s => {
-    const dx = s.px - camX;
-    const dy = s.startY - camY - (1 - s.timer) * 24;
-    ctx.globalAlpha = s.timer;
-    // Circle background
-    ctx.fillStyle = s.color;
-    ctx.beginPath();
-    ctx.arc(dx+16, dy-8, 10, 0, Math.PI*2);
-    ctx.fill();
-    // Number
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 10px "Press Start 2P"';
-    ctx.textAlign = 'center';
-    ctx.fillText(s.dmg.toString(), dx+16, dy-4);
-    ctx.globalAlpha = 1;
-  });
-
-  ctx.textAlign = 'left';
-}
-
-function drawHPBar(x, y, hp, maxHp) {
-  const w = 30, h = 4;
-  ctx.fillStyle = '#600';
-  ctx.fillRect(x+1, y, w, h);
-  const pct = Math.max(0, hp/maxHp);
-  ctx.fillStyle = pct > 0.5 ? '#00b400' : pct > 0.25 ? '#f07800' : '#c80000';
-  ctx.fillRect(x+1, y, w*pct, h);
-  ctx.strokeStyle = '#000';
-  ctx.lineWidth = 1;
-  ctx.strokeRect(x+1, y, w, h);
-}
-
-// ═══════════════════════════════════════
-// 20. MINIMAP
-// ═══════════════════════════════════════
-function renderMinimap() {
-  if (!minimapCtx) return;
-  const mw = 120, mh = 120;
-  const sx = mw / MAP_W;
-  const sy = mh / MAP_H;
-  minimapCtx.fillStyle = '#000';
-  minimapCtx.fillRect(0, 0, mw, mh);
-  const tileColors = { 0:'#2d6e1e', 1:'#8a6a3a', 2:'#1a4a8c', 3:'#606060', 4:'#6b4423', 5:'#1a5c0a', 6:'#808080', 7:'#6b4423', 8:'#808080' };
-  for (let ty = 0; ty < MAP_H; ty++) {
-    for (let tx = 0; tx < MAP_W; tx++) {
-      minimapCtx.fillStyle = tileColors[tileMap[ty][tx]] || '#000';
-      minimapCtx.fillRect(Math.floor(tx*sx), Math.floor(ty*sy), Math.ceil(sx), Math.ceil(sy));
-    }
-  }
-  // NPCs
-  GS.npcs.forEach(npc => {
-    minimapCtx.fillStyle = '#ff0';
-    minimapCtx.fillRect(Math.floor(npc.tileX*sx), Math.floor(npc.tileY*sy), 3, 3);
-  });
-  // Enemies
-  GS.enemies.forEach(en => {
-    if (!en.dead) {
-      minimapCtx.fillStyle = '#f00';
-      minimapCtx.fillRect(Math.floor(en.tileX*sx), Math.floor(en.tileY*sy), 3, 3);
-    }
-  });
-  // World items
-  GS.worldItems.forEach(wi => {
-    if (!wi.collected) {
-      minimapCtx.fillStyle = '#0ff';
-      minimapCtx.fillRect(Math.floor(wi.tileX*sx), Math.floor(wi.tileY*sy), 2, 2);
-    }
-  });
-  // Player
-  minimapCtx.fillStyle = '#fff';
-  minimapCtx.fillRect(Math.floor(GS.player.tileX*sx)-1, Math.floor(GS.player.tileY*sy)-1, 4, 4);
-}
-
-// ═══════════════════════════════════════
-// 21. UPDATE LOOP
-// ═══════════════════════════════════════
-function update(dt) {
-  GS.playTime += dt;
-  GS.tickTimer += dt;
-
-  // Game tick
-  if (GS.tickTimer >= TICK_MS / 1000) {
-    GS.tickTimer -= TICK_MS / 1000;
-    GS.tick++;
-    processCombatTick();
-    // NPC AI
-    GS.npcs.forEach(npc => {
-      if (npc.type === 'hans') {
-        npc.wanderTimer -= TICK_MS/1000;
-        if (npc.wanderTimer <= 0) {
-          npc.wanderTimer = 2 + Math.random()*3;
-          const dx = Math.floor(Math.random()*5)-2 + npc.originX;
-          const dy = Math.floor(Math.random()*5)-2 + npc.originY;
-          if (isWalkable(dx, dy, tileMap)) {
-            npc.tileX = dx; npc.tileY = dy;
-            npc.pixelX = dx*TILE_W; npc.pixelY = dy*TILE_H;
-          }
-        }
-      }
-    });
-    // Enemy AI
-    GS.enemies.forEach(en => {
-      if (en.dead) {
-        en.respawnTimer -= TICK_MS/1000;
-        if (en.respawnTimer <= 0) {
-          en.dead = false;
-          en.hp = en.maxHp;
-          en.tileX = en.originX; en.tileY = en.originY;
-          en.pixelX = en.originX*TILE_W; en.pixelY = en.originY*TILE_H;
-          en.state = 'idle';
-        }
-        return;
-      }
-      const dist = Math.abs(en.tileX - GS.player.tileX) + Math.abs(en.tileY - GS.player.tileY);
-      if (dist <= en.aggroRange && !GS.player.inCombat) {
-        // Aggro
-        if (dist > 1) {
-          const path = aStar(en.tileX, en.tileY, GS.player.tileX, GS.player.tileY, tileMap);
-          if (path && path.length > 1) {
-            const next = path[1];
-            en.tileX = next.x; en.tileY = next.y;
-            en.pixelX = next.x*TILE_W; en.pixelY = next.y*TILE_H;
-          }
-        }
-      } else if (!GS.player.inCombat || GS.player.combatTarget !== en.id) {
-        // Wander
-        en.wanderTimer -= TICK_MS/1000;
-        if (en.wanderTimer <= 0) {
-          en.wanderTimer = 2 + Math.random()*3;
-          const dx = Math.floor(Math.random()*5)-2 + en.originX;
-          const dy = Math.floor(Math.random()*5)-2 + en.originY;
-          if (isWalkable(dx, dy, tileMap)) {
-            en.tileX = dx; en.tileY = dy;
-            en.pixelX = dx*TILE_W; en.pixelY = dy*TILE_H;
-          }
-        }
-      }
-    });
-    // HP regen every 10 ticks
-    if (GS.tick % 10 === 0 && GS.player.hp < GS.player.maxHp && !GS.player.inCombat) {
-      GS.player.hp = Math.min(GS.player.hp + 1, GS.player.maxHp);
-    }
-  }
-
-  // Player movement along path
-  if (GS.player.path && GS.player.pathIndex < GS.player.path.length) {
-    const target = GS.player.path[GS.player.pathIndex];
-    const targetPX = target.x * TILE_W;
-    const targetPY = target.y * TILE_H;
-    const dx = targetPX - GS.player.pixelX;
-    const dy = targetPY - GS.player.pixelY;
-    const dist = Math.sqrt(dx*dx + dy*dy);
-    const speed = WALK_SPEED * TILE_W * dt;
-    if (dist < speed) {
-      GS.player.pixelX = targetPX;
-      GS.player.pixelY = targetPY;
-      GS.player.tileX = target.x;
-      GS.player.tileY = target.y;
-      GS.player.pathIndex++;
-      GS.player.moving = true;
-      // Check quest items on pickup
-      checkQuestItems();
-    } else {
-      GS.player.pixelX += (dx/dist) * speed;
-      GS.player.pixelY += (dy/dist) * speed;
-      GS.player.moving = true;
-    }
-    // Direction
-    if (Math.abs(dx) > Math.abs(dy)) {
-      GS.player.dir = dx > 0 ? 'east' : 'west';
-    } else {
-      GS.player.dir = dy > 0 ? 'south' : 'north';
-    }
-  } else {
-    GS.player.path = null;
-    GS.player.moving = false;
-  }
-
-  // Animate player
-  GS.player.animTimer += dt;
-  if (GS.player.animTimer > 0.15) {
-    GS.player.animTimer = 0;
-    if (GS.player.moving) {
-      GS.player.animFrame = (GS.player.animFrame + 1) % 4;
-    } else {
-      GS.player.animFrame = 0;
-    }
-  }
-
-  // Animate NPCs
-  GS.npcs.forEach(npc => {
-    npc.animTimer += dt;
-    if (npc.animTimer > 0.5) {
-      npc.animTimer = 0;
-      npc.animFrame = (npc.animFrame + 1) % 2;
-    }
-  });
-
-  // Animate enemies
-  GS.enemies.forEach(en => {
-    if (en.dead) return;
-    en.animTimer += dt;
-    if (en.animTimer > 0.4) {
-      en.animTimer = 0;
-      if (GS.player.inCombat && GS.player.combatTarget === en.id) {
-        en.animFrame = (en.animFrame + 1) % 4;
-      } else {
-        en.animFrame = (en.animFrame + 1) % 2;
-      }
-    }
-  });
-
-  // Animate world items
-  GS.worldItems.forEach(wi => {
-    if (!wi.collected) wi.sparkleTimer += dt;
-  });
-
-  // Splat decay
-  GS.splats = GS.splats.filter(s => {
-    s.timer -= dt;
-    return s.timer > 0;
-  });
-
-  // Water animation
-  sprites.waterFrame = Math.floor(Date.now() / 500) % 2;
-
-  // Cooking needle
-  if (cookingActive) {
-    cookingNeedle += cookingDir * cookingSpeed * dt;
-    if (cookingNeedle >= 1) { cookingNeedle = 1; cookingDir = -1; }
-    if (cookingNeedle <= 0) { cookingNeedle = 0; cookingDir = 1; }
-    document.getElementById('cooking-needle').style.left = (cookingNeedle * 100) + '%';
-  }
-
-  updateCamera();
-}
-
-// ═══════════════════════════════════════
-// 22. INPUT HANDLER
-// ═══════════════════════════════════════
-function setupInput() {
-  canvas.addEventListener('mousemove', (e) => {
-    const rect = canvas.getBoundingClientRect();
-    const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
-    const my = (e.clientY - rect.top) * (canvas.height / rect.height);
-    hoverTileX = Math.floor((mx + GS.camera.x) / TILE_W);
-    hoverTileY = Math.floor((my + GS.camera.y) / TILE_H);
-    // Cursor style
-    let isEntity = false;
-    GS.npcs.forEach(n => { if(n.tileX===hoverTileX&&n.tileY===hoverTileY) isEntity=true; });
-    GS.enemies.forEach(e => { if(!e.dead&&e.tileX===hoverTileX&&e.tileY===hoverTileY) isEntity=true; });
-    GS.worldItems.forEach(w => { if(!w.collected&&w.tileX===hoverTileX&&w.tileY===hoverTileY) isEntity=true; });
-    // Check range tile
-    if (hoverTileX>=0 && hoverTileY>=0 && hoverTileX<MAP_W && hoverTileY<MAP_H && tileMap[hoverTileY][hoverTileX]===8) isEntity=true;
-    canvas.style.cursor = isEntity ? 'pointer' : 'crosshair';
-  });
-
-  canvas.addEventListener('click', (e) => {
-    const rect = canvas.getBoundingClientRect();
-    const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
-    const my = (e.clientY - rect.top) * (canvas.height / rect.height);
-    const clickTX = Math.floor((mx + GS.camera.x) / TILE_W);
-    const clickTY = Math.floor((my + GS.camera.y) / TILE_H);
-    handleWorldClick(clickTX, clickTY);
-  });
-
-  // Touch support
-  canvas.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    const touch = e.touches[0];
-    const rect = canvas.getBoundingClientRect();
-    const mx = (touch.clientX - rect.left) * (canvas.width / rect.width);
-    const my = (touch.clientY - rect.top) * (canvas.height / rect.height);
-    const clickTX = Math.floor((mx + GS.camera.x) / TILE_W);
-    const clickTY = Math.floor((my + GS.camera.y) / TILE_H);
-    handleWorldClick(clickTX, clickTY);
-  });
-
-  // Keyboard
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'i' || e.key === 'I') { switchTab('inv'); }
-    else if (e.key === 'q' || e.key === 'Q') { switchTab('quests'); }
-    else if (e.key === 's' || e.key === 'S') {
-      if (document.activeElement !== document.getElementById('chat-input')) {
-        switchTab('skills');
-      }
-    }
-    else if (e.key === 'Escape') {
-      closeDialog();
-      closeCooking();
-      document.getElementById('context-menu').style.display = 'none';
-    }
-    else if (e.key === 'Enter') {
-      const ci = document.getElementById('chat-input');
-      if (document.activeElement === ci) {
-        if (ci.value.trim()) {
-          addChat(`[${GS.player.name}]: ${ci.value}`, 'player');
-          ci.value = '';
-        }
-        ci.blur();
-      } else {
-        ci.focus();
-      }
-      e.preventDefault();
-    }
-    else if (e.key === 'F5') {
-      e.preventDefault();
-      saveGame();
-      addChat('Game saved!', 'system');
-    }
-  });
-
-  // Close context menu on click
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('#context-menu') && !e.target.closest('.inv-slot')) {
-      document.getElementById('context-menu').style.display = 'none';
-    }
-  });
-}
-
-function handleWorldClick(tx, ty) {
-  if (tx < 0 || ty < 0 || tx >= MAP_W || ty >= MAP_H) return;
-
-  // Check NPC click
-  const npc = GS.npcs.find(n => n.tileX === tx && n.tileY === ty);
-  if (npc) {
-    const dist = Math.abs(GS.player.tileX - tx) + Math.abs(GS.player.tileY - ty);
-    if (dist <= 2) {
-      openDialog(npc.type);
-      addChat(`You talk to ${npc.name}.`, 'npc');
-    } else {
-      // Walk to NPC
-      const adjacent = [{x:tx-1,y:ty},{x:tx+1,y:ty},{x:tx,y:ty-1},{x:tx,y:ty+1}];
-      const walkable = adjacent.filter(p => isWalkable(p.x, p.y, tileMap));
-      if (walkable.length) {
-        walkable.sort((a,b) => {
-          const da = Math.abs(a.x-GS.player.tileX)+Math.abs(a.y-GS.player.tileY);
-          const db = Math.abs(b.x-GS.player.tileX)+Math.abs(b.y-GS.player.tileY);
-          return da-db;
-        });
-        const path = aStar(GS.player.tileX, GS.player.tileY, walkable[0].x, walkable[0].y, tileMap);
-        if (path) {
-          GS.player.path = path;
-          GS.player.pathIndex = 1;
-          // After arriving, auto-interact
-          setTimeout(() => {
-            const d2 = Math.abs(GS.player.tileX-tx)+Math.abs(GS.player.tileY-ty);
-            if (d2 <= 2) { openDialog(npc.type); addChat(`You talk to ${npc.name}.`, 'npc'); }
-          }, path.length * 500 + 200);
-        }
-      }
-    }
-    return;
-  }
-
-  // Check enemy click
-  const enemy = GS.enemies.find(en => !en.dead && en.tileX === tx && en.tileY === ty);
-  if (enemy) {
-    GS.player.inCombat = true;
-    GS.player.combatTarget = enemy.id;
-    addChat(`You attack the ${enemy.name}!`, 'combat_good');
-    // Walk toward if not adjacent
-    const dist = Math.abs(GS.player.tileX - tx) + Math.abs(GS.player.tileY - ty);
-    if (dist > 1) {
-      const adjacent = [{x:tx-1,y:ty},{x:tx+1,y:ty},{x:tx,y:ty-1},{x:tx,y:ty+1}];
-      const walkable = adjacent.filter(p => isWalkable(p.x, p.y, tileMap));
-      walkable.sort((a,b) => {
-        const da = Math.abs(a.x-GS.player.tileX)+Math.abs(a.y-GS.player.tileY);
-        const db = Math.abs(b.x-GS.player.tileX)+Math.abs(b.y-GS.player.tileY);
-        return da-db;
-      });
-      if (walkable.length) {
-        const path = aStar(GS.player.tileX, GS.player.tileY, walkable[0].x, walkable[0].y, tileMap);
-        if (path) { GS.player.path = path; GS.player.pathIndex = 1; }
-      }
-    }
-    return;
-  }
-
-  // Check world item click
-  const wi = GS.worldItems.find(w => !w.collected && w.tileX === tx && w.tileY === ty);
-  if (wi) {
-    const dist = Math.abs(GS.player.tileX - tx) + Math.abs(GS.player.tileY - ty);
-    if (dist <= 1) {
-      if (addToInventory(wi.itemId)) {
-        wi.collected = true;
-        addChat(`You pick up: ${ITEM_DB[wi.itemId].name}`, 'action');
-        checkQuestItems();
-        renderTab();
-      }
-    } else {
-      const path = aStar(GS.player.tileX, GS.player.tileY, tx, ty, tileMap);
-      if (path) {
-        GS.player.path = path;
-        GS.player.pathIndex = 1;
-        setTimeout(() => {
-          const d2 = Math.abs(GS.player.tileX-tx)+Math.abs(GS.player.tileY-ty);
-          if (d2 <= 1 && !wi.collected) {
-            if (addToInventory(wi.itemId)) {
-              wi.collected = true;
-              addChat(`You pick up: ${ITEM_DB[wi.itemId].name}`, 'action');
-              checkQuestItems();
-              renderTab();
-            }
-          }
-        }, path.length * 500 + 200);
-      }
-    }
-    return;
-  }
-
-  // Check cooking range
-  if (tileMap[ty][tx] === 8) {
-    const dist = Math.abs(GS.player.tileX - tx) + Math.abs(GS.player.tileY - ty);
-    if (dist <= 2) {
-      openCooking();
-    } else {
-      const path = aStar(GS.player.tileX, GS.player.tileY, tx, ty, tileMap);
-      if (path) {
-        GS.player.path = path;
-        GS.player.pathIndex = 1;
-        setTimeout(() => {
-          const d2 = Math.abs(GS.player.tileX-tx)+Math.abs(GS.player.tileY-ty);
-          if (d2 <= 2) openCooking();
-        }, path.length * 500 + 200);
-      }
-    }
-    return;
-  }
-
-  // Regular walk
-  GS.player.inCombat = false;
-  GS.player.combatTarget = null;
-  const path = aStar(GS.player.tileX, GS.player.tileY, tx, ty, tileMap);
-  if (path && path.length > 1) {
-    GS.player.path = path;
-    GS.player.pathIndex = 1;
-  }
-}
-
-function switchTab(tab) {
-  activeTab = tab;
-  document.querySelectorAll('.tab-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.tab === tab);
-  });
-  renderTab();
-}
-
-// ═══════════════════════════════════════
-// 23. GAME LOOP
-// ═══════════════════════════════════════
-let lastTime = 0;
-let saveTimer = 0;
-let minimapTimer = 0;
-
-function gameLoop(timestamp) {
-  const dt = Math.min((timestamp - lastTime) / 1000, 0.1); // cap dt
-  lastTime = timestamp;
-
-  update(dt);
-  render();
-
-  // Minimap update every 0.5s
-  minimapTimer += dt;
-  if (minimapTimer > 0.5) {
-    minimapTimer = 0;
-    renderMinimap();
-  }
-
-  // Auto-save every 30s
-  saveTimer += dt;
-  if (saveTimer > 30) {
-    saveTimer = 0;
-    saveGame();
-  }
-
-  requestAnimationFrame(gameLoop);
-}
-
-// ═══════════════════════════════════════
-// 24. INIT
-// ═══════════════════════════════════════
-function init() {
-  sprites = new SpriteGenerator();
-  canvas = document.getElementById('game-canvas');
-  ctx = canvas.getContext('2d');
-  minimapCanvas = document.getElementById('minimap-canvas');
-  minimapCtx = minimapCanvas.getContext('2d');
-
-  resizeCanvas();
-  window.addEventListener('resize', resizeCanvas);
-
-  const loaded = loadGame();
-  initEntities();
-
-  // Restore world items collected state from inventory
-  if (loaded) {
-    // If quest is complete or items are in inventory, mark world items as collected
-    if (GS.quests.cooksProblem === 'COMPLETE' || GS.quests.cooksProblem === 'ALL_ITEMS' || GS.quests.cooksProblem === 'TURNING_IN') {
-      GS.worldItems.forEach(wi => wi.collected = true);
-    } else {
-      if (hasItem('egg')) { const wi = GS.worldItems.find(w=>w.itemId==='egg'); if(wi) wi.collected=true; }
-      if (hasItem('flour')) { const wi = GS.worldItems.find(w=>w.itemId==='flour'); if(wi) wi.collected=true; }
-      if (hasItem('milk')) { const wi = GS.worldItems.find(w=>w.itemId==='milk'); if(wi) wi.collected=true; }
-    }
-  }
-
-  if (!loaded) {
-    addChat('Welcome to Lumbridge! You arrive at the castle gate.', 'system');
-    addChat('Tip: Click the ground to move. Click on the Cook to begin your quest.', 'quest');
-    addChat('Tip: Press I for inventory, Q for quest log.', 'quest');
-    // Starter items
-    addToInventory('bread');
-    addToInventory('bronze_sword');
-  } else {
-    addChat('Welcome back, adventurer! Your progress has been restored.', 'system');
-    renderChat();
-  }
-
-  setupInput();
-
-  // Tab buttons
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
-  });
-
-  // Cooking button
-  document.getElementById('cooking-btn').addEventListener('click', doCook);
-
-  // Docs toggle
-  document.getElementById('docs-toggle').addEventListener('click', () => {
-    document.getElementById('docs-panel').classList.toggle('show');
-  });
-  document.getElementById('docs-close').addEventListener('click', () => {
-    document.getElementById('docs-panel').classList.remove('show');
-  });
-
-  // Save on page hide
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) saveGame();
-  });
-
-  renderTab();
-  renderMinimap();
-  updateCamera();
-
-  requestAnimationFrame(gameLoop);
-}
-
-// PWA service worker
-if ('serviceWorker' in navigator) {
-  try {
-    const swCode = `self.addEventListener('install',e=>{self.skipWaiting()});self.addEventListener('activate',e=>{e.waitUntil(clients.claim())});self.addEventListener('fetch',e=>{e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)))});`;
-    const blob = new Blob([swCode], {type:'application/javascript'});
-    const swURL = URL.createObjectURL(blob);
-    navigator.serviceWorker.register(swURL).catch(()=>{});
-  } catch(e) {}
-}
-
-// Start game
-init();
+})();
 </script>
 </body>
 </html>
