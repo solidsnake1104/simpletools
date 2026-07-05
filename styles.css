@@ -571,27 +571,46 @@ html[data-theme="summer"] .upload-area {
 }
 
 /* ── QR Code Generator ── */
-.glass-input input[type="color"] {
-  padding: 0.3rem;
-  height: 44px;
-  cursor: pointer;
+.glass-input textarea,
+.glass-input select {
+  padding: 0.6rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.10);
+  backdrop-filter: blur(10px) saturate(180%);
+  -webkit-backdrop-filter: blur(10px) saturate(180%);
+  color: var(--text);
+  font-size: 1rem;
+  font-family: inherit;
 }
 
-#qrCanvasWrap {
-  display: inline-block;
+.glass-input textarea:focus,
+.glass-input select:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: rgba(255,255,255,0.18);
+}
+
+.glass-input textarea {
+  resize: vertical;
+}
+
+.qr-preview-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+  min-height: 120px;
   padding: 1.25rem;
   background: #ffffff;
   border-radius: 12px;
   border: 1px solid rgba(255,255,255,0.15);
 }
 
-#qrCanvasWrap canvas {
+.qr-preview-box img,
+.qr-preview-box canvas {
   display: block;
   max-width: 100%;
   height: auto;
   border-radius: 6px;
-}
-
-#qrPreviewWrap {
-  display: none;
 }

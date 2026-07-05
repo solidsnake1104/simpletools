@@ -80,44 +80,41 @@
     <section class="tool-section" id="qrMode">
       <h2>Enter Your Text or URL</h2>
 
-      <div class="glass-input-row">
-        <div class="glass-input" style="flex:2;">
-          <label for="qrText">Text or URL</label>
-          <input type="text" id="qrText" placeholder="https://example.com or any text" />
-        </div>
-      </div>
-
-      <p style="color:var(--muted);font-size:0.9rem;margin-top:-0.5rem;">Size</p>
-      <div class="glass-group" id="qrSizeGroup">
-        <button type="button" class="glass-option" data-value="200">Small</button>
-        <button type="button" class="glass-option active" data-value="300">Medium</button>
-        <button type="button" class="glass-option" data-value="500">Large</button>
-      </div>
-
-      <p style="color:var(--muted);font-size:0.9rem;margin-top:-0.5rem;">Error Correction</p>
-      <div class="glass-group" id="qrEccGroup">
-        <button type="button" class="glass-option" data-value="L">Low</button>
-        <button type="button" class="glass-option active" data-value="M">Medium</button>
-        <button type="button" class="glass-option" data-value="Q">Quartile</button>
-        <button type="button" class="glass-option" data-value="H">High</button>
+      <div class="glass-input" style="margin-bottom:1.25rem;">
+        <label for="text">Text or URL</label>
+        <textarea id="text" rows="4" placeholder="https://example.com or any text">https://example.com</textarea>
       </div>
 
       <div class="glass-input-row">
         <div class="glass-input">
-          <label for="qrFgColor">Foreground Color</label>
-          <input type="color" id="qrFgColor" value="#000000" />
+          <label for="size">Size (px)</label>
+          <input id="size" type="number" min="64" max="2048" value="300" />
         </div>
         <div class="glass-input">
-          <label for="qrBgColor">Background Color</label>
-          <input type="color" id="qrBgColor" value="#ffffff" />
+          <label for="ec">Error correction</label>
+          <select id="ec">
+            <option value="L">L - Low (7%)</option>
+            <option value="M" selected>M - Medium (15%)</option>
+            <option value="Q">Q - Quartile (25%)</option>
+            <option value="H">H - High (30%)</option>
+          </select>
         </div>
       </div>
 
-      <button class="glass-btn" id="generateQrBtn">Generate QR Code</button>
+      <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+        <button id="generate" class="glass-btn">Generate QR</button>
+        <button id="clear" class="glass-btn" style="background:transparent;">Clear</button>
+      </div>
 
-      <div id="qrPreviewWrap" style="margin-top:2rem;text-align:center;">
-        <div id="qrCanvasWrap"></div>
-        <button class="glass-btn" id="downloadQrBtn">⬇ Download PNG</button>
+      
+
+      <div style="margin-top:2rem;text-align:center;">
+        <div id="qrcode" class="qr-preview-box"></div>
+        <p id="info" style="margin-top:0.75rem;color:var(--muted);font-size:0.9rem;">No QR generated yet</p>
+        <div style="display:flex;gap:0.75rem;justify-content:center;margin-top:0.5rem;">
+          <button id="download" class="glass-btn" disabled>Download PNG</button>
+          <button id="copy" class="glass-btn" disabled>Copy Image</button>
+        </div>
       </div>
     </section>
 
@@ -153,8 +150,9 @@
   </div>
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@gh-pages/qrcode.min.js"></script>
 
   <script src="../script.js"></script>
+  <script src="qr-generator.js"></script>
 </body>
 </html>
