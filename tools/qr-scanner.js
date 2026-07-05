@@ -20,6 +20,15 @@ try {
   const canvas = document.getElementById('captureCanvas');
   const ctx = canvas ? canvas.getContext('2d') : null;
 
+  // Debug: report that the script loaded and elements were found
+  console.log('qr-scanner.js loaded');
+  if (statusEl) statusEl.textContent = 'Scanner script loaded';
+
+  function logBind(name, el) {
+    console.log('qr-scanner: binding', name, !!el);
+    if (statusEl) statusEl.textContent = 'Binding: ' + name;
+  }
+
   let stream = null;
   let scanning = false;
   let detector = null;
@@ -192,7 +201,8 @@ function playBeep() {
   } catch (e) { /* ignore */ }
 }
 
-if (copyBtn) copyBtn.addEventListener('click', async () => {
+  logBind('copyBtn', copyBtn);
+  if (copyBtn) copyBtn.addEventListener('click', async () => {
   const text = resultText.textContent || '';
   try {
     await navigator.clipboard.writeText(text);
@@ -202,12 +212,14 @@ if (copyBtn) copyBtn.addEventListener('click', async () => {
   }
 });
 
-if (beepBtn) beepBtn.addEventListener('click', () => {
+  logBind('beepBtn', beepBtn);
+  if (beepBtn) beepBtn.addEventListener('click', () => {
   beepOn = !beepOn;
   beepBtn.textContent = beepOn ? 'Beep On' : 'Beep Off';
 });
 
-if (clearBtn) clearBtn.addEventListener('click', () => {
+  logBind('clearBtn', clearBtn);
+  if (clearBtn) clearBtn.addEventListener('click', () => {
   resultText.textContent = 'No result yet';
   resultMeta.textContent = '';
   copyBtn.disabled = true;
@@ -217,21 +229,26 @@ if (clearBtn) clearBtn.addEventListener('click', () => {
   statusEl.textContent = '';
 });
 
-if (startBtn) startBtn.addEventListener('click', async () => {
+  logBind('startBtn', startBtn);
+  if (startBtn) startBtn.addEventListener('click', async () => {
   await initDetector();
   await listCameras();
   const deviceId = cameraSelect ? cameraSelect.value || '' : '';
   await startCamera(deviceId);
 });
 
-if (stopBtn) stopBtn.addEventListener('click', () => stopCamera());
-if (torchBtn) torchBtn.addEventListener('click', () => toggleTorch());
-if (cameraSelect) cameraSelect.addEventListener('change', async () => {
+  logBind('stopBtn', stopBtn);
+  if (stopBtn) stopBtn.addEventListener('click', () => stopCamera());
+  logBind('torchBtn', torchBtn);
+  if (torchBtn) torchBtn.addEventListener('click', () => toggleTorch());
+  logBind('cameraSelect', cameraSelect);
+  if (cameraSelect) cameraSelect.addEventListener('change', async () => {
   if (stream) await startCamera(cameraSelect.value || '');
 });
 
 // Image upload handling with fallback decode using jsQR
-if (fileInput) fileInput.addEventListener('change', async (ev) => {
+  logBind('fileInput', fileInput);
+  if (fileInput) fileInput.addEventListener('change', async (ev) => {
   const file = ev.target.files && ev.target.files[0];
   if (!file) return;
   statusEl.textContent = 'Decoding image...';
@@ -323,6 +340,18 @@ async function ensureJsQR() {
     openBtn.style.pointerEvents = 'none';
     openBtn.style.opacity = '0.6';
   }
+
+  // Global click logger to detect whether clicks are reaching the page
+  document.addEventListener('click', (e) => {
+    const t = e.target;
+    const id = t && t.id;
+    if (id) console.log('qr-scanner: click target id=', id);
+    else if (t && t.closest) {
+      const btn = t.closest('.glass-btn');
+      if (btn) console.log('qr-scanner: click nearest .glass-btn id=', btn.id || '(no id)');
+    }
+    if (statusEl) statusEl.textContent = 'Last click: ' + (id || (t && t.className) || t.tagName);
+  }, { capture: false });
 })();
 
 } catch (err) {
