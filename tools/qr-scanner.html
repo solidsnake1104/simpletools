@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en" data-theme="default">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <title>QR Scanner — Scan QR Codes Instantly • SimpleTools</title>
+  <meta name="description" content="Scan QR codes from your camera or upload an image. Fast, private, and simple." />
+  <link rel="canonical" href="https://simplertools.net/tools/qr-scanner.html">
+
+  <meta property="og:title" content="QR Scanner — Scan QR Codes Instantly • SimpleTools">
+  <meta property="og:description" content="Scan QR codes from your camera or upload an image. Fast, private, and simple.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://simplertools.net/tools/qr-scanner.html">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "QR Scanner",
+    "url": "https://simplertools.net/tools/qr-scanner.html",
+    "description": "Scan QR codes using your device camera or upload an image. Runs locally in the browser.",
+    "applicationCategory": "Utility",
+    "operatingSystem": "All",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  }
+  </script>
+
+  <link rel="stylesheet" href="../styles.css" />
+  <link rel="icon" type="image/png" href="../site_icon.png" />
+  <link rel="shortcut icon" type="image/png" href="../site_icon.png" />
+  <link rel="apple-touch-icon" href="../site_icon.png" />
+</head>
+
+<body>
+  <header class="site-header">
+    <div class="container">
+      <a href="../index.html" class="logo-link">
+        <img src="../logo_transparent.png" alt="SimpleTools logo" class="site-logo" />
+      </a>
+
+      <p class="tagline">Scan QR codes from your camera or images</p>
+    </div>
+  </header>
+
+  <main class="tool-page container">
+    <h1 class="tool-title">QR Scanner</h1>
+
+    <section class="tool-section" id="scannerMode">
+      <h2>Camera & Upload</h2>
+
+      <div class="upload-area" id="cameraArea" tabindex="0" aria-label="Camera and upload area">
+        <div id="videoWrapper" style="max-width:700px;margin:0 auto;position:relative;">
+          <video id="preview" playsinline autoplay muted style="width:100%;height:auto;border-radius:12px;background:#000"></video>
+          <canvas id="captureCanvas" style="display:none"></canvas>
+
+          <div id="overlay" style="position:absolute;inset:0;pointer-events:none;display:flex;align-items:center;justify-content:center">
+            <div id="scanBox" style="width:60%;max-width:420px;height:40%;border:2px dashed rgba(255,255,255,0.25);border-radius:12px;box-sizing:border-box"></div>
+          </div>
+        </div>
+
+        <div style="margin-top:1rem;display:flex;gap:0.75rem;flex-wrap:wrap;justify-content:center">
+          <button id="startBtn" class="glass-btn">Start Camera</button>
+          <button id="stopBtn" class="glass-btn" disabled>Stop</button>
+          <button id="torchBtn" class="glass-btn" disabled>Toggle Torch</button>
+
+          <label class="glass-btn" style="display:inline-flex;align-items:center;gap:0.5rem;cursor:pointer">
+            <input id="fileInput" type="file" accept="image/*" style="display:none" />
+            Upload Image
+          </label>
+
+          <select id="cameraSelect" class="glass-option" style="min-width:180px">
+            <option value="">Choose camera</option>
+          </select>
+        </div>
+
+        <div id="status" style="margin-top:1rem;text-align:center;color:var(--muted)"></div>
+      </div>
+    </section>
+
+    <section class="tool-section" style="margin-top:1.5rem">
+      <h2>Result</h2>
+
+      <div class="file-item" style="align-items:flex-start;flex-direction:column;gap:0.5rem">
+        <div style="width:100%;display:flex;gap:0.5rem;align-items:center">
+          <div style="flex:1">
+            <div id="resultText" style="word-break:break-word;color:var(--text);min-height:1.5rem">No result yet</div>
+            <div id="resultMeta" style="color:var(--muted);font-size:0.9rem"></div>
+          </div>
+
+          <div style="display:flex;gap:0.5rem">
+            <button id="copyBtn" class="glass-btn" disabled>Copy</button>
+            <a id="openBtn" class="glass-btn" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center" target="_blank" rel="noopener">Open</a>
+          </div>
+        </div>
+
+        <div style="width:100%;display:flex;gap:0.5rem;flex-wrap:wrap">
+          <button id="beepBtn" class="glass-option">Beep On</button>
+          <button id="clearBtn" class="glass-option">Clear</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="tool-section" style="margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid rgba(255,255,255,0.06);">
+      <h3>About This Tool</h3>
+      <p>Scans QR and barcode data locally in your browser. Uses the browser Barcode Detector when available and falls back to a JS decoder for images. Nothing is uploaded by default.</p>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-content">
+        <p>&copy; <span id="year"></span> SimpleTools • Small apps, big impact.</p>
+
+        <nav class="footer-links">
+          <a href="../about.html">About</a>
+          <a href="../contact.html">Contact</a>
+          <a href="../privacy.html">Privacy Policy</a>
+        </nav>
+
+        <div class="theme-controls">
+          <label for="theme-select" class="visually-hidden">Theme</label>
+          <select id="theme-select" aria-label="Select seasonal theme">
+            <option value="auto">Auto (by date)</option>
+            <option value="spring">Spring</option>
+            <option value="summer">Summer</option>
+            <option value="autumn">Autumn</option>
+            <option value="winter">Winter</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../script.js"></script>
+  <script type="module" src="qr-scanner.js"></script>
+</body>
+</html>
