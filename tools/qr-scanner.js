@@ -2,33 +2,34 @@
 // Matches structure and behavior used by the QR generator page.
 // Uses native BarcodeDetector when available, falls back to jsQR for uploaded images.
 
-const video = document.getElementById('preview');
-const startBtn = document.getElementById('startBtn');
-const stopBtn = document.getElementById('stopBtn');
-const torchBtn = document.getElementById('torchBtn');
-const fileInput = document.getElementById('fileInput');
-const cameraSelect = document.getElementById('cameraSelect');
-const statusEl = document.getElementById('status');
-const resultText = document.getElementById('resultText');
-const resultMeta = document.getElementById('resultMeta');
-const copyBtn = document.getElementById('copyBtn');
-const openBtn = document.getElementById('openBtn');
-const beepBtn = document.getElementById('beepBtn');
-const clearBtn = document.getElementById('clearBtn');
+try {
+  const video = document.getElementById('preview');
+  const startBtn = document.getElementById('startBtn');
+  const stopBtn = document.getElementById('stopBtn');
+  const torchBtn = document.getElementById('torchBtn');
+  const fileInput = document.getElementById('fileInput');
+  const cameraSelect = document.getElementById('cameraSelect');
+  const statusEl = document.getElementById('status');
+  const resultText = document.getElementById('resultText');
+  const resultMeta = document.getElementById('resultMeta');
+  const copyBtn = document.getElementById('copyBtn');
+  const openBtn = document.getElementById('openBtn');
+  const beepBtn = document.getElementById('beepBtn');
+  const clearBtn = document.getElementById('clearBtn');
 
-const canvas = document.getElementById('captureCanvas');
-const ctx = canvas.getContext('2d');
+  const canvas = document.getElementById('captureCanvas');
+  const ctx = canvas ? canvas.getContext('2d') : null;
 
-let stream = null;
-let scanning = false;
-let detector = null;
-let scanInterval = null;
-let currentTrack = null;
-let torchOn = false;
-let beepOn = true;
-let jsQRLoaded = false;
+  let stream = null;
+  let scanning = false;
+  let detector = null;
+  let scanInterval = null;
+  let currentTrack = null;
+  let torchOn = false;
+  let beepOn = true;
+  let jsQRLoaded = false;
 
-async function initDetector() {
+  async function initDetector() {
   if ('BarcodeDetector' in window) {
     try {
       const formats = await BarcodeDetector.getSupportedFormats();
@@ -126,6 +127,7 @@ async function toggleTorch() {
 }
 
 function drawToCanvas() {
+  if (!canvas || !ctx) return false;
   if (!video.videoWidth || !video.videoHeight) return false;
   const vw = video.videoWidth;
   const vh = video.videoHeight;
@@ -190,7 +192,7 @@ function playBeep() {
   } catch (e) { /* ignore */ }
 }
 
-copyBtn.addEventListener('click', async () => {
+if (copyBtn) copyBtn.addEventListener('click', async () => {
   const text = resultText.textContent || '';
   try {
     await navigator.clipboard.writeText(text);
@@ -200,12 +202,12 @@ copyBtn.addEventListener('click', async () => {
   }
 });
 
-beepBtn.addEventListener('click', () => {
+if (beepBtn) beepBtn.addEventListener('click', () => {
   beepOn = !beepOn;
   beepBtn.textContent = beepOn ? 'Beep On' : 'Beep Off';
 });
 
-clearBtn.addEventListener('click', () => {
+if (clearBtn) clearBtn.addEventListener('click', () => {
   resultText.textContent = 'No result yet';
   resultMeta.textContent = '';
   copyBtn.disabled = true;
@@ -215,21 +217,21 @@ clearBtn.addEventListener('click', () => {
   statusEl.textContent = '';
 });
 
-startBtn.addEventListener('click', async () => {
+if (startBtn) startBtn.addEventListener('click', async () => {
   await initDetector();
   await listCameras();
-  const deviceId = cameraSelect.value || '';
+  const deviceId = cameraSelect ? cameraSelect.value || '' : '';
   await startCamera(deviceId);
 });
 
-stopBtn.addEventListener('click', () => stopCamera());
-torchBtn.addEventListener('click', () => toggleTorch());
-cameraSelect.addEventListener('change', async () => {
+if (stopBtn) stopBtn.addEventListener('click', () => stopCamera());
+if (torchBtn) torchBtn.addEventListener('click', () => toggleTorch());
+if (cameraSelect) cameraSelect.addEventListener('change', async () => {
   if (stream) await startCamera(cameraSelect.value || '');
 });
 
 // Image upload handling with fallback decode using jsQR
-fileInput.addEventListener('change', async (ev) => {
+if (fileInput) fileInput.addEventListener('change', async (ev) => {
   const file = ev.target.files && ev.target.files[0];
   if (!file) return;
   statusEl.textContent = 'Decoding image...';
@@ -290,25 +292,43 @@ async function ensureJsQR() {
   listCameras();
 
   const cameraArea = document.getElementById('cameraArea');
-  cameraArea.addEventListener('dragover', (e) => { e.preventDefault(); cameraArea.classList.add('dragover'); });
-  cameraArea.addEventListener('dragleave', () => cameraArea.classList.remove('dragover'));
-  cameraArea.addEventListener('drop', (e) => {
-    e.preventDefault();
-    cameraArea.classList.remove('dragover');
-    const f = e.dataTransfer.files && e.dataTransfer.files[0];
-    if (f && f.type.startsWith('image/')) {
-      fileInput.files = e.dataTransfer.files;
-      fileInput.dispatchEvent(new Event('change'));
-    }
-  });
+  if (cameraArea) {
+    cameraArea.addEventListener('dragover', (e) => { e.preventDefault(); cameraArea.classList.add('dragover'); });
+    cameraArea.addEventListener('dragleave', () => cameraArea.classList.remove('dragover'));
+    cameraArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      cameraArea.classList.remove('dragover');
+      const f = e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f && f.type.startsWith('image/')) {
+        if (fileInput) {
+          fileInput.files = e.dataTransfer.files;
+          fileInput.dispatchEvent(new Event('change'));
+        }
+      }
+    });
+  }
 
   window.addEventListener('keydown', (e) => {
     if (e.key === 's') {
-      if (startBtn.disabled) stopBtn.click(); else startBtn.click();
+      try {
+        if (startBtn && startBtn.disabled) {
+          if (stopBtn) stopBtn.click();
+        } else if (startBtn) startBtn.click();
+      } catch (err) { /* ignore */ }
     }
   });
 
-  copyBtn.disabled = true;
-  openBtn.style.pointerEvents = 'none';
-  openBtn.style.opacity = '0.6';
+  if (copyBtn) copyBtn.disabled = true;
+  if (openBtn) {
+    openBtn.style.pointerEvents = 'none';
+    openBtn.style.opacity = '0.6';
+  }
 })();
+
+} catch (err) {
+  console.error('qr-scanner initialization error', err);
+  try {
+    const statusEl = document.getElementById && document.getElementById('status');
+    if (statusEl) statusEl.textContent = 'Scanner failed to initialize: ' + (err && err.message ? err.message : String(err));
+  } catch (e) { /* ignore */ }
+}

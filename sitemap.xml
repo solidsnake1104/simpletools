@@ -65,7 +65,7 @@
     <priority>0.9</priority>
   </url>
 
-  <!-- QR Scanner -->
+  <!-- QR Code Scanner -->
   <url>
     <loc>https://simplertools.net/tools/qr-scanner.html</loc>
     <lastmod>2026-07-04</lastmod>
