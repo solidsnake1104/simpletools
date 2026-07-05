@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en" data-theme="default">
+<head>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2884785253571228"
+     crossorigin="anonymous"></script>
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <!-- Primary SEO -->
+  <title>QR Code Generator — Create QR Codes Instantly • SimplerTools</title>
+  <meta name="description" content="Turn any text or URL into a QR code instantly with SimplerTools QR Code Generator. 100% browser‑based, fast, private, and no file uploads required.">
+  <meta name="keywords" content="qr code generator, create qr code, text to qr code, url to qr code, qr code maker, simplertools, browser tools, no upload qr code">
+
+  <!-- Canonical -->
+  <link rel="canonical" href="https://simplertools.net/tools/qr-generator.html">
+
+  <!-- OpenGraph -->
+  <meta property="og:title" content="QR Code Generator — Create QR Codes Instantly • SimplerTools">
+  <meta property="og:description" content="Fast, private, browser‑based QR code generation. No uploads. No tracking.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://simplertools.net/tools/qr-generator.html">
+  <meta property="og:image" content="https://simplertools.net/og-qr-generator.png">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="QR Code Generator — Create QR Codes Instantly • SimplerTools">
+  <meta name="twitter:description" content="Turn any text or URL into a QR code instantly in your browser. Free, private, and no uploads.">
+  <meta name="twitter:image" content="https://simplertools.net/og-qr-generator.png">
+
+  <!-- AI Crawler Metadata -->
+  <meta name="ai-tool" content="QR Code Generator">
+  <meta name="ai-category" content="Utility">
+  <meta name="ai-description" content="A fast, browser‑based QR code generator that runs entirely on-device with no uploads.">
+  <meta name="ai-content" content="qr code, generator, utility, browser-based">
+
+  <!-- Schema.org JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "QR Code Generator",
+    "url": "https://simplertools.net/tools/qr-generator.html",
+    "description": "Turn any text or URL into a QR code instantly in your browser with SimplerTools QR Code Generator. No uploads, no tracking, fully private.",
+    "applicationCategory": "Utility",
+    "operatingSystem": "All",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "SimplerTools",
+      "url": "https://simplertools.net"
+    }
+  }
+  </script>
+
+  <link rel="stylesheet" href="../styles.css" />
+  <link rel="icon" type="image/png" href="../site_icon.png" />
+  <link rel="shortcut icon" type="image/png" href="../site_icon.png" />
+  <link rel="apple-touch-icon" href="../site_icon.png" />
+</head>
+
+<body>
+  <header class="site-header">
+    <div class="container">
+      <a href="../index.html" class="logo-link">
+        <img src="../logo_transparent.png" alt="SimplerTools logo" class="site-logo" />
+      </a>
+
+    <p class="tagline">Turn any text or URL into a QR code</p>
+    </div>
+  </header>
+
+<main class="tool-page container">
+<h1 class="tool-title">QR Code Generator</h1>
+
+    <section class="tool-section" id="qrMode">
+      <h2>Enter Your Text or URL</h2>
+
+      <div class="glass-input-row">
+        <div class="glass-input" style="flex:2;">
+          <label for="qrText">Text or URL</label>
+          <input type="text" id="qrText" placeholder="https://example.com or any text" />
+        </div>
+      </div>
+
+      <p style="color:var(--muted);font-size:0.9rem;margin-top:-0.5rem;">Size</p>
+      <div class="glass-group" id="qrSizeGroup">
+        <button type="button" class="glass-option" data-value="200">Small</button>
+        <button type="button" class="glass-option active" data-value="300">Medium</button>
+        <button type="button" class="glass-option" data-value="500">Large</button>
+      </div>
+
+      <p style="color:var(--muted);font-size:0.9rem;margin-top:-0.5rem;">Error Correction</p>
+      <div class="glass-group" id="qrEccGroup">
+        <button type="button" class="glass-option" data-value="L">Low</button>
+        <button type="button" class="glass-option active" data-value="M">Medium</button>
+        <button type="button" class="glass-option" data-value="Q">Quartile</button>
+        <button type="button" class="glass-option" data-value="H">High</button>
+      </div>
+
+      <div class="glass-input-row">
+        <div class="glass-input">
+          <label for="qrFgColor">Foreground Color</label>
+          <input type="color" id="qrFgColor" value="#000000" />
+        </div>
+        <div class="glass-input">
+          <label for="qrBgColor">Background Color</label>
+          <input type="color" id="qrBgColor" value="#ffffff" />
+        </div>
+      </div>
+
+      <button class="glass-btn" id="generateQrBtn">Generate QR Code</button>
+
+      <div id="qrPreviewWrap" style="margin-top:2rem;text-align:center;">
+        <div id="qrCanvasWrap"></div>
+        <button class="glass-btn" id="downloadQrBtn">⬇ Download PNG</button>
+      </div>
+    </section>
+
+    <section class="tool-section" style="margin-top:3rem;padding-top:2rem;border-top:1px solid rgba(255,255,255,0.06);">
+      <h3>About This Tool</h3>
+      <p>Generate QR codes directly in your browser — no files are uploaded to any server, and nothing you type ever leaves your device. Great for sharing links, Wi‑Fi details, contact info, or any short message that's easier to scan than to type.</p>
+    </section>
+
+  </main>
+
+ <footer class="site-footer">
+  <div class="container">
+    <div class="footer-content">
+      <p>&copy; <span id="year"></span> SimplerTools • Small apps, big impact.</p>
+
+      <nav class="footer-links">
+        <a href="../about.html">About</a>
+        <a href="../contact.html">Contact</a>
+        <a href="../privacy.html">Privacy Policy</a>
+      </nav>
+
+      <div class="theme-controls">
+        <label for="theme-select" class="visually-hidden">Theme</label>
+        <select id="theme-select" aria-label="Select seasonal theme">
+          <option value="auto">Auto (by date)</option>
+          <option value="spring">Spring</option>
+          <option value="summer">Summer</option>
+          <option value="autumn">Autumn</option>
+          <option value="winter">Winter</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+
+  <script src="../script.js"></script>
+</body>
+</html>

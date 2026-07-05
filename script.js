@@ -1407,6 +1407,110 @@ async function trimLargeFileWithFFmpeg(file, start, end) {
       }
     });
   }
+
+  // ===========================================================
+  // QR CODE GENERATOR
+  // ===========================================================
+  const qrText        = document.getElementById("qrText");
+  const generateQrBtn  = document.getElementById("generateQrBtn");
+  const qrCanvasWrap   = document.getElementById("qrCanvasWrap");
+  const qrPreviewWrap  = document.getElementById("qrPreviewWrap");
+  const downloadQrBtn  = document.getElementById("downloadQrBtn");
+  const qrFgColor      = document.getElementById("qrFgColor");
+  const qrBgColor      = document.getElementById("qrBgColor");
+
+  let qrSize = 300;
+  let qrEcc  = "M";
+  let qrCanvas = null;
+
+  function setupGlassGroup(groupId, onSelect) {
+    const group = document.getElementById(groupId);
+    if (!group) return;
+
+    group.querySelectorAll(".glass-option").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        group.querySelectorAll(".glass-option").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        onSelect(btn.dataset.value);
+      });
+    });
+  }
+
+  setupGlassGroup("qrSizeGroup", (v) => { qrSize = Number(v); });
+  setupGlassGroup("qrEccGroup", (v) => { qrEcc = v; });
+
+  async function generateQr() {
+    if (!qrText) return;
+
+    const text = qrText.value.trim();
+
+    if (!text) {
+      alert("Please enter some text or a URL first.");
+      return;
+    }
+
+    if (typeof QRCode === "undefined") {
+      alert("The QR code library failed to load. Please check your connection and try again.");
+      return;
+    }
+
+    qrCanvasWrap.innerHTML = "";
+
+    const canvas = document.createElement("canvas");
+    qrCanvasWrap.appendChild(canvas);
+
+    try {
+      await QRCode.toCanvas(canvas, text, {
+        width: qrSize,
+        errorCorrectionLevel: qrEcc,
+        margin: 2,
+        color: {
+          dark: (qrFgColor && qrFgColor.value) || "#000000",
+          light: (qrBgColor && qrBgColor.value) || "#ffffff"
+        }
+      });
+
+      qrCanvas = canvas;
+
+      if (qrPreviewWrap) {
+        qrPreviewWrap.style.display = "block";
+      }
+
+      showToast("QR code generated!");
+    } catch (err) {
+      console.error("QR generation error:", err);
+      alert("Could not generate a QR code from that input. Please try again.");
+    }
+  }
+
+  if (generateQrBtn) {
+    generateQrBtn.addEventListener("click", generateQr);
+  }
+
+  if (qrText) {
+    qrText.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        generateQr();
+      }
+    });
+  }
+
+  if (downloadQrBtn) {
+    downloadQrBtn.addEventListener("click", () => {
+      if (!qrCanvas) return;
+
+      qrCanvas.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+
+        a.href = url;
+        a.download = "qrcode.png";
+        a.click();
+
+        URL.revokeObjectURL(url);
+        showToast("Download started!");
+      });
+    });
+  }
 });
-
-
