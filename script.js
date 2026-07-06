@@ -1,59 +1,111 @@
 // -----------------------------------------------------------
-// Seasonal Theme Engine
+// Theme Engine — Light / Dark / Auto (system), manual override
 // -----------------------------------------------------------
 (function () {
-  const setTheme = (t) => document.documentElement.setAttribute("data-theme", t);
+  const STORAGE_KEY = "simplertools-color-scheme"; // "light" | "dark" | "auto"
+  const root = document.documentElement;
+  const media = window.matchMedia("(prefers-color-scheme: dark)");
 
-  const detectSeason = () => {
-    const m = new Date().getMonth() + 1;
-
-    if (m >= 3 && m < 5) return "spring";
-    if (m >= 6 && m < 8) return "summer";
-    if (m >= 9 && m <= 11) return "autumn";
-
-    return "winter";
-  };
-
-  const select = document.getElementById("theme-select");
-  const year = document.getElementById("year");
-
-  if (year) {
-    year.textContent = new Date().getFullYear();
-  }
-
-  const saved = localStorage.getItem("simplertools-theme");
-
-  if (saved) {
-    if (saved === "auto") {
-      setTheme(detectSeason());
+  function apply(mode) {
+    if (mode === "auto") {
+      root.removeAttribute("data-theme");
     } else {
-      setTheme(saved);
+      root.setAttribute("data-theme", mode);
     }
-
-    if (select) {
-      select.value = saved;
-    }
-  } else {
-    if (select) {
-      select.value = "auto";
-    }
-
-    setTheme(detectSeason());
+    updateToggleButtons(mode);
   }
 
-  if (select) {
-    select.addEventListener("change", (e) => {
-      const v = e.target.value;
+  function currentMode() {
+    return localStorage.getItem(STORAGE_KEY) || "auto";
+  }
 
-      localStorage.setItem("simplertools-theme", v);
+  function setMode(mode) {
+    localStorage.setItem(STORAGE_KEY, mode);
+    apply(mode);
+  }
 
-      if (v === "auto") {
-        setTheme(detectSeason());
-      } else {
-        setTheme(v);
-      }
+  function updateToggleButtons(mode) {
+    document.querySelectorAll("[data-theme-option]").forEach((btn) => {
+      btn.classList.toggle("is-active", btn.dataset.themeOption === mode);
+      btn.setAttribute(
+        "aria-pressed",
+        btn.dataset.themeOption === mode ? "true" : "false"
+      );
     });
   }
+
+  // Initialize immediately (before DOMContentLoaded) to avoid a flash of
+  // the wrong theme.
+  apply(currentMode());
+
+  // If following system preference, react live to OS-level changes.
+  media.addEventListener("change", () => {
+    if (currentMode() === "auto") apply("auto");
+  });
+
+  // Simple toggle button (header icon): cycles light -> dark -> light,
+  // ignoring "auto" so a single tap always gives a predictable result.
+  document.addEventListener("click", (e) => {
+    const toggle = e.target.closest(".theme-toggle");
+    if (toggle) {
+      const isDark = root.getAttribute("data-theme")
+        ? root.getAttribute("data-theme") === "dark"
+        : media.matches;
+      setMode(isDark ? "light" : "dark");
+    }
+
+    const option = e.target.closest("[data-theme-option]");
+    if (option) {
+      setMode(option.dataset.themeOption);
+    }
+  });
+
+  document.addEventListener("DOMContentLoaded", () => {
+    updateToggleButtons(currentMode());
+
+    const year = document.getElementById("year");
+    if (year) year.textContent = new Date().getFullYear();
+  });
+})();
+
+// -----------------------------------------------------------
+// Hamburger Nav Drawer
+// -----------------------------------------------------------
+(function () {
+  document.addEventListener("DOMContentLoaded", () => {
+    const toggle = document.querySelector(".nav-toggle");
+    const drawer = document.querySelector(".nav-drawer");
+    const overlay = document.querySelector(".nav-overlay");
+    const closeBtn = document.querySelector(".nav-drawer-close");
+
+    if (!toggle || !drawer || !overlay) return;
+
+    function openNav() {
+      drawer.classList.add("is-open");
+      overlay.classList.add("is-open");
+      toggle.setAttribute("aria-expanded", "true");
+      document.body.classList.add("nav-open");
+    }
+
+    function closeNav() {
+      drawer.classList.remove("is-open");
+      overlay.classList.remove("is-open");
+      toggle.setAttribute("aria-expanded", "false");
+      document.body.classList.remove("nav-open");
+    }
+
+    toggle.addEventListener("click", () => {
+      const isOpen = drawer.classList.contains("is-open");
+      isOpen ? closeNav() : openNav();
+    });
+
+    overlay.addEventListener("click", closeNav);
+    if (closeBtn) closeBtn.addEventListener("click", closeNav);
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeNav();
+    });
+  });
 })();
 
 // -----------------------------------------------------------

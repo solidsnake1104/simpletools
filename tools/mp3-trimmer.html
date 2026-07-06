@@ -1,11 +1,14 @@
 <!doctype html>
-<html lang="en" data-theme="default">
+<html lang="en">
 <head>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2884785253571228"
      crossorigin="anonymous"></script>
 
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#f6f7f9" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0b0f16" media="(prefers-color-scheme: dark)" />
 
   <!-- Primary SEO -->
   <title>Audio & MP3 Trimmer — Trim Audio Clips Instantly • SimplerTools</title>
@@ -62,98 +65,151 @@
   <link rel="shortcut icon" type="image/png" href="../site_icon.png" />
   <link rel="apple-touch-icon" href="../site_icon.png" />
 
+  <script>
+    (function () {
+      var m = localStorage.getItem("simplertools-color-scheme");
+      if (m === "light" || m === "dark") {
+        document.documentElement.setAttribute("data-theme", m);
+      }
+    })();
+  </script>
+
   <!-- WaveSurfer v7 (waveform display + playback only) -->
   <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
   <!-- No FFmpeg needed — trimming uses Web Audio API + WAV encoder -->
   <!-- No regions plugin — trim selection handled by custom overlay -->
-
 </head>
 
 <body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
   <header class="site-header">
     <div class="container">
-      <a href="../index.html" class="logo-link">
-        <img src="../logo_transparent.png" alt="SimplerTools logo" class="site-logo" />
-      </a>
+      <div class="header-left">
+        <button class="icon-btn nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="siteNav">
+          <svg class="icon-burger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+          <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
 
-      <p class="tagline">Trim MP3 audio clips with precision — no uploads</p>
+        <a href="../index.html" class="logo-link">
+          <img src="../logo_transparent.png" alt="SimplerTools logo" class="site-logo" />
+        </a>
+        <p class="tagline">Trim MP3 audio clips with precision — no uploads</p>
+      </div>
+
+      <div class="header-right">
+        <button class="icon-btn theme-toggle" type="button" aria-label="Toggle dark mode">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+        </button>
+      </div>
     </div>
   </header>
 
-<main class="tool-page container">
-<h1 class="tool-title">Audio & MP3 Trimmer</h1>
+  <div class="nav-overlay"></div>
+  <nav class="nav-drawer" id="siteNav" aria-label="Site navigation">
+    <div class="nav-drawer-header">
+      <strong>Menu</strong>
+      <button class="icon-btn nav-drawer-close" type="button" aria-label="Close menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
 
-<section class="tool-section">
-  <h2>Select an MP3 File</h2>
+    <p class="nav-section-label">Tools</p>
+    <ul class="nav-list">
+      <li><a class="nav-link" data-category="audio" href="mp3-trimmer.html"><span class="nav-dot"></span>Audio &amp; MP3 Trimmer</a></li>
+      <li><a class="nav-link" data-category="image" href="image-metadata-cleaner.html"><span class="nav-dot"></span>Image Metadata Cleaner</a></li>
+      <li><a class="nav-link" data-category="image" href="image-resizer.html"><span class="nav-dot"></span>Image Resizer</a></li>
+      <li><a class="nav-link" data-category="pdf" href="pdf-joiner.html"><span class="nav-dot"></span>PDF Joiner</a></li>
+      <li><a class="nav-link" data-category="qr" href="qr-generator.html"><span class="nav-dot"></span>QR Code Generator</a></li>
+      <li><a class="nav-link" data-category="video" href="video-audio-extractor.html"><span class="nav-dot"></span>Video Audio Extractor</a></li>
+    </ul>
 
-  <div class="upload-area" id="uploadAreaAudio">
-    <p><strong>Click to upload or drag and drop</strong></p>
-    <p style="color:var(--muted);font-size:0.9rem;">Supports MP3, WAV, OGG</p>
-    <input type="file" id="audioInput" class="file-input" accept=".mp3,.wav,.ogg" />
-  </div>
+    <p class="nav-section-label">Site</p>
+    <ul class="nav-list">
+      <li><a class="nav-link" href="../about.html">About</a></li>
+      <li><a class="nav-link" href="../contact.html">Contact</a></li>
+      <li><a class="nav-link" href="../privacy.html">Privacy Policy</a></li>
+    </ul>
 
-  <div id="waveform" style="margin-top:2rem;min-height:120px;background:rgba(255,255,255,0.03);border-radius:8px;"></div>
-
-  <!-- Playback controls (hidden until file loaded) -->
-  <div id="playbackControls" style="display:none;gap:0.75rem;flex-wrap:wrap;">
-    <button class="glass-btn" id="playPauseBtn" style="margin-top:0;">▶ Play</button>
-    <button class="glass-btn" id="playSelectionBtn" style="margin-top:0;">▶ Play Selection</button>
-  </div>
-
-  <div class="trim-controls" style="margin-top:1.5rem;">
-    <label>Start (s): <input type="number" id="startTime" min="0" step="0.01" value="0"></label>
-    <label>End (s): <input type="number" id="endTime" min="0" step="0.01" value="0"></label>
-
-    <label style="margin-left:1rem;">
-      Output Format:
-      <select id="outputFormat">
-        <option value="wav">WAV (best quality)</option>
-        <option value="mp3-approx">MP3 (via WAV rename)</option>
-      </select>
-    </label>
-  </div>
-
-
-  <button class="glass-btn" id="trimBtn" disabled>⬇ Download Trimmed Audio</button>
-
-  <p style="color:var(--muted);font-size:0.85rem;margin-top:0.75rem;">
-    Trimming runs entirely in your browser — no uploads, no servers.
-    WAV output is lossless and works in all players.
-  </p>
-</section>
-
-<section class="tool-section" style="margin-top:3rem;padding-top:2rem;border-top:1px solid rgba(255,255,255,0.06);">
-  <h3>About This Tool</h3>
-  <p>Trim audio clips directly in your browser — no files are uploaded to any server.</p>
-</section>
-
-</main>
-
-<footer class="site-footer">
-  <div class="container">
-    <div class="footer-content">
-      <p>&copy; <span id="year"></span> SimplerTools • Small apps, big impact.</p>
-
-      <nav class="footer-links">
-        <a href="../about.html">About</a>
-        <a href="../contact.html">Contact</a>
-        <a href="../privacy.html">Privacy Policy</a>
-      </nav>
-
-      <div class="theme-controls">
-        <label for="theme-select" class="visually-hidden">Theme</label>
-        <select id="theme-select" aria-label="Select seasonal theme">
-          <option value="auto">Auto (by date)</option>
-          <option value="spring">Spring</option>
-          <option value="summer">Summer</option>
-          <option value="autumn">Autumn</option>
-          <option value="winter">Winter</option>
-        </select>
+    <div class="nav-drawer-footer">
+      <div class="nav-theme-row">
+        <span>Appearance</span>
+        <div class="segmented" role="group" aria-label="Theme">
+          <button type="button" data-theme-option="light">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+            Light
+          </button>
+          <button type="button" data-theme-option="auto">Auto</button>
+          <button type="button" data-theme-option="dark">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+            Dark
+          </button>
+        </div>
       </div>
     </div>
-  </div>
-</footer>
+  </nav>
 
-<script src="../script.js"></script>
+  <main class="tool-page container" id="main">
+    <h1 class="tool-title">Audio &amp; MP3 Trimmer</h1>
+
+    <section class="tool-section">
+      <h2>Select an MP3 File</h2>
+
+      <div class="upload-area" id="uploadAreaAudio">
+        <p><strong>Click to upload or drag and drop</strong></p>
+        <p style="color:var(--muted);font-size:0.9rem;">Supports MP3, WAV, OGG</p>
+        <input type="file" id="audioInput" class="file-input" accept=".mp3,.wav,.ogg" />
+      </div>
+
+      <div id="waveform" style="margin-top:2rem;min-height:120px;background:rgba(255,255,255,0.03);border-radius:8px;"></div>
+
+      <div id="playbackControls" style="display:none;gap:0.75rem;flex-wrap:wrap;">
+        <button class="glass-btn" id="playPauseBtn" style="margin-top:0;">▶ Play</button>
+        <button class="glass-btn" id="playSelectionBtn" style="margin-top:0;">▶ Play Selection</button>
+      </div>
+
+      <div class="trim-controls" style="margin-top:1.5rem;">
+        <label>Start (s): <input type="number" id="startTime" min="0" step="0.01" value="0"></label>
+        <label>End (s): <input type="number" id="endTime" min="0" step="0.01" value="0"></label>
+
+        <label style="margin-left:1rem;">
+          Output Format:
+          <select id="outputFormat">
+            <option value="wav">WAV (best quality)</option>
+            <option value="mp3-approx">MP3 (via WAV rename)</option>
+          </select>
+        </label>
+      </div>
+
+      <button class="glass-btn" id="trimBtn" disabled>⬇ Download Trimmed Audio</button>
+
+      <p style="color:var(--muted);font-size:0.85rem;margin-top:0.75rem;">
+        Trimming runs entirely in your browser — no uploads, no servers.
+        WAV output is lossless and works in all players.
+      </p>
+    </section>
+
+    <section class="tool-section" style="margin-top:3rem;padding-top:2rem;border-top:1px solid rgba(255,255,255,0.06);">
+      <h3>About This Tool</h3>
+      <p>Trim audio clips directly in your browser — no files are uploaded to any server.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-content">
+        <p>&copy; <span id="year"></span> SimplerTools • Small apps, big impact.</p>
+
+        <nav class="footer-links">
+          <a href="../about.html">About</a>
+          <a href="../contact.html">Contact</a>
+          <a href="../privacy.html">Privacy Policy</a>
+        </nav>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../script.js"></script>
 </body>
 </html>

@@ -1,160 +1,208 @@
-const uploadArea = document.getElementById("uploadAreaMeta");
-const fileInput = document.getElementById("fileInputMeta");
-const metadataSection = document.getElementById("metadataSection");
-const metadataTableBody = document.querySelector("#metadataTable tbody");
-const cleanBtn = document.getElementById("cleanMetadataBtn");
+<!doctype html>
+<html lang="en">
+<head>
+  <!-- AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2884785253571228"
+    crossorigin="anonymous"></script>
 
-const smallPreviewWrapper = document.getElementById("smallPreviewWrapper");
-const smallPreview = document.getElementById("smallPreview");
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#f6f7f9" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0b0f16" media="(prefers-color-scheme: dark)" />
 
-let originalFile;
+  <title>Image Metadata Cleaner — Remove EXIF Data | SimplerTools</title>
 
-// Upload interactions
-uploadArea.addEventListener("click", () => fileInput.click());
+  <!-- Primary SEO -->
+  <meta name="description" content="Remove hidden EXIF metadata from images instantly in your browser. No uploads, no tracking, fully private.">
+  <meta name="keywords" content="image metadata cleaner, exif remover, remove gps data, privacy image tool, SimplerTools">
 
-uploadArea.addEventListener("dragover", e => {
-  e.preventDefault();
-  uploadArea.classList.add("dragover");
-});
+  <!-- Canonical -->
+  <link rel="canonical" href="https://simplertools.io/tools/image-metadata-cleaner.html">
 
-uploadArea.addEventListener("dragleave", () => {
-  uploadArea.classList.remove("dragover");
-});
+  <!-- OpenGraph -->
+  <meta property="og:title" content="Image Metadata Cleaner — Remove EXIF Data">
+  <meta property="og:description" content="Remove hidden EXIF metadata from images instantly in your browser. No uploads, no tracking, fully private.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://simplertools.io/tools/image-metadata-cleaner.html">
+  <meta property="og:image" content="https://simplertools.io/og-image.png">
 
-uploadArea.addEventListener("drop", e => {
-  e.preventDefault();
-  uploadArea.classList.remove("dragover");
-  if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-    handleFile(e.dataTransfer.files[0]);
-  }
-});
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Image Metadata Cleaner — Remove EXIF Data">
+  <meta name="twitter:description" content="Remove hidden EXIF metadata from images instantly in your browser. No uploads, no tracking, fully private.">
+  <meta name="twitter:image" content="https://simplertools.io/og-image.png">
 
-fileInput.addEventListener("change", e => {
-  if (e.target.files && e.target.files[0]) {
-    handleFile(e.target.files[0]);
-  }
-});
+  <!-- AI Agent Metadata -->
+  <meta name="ai-tool-name" content="Image Metadata Cleaner">
+  <meta name="ai-tool-description" content="Remove hidden EXIF metadata from images. No uploads. Fully private.">
+  <meta name="ai-tool-category" content="Image Tools">
 
-// Handle file
-function handleFile(file) {
-  if (!file || !file.type.startsWith("image/")) {
-    alert("Please select a valid image file.");
-    return;
-  }
-
-  originalFile = file;
-
-  // Show small preview
-  const previewURL = URL.createObjectURL(file);
-  smallPreview.src = previewURL;
-  smallPreviewWrapper.style.display = "block";
-
-  // Reset sections
-  metadataSection.style.display = "none";
-  metadataTableBody.innerHTML = "";
-
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      const tags = ExifReader.load(e.target.result);
-      populateMetadata(tags);
-      metadataSection.style.display = "block";
-    } catch (err) {
-      console.error(err);
-      alert("Could not read metadata from this image.");
+  <!-- JSON-LD Schema -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Image Metadata Cleaner",
+    "url": "https://simplertools.io/tools/image-metadata-cleaner.html",
+    "description": "Remove hidden EXIF metadata from images instantly in your browser. No uploads, no tracking, fully private.",
+    "applicationCategory": "Utility",
+    "operatingSystem": "Any",
+    "browserRequirements": "Requires JavaScript",
+    "provider": {
+      "@type": "Organization",
+      "name": "SimplerTools",
+      "url": "https://simplertools.net"
     }
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-// Populate table (READ‑ONLY)
-function populateMetadata(tags) {
-  metadataTableBody.innerHTML = "";
-
-  const entries = Object.entries(tags);
-  if (entries.length === 0) {
-    const row = document.createElement("tr");
-    const cell = document.createElement("td");
-    cell.colSpan = 2;
-    cell.textContent = "No readable metadata found.";
-    row.appendChild(cell);
-    metadataTableBody.appendChild(row);
-    return;
   }
+  </script>
 
-  entries.forEach(([tag, data]) => {
-    const row = document.createElement("tr");
+  <!-- Styles -->
+  <link rel="stylesheet" href="../styles.css" />
+  <link rel="stylesheet" href="image-metadata-cleaner.css" />
+  <link rel="icon" type="image/png" href="../site_icon.png" />
 
-    row.innerHTML = `
-      <td>${tag}</td>
-      <td>${data.description || data.value || "(binary)"}</td>
-    `;
-
-    metadataTableBody.appendChild(row);
-  });
-}
-
-// Clean metadata → DIRECT DOWNLOAD (PNG = metadata-free)
-cleanBtn.addEventListener("click", () => {
-  if (!originalFile) {
-    alert("Please upload an image first.");
-    return;
-  }
-
-  const img = new Image();
-  img.onload = () => {
-    const canvas = document.createElement("canvas");
-    canvas.width = img.width;
-    canvas.height = img.height;
-
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(img, 0, 0);
-
-    // Force PNG output (metadata-free)
-    canvas.toBlob(blob => {
-      if (blob) {
-        triggerDownload(blob);
-      } else {
-        const dataURL = canvas.toDataURL("image/png");
-        const fallbackBlob = dataURLToBlob(dataURL);
-        triggerDownload(fallbackBlob);
+  <!-- Inline no-flash theme init: applies saved theme before first paint -->
+  <script>
+    (function () {
+      var m = localStorage.getItem("simplertools-color-scheme");
+      if (m === "light" || m === "dark") {
+        document.documentElement.setAttribute("data-theme", m);
       }
-    }, "image/png");
-  };
+    })();
+  </script>
+</head>
 
-  img.onerror = () => {
-    alert("Could not load image for cleaning.");
-  };
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
 
-  img.src = URL.createObjectURL(originalFile);
-});
+  <header class="site-header">
+    <div class="container">
+      <div class="header-left">
+        <button class="icon-btn nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="siteNav">
+          <svg class="icon-burger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+          <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
 
-// Convert dataURL → Blob
-function dataURLToBlob(dataURL) {
-  const parts = dataURL.split(',');
-  const mime = parts[0].match(/:(.*?);/)[1];
-  const binary = atob(parts[1]);
-  const len = binary.length;
-  const u8 = new Uint8Array(len);
-  for (let i = 0; i < len; i++) u8[i] = binary.charCodeAt(i);
-  return new Blob([u8], { type: mime });
-}
+        <a href="../index.html" class="logo-link">
+          <img src="../logo_transparent.png" alt="SimplerTools logo" class="site-logo" />
+        </a>
+        <p class="tagline">Clean hidden EXIF metadata</p>
+      </div>
 
-// Download + confirmation
-function triggerDownload(blob) {
-  const url = URL.createObjectURL(blob);
+      <div class="header-right">
+        <button class="icon-btn theme-toggle" type="button" aria-label="Toggle dark mode">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
 
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "cleaned-" + originalFile.name.replace(/\.[^.]+$/, ".png");
-  a.click();
+  <div class="nav-overlay"></div>
+  <nav class="nav-drawer" id="siteNav" aria-label="Site navigation">
+    <div class="nav-drawer-header">
+      <strong>Menu</strong>
+      <button class="icon-btn nav-drawer-close" type="button" aria-label="Close menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
 
-  // Confirmation message
-  cleanBtn.textContent = "Metadata cleaned ✔";
-  cleanBtn.disabled = true;
+    <p class="nav-section-label">Tools</p>
+    <ul class="nav-list">
+      <li><a class="nav-link" data-category="audio" href="mp3-trimmer.html"><span class="nav-dot"></span>Audio &amp; MP3 Trimmer</a></li>
+      <li><a class="nav-link" data-category="image" href="image-metadata-cleaner.html"><span class="nav-dot"></span>Image Metadata Cleaner</a></li>
+      <li><a class="nav-link" data-category="image" href="image-resizer.html"><span class="nav-dot"></span>Image Resizer</a></li>
+      <li><a class="nav-link" data-category="pdf" href="pdf-joiner.html"><span class="nav-dot"></span>PDF Joiner</a></li>
+      <li><a class="nav-link" data-category="qr" href="qr-generator.html"><span class="nav-dot"></span>QR Code Generator</a></li>
+      <li><a class="nav-link" data-category="video" href="video-audio-extractor.html"><span class="nav-dot"></span>Video Audio Extractor</a></li>
+    </ul>
 
-  setTimeout(() => {
-    cleanBtn.textContent = "Clean Metadata";
-    cleanBtn.disabled = false;
-  }, 2000);
-}
+    <p class="nav-section-label">Site</p>
+    <ul class="nav-list">
+      <li><a class="nav-link" href="../about.html">About</a></li>
+      <li><a class="nav-link" href="../contact.html">Contact</a></li>
+      <li><a class="nav-link" href="../privacy.html">Privacy Policy</a></li>
+    </ul>
+
+    <div class="nav-drawer-footer">
+      <div class="nav-theme-row">
+        <span>Appearance</span>
+        <div class="segmented" role="group" aria-label="Theme">
+          <button type="button" data-theme-option="light">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+            Light
+          </button>
+          <button type="button" data-theme-option="auto">Auto</button>
+          <button type="button" data-theme-option="dark">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+            Dark
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="tool-page container" id="main">
+
+    <h1 class="tool-title">Image Metadata Cleaner</h1>
+    <p style="color:var(--muted); margin-bottom:1.5rem;">
+      View and remove hidden EXIF metadata from your images — all processing happens locally.
+    </p>
+
+    <p class="privacy-badge">🔒 All processing happens locally on your device.</p>
+
+    <!-- Upload Area -->
+    <div class="upload-area" id="uploadAreaMeta">
+      <p><strong>Click to upload or drag an image here</strong></p>
+      <p style="color:var(--muted);font-size:0.9rem;">Supported: JPG, PNG, WebP</p>
+      <input type="file" id="fileInputMeta" class="file-input" accept="image/*" />
+    </div>
+
+    <!-- Small Image Preview -->
+    <div id="smallPreviewWrapper" style="display:none; margin-top:1rem;">
+      <img id="smallPreview" alt="Image preview" style="max-width:200px; border-radius:8px;">
+    </div>
+
+    <!-- Metadata Table (READ ONLY) -->
+    <div id="metadataSection" style="display:none; margin-top:1.5rem;">
+
+      <!-- Clean Button ABOVE table -->
+      <button class="glass-btn" id="cleanMetadataBtn">
+        Clean Metadata
+      </button>
+
+      <table id="metadataTable">
+        <thead>
+          <tr>
+            <th>Tag</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+    </div>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-content">
+        <p>&copy; <span id="year"></span> SimplerTools</p>
+
+        <nav class="footer-links">
+          <a href="../about.html">About</a>
+          <a href="../contact.html">Contact</a>
+          <a href="../privacy.html">Privacy Policy</a>
+        </nav>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../script.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/exifreader@4.12.0/dist/exif-reader.min.js"></script>
+  <script src="image-metadata-cleaner.js"></script>
+
+</body>
+</html>

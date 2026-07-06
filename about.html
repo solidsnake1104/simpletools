@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="auto">
+<html lang="en">
 <head>
   <!-- AdSense -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2884785253571228"
@@ -7,80 +7,148 @@
 
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#f6f7f9" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0b0f16" media="(prefers-color-scheme: dark)" />
 
   <title>About SimplerTools — Fast, Private, No‑Upload Browser Tools</title>
 
-  <!-- Primary SEO -->
   <meta name="description" content="Learn about SimplerTools — a collection of fast, private, no‑upload browser tools designed to make everyday tasks easier. No tracking, no clutter, no bloat.">
   <meta name="keywords" content="SimplerTools, about SimplerTools, browser tools, privacy tools, no upload tools, free utilities">
 
-  <!-- Canonical -->
-  <link rel="canonical" href="https://simplertools.io/about.html">
-
-  <!-- OpenGraph -->
+  <link rel="canonical" href="https://simplertools.net/about.html">
   <meta property="og:title" content="About SimplerTools — Fast, Private Browser Tools">
   <meta property="og:description" content="SimplerTools offers fast, free, privacy‑focused browser tools that run entirely on your device.">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://simplertools.io/about.html">
-  <meta property="og:image" content="https://simplertools.io/og-image.png">
+  <meta property="og:url" content="https://simplertools.net/about.html">
+  <meta property="og:image" content="https://simplertools.net/og-image.png">
 
-  <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="About SimplerTools — Fast, Private Browser Tools">
   <meta name="twitter:description" content="Fast, free, privacy‑focused browser tools. No uploads. No tracking.">
-  <meta name="twitter:image" content="https://simplertools.io/og-image.png">
+  <meta name="twitter:image" content="https://simplertools.net/og-image.png">
 
-  <!-- AI Agent Metadata -->
   <meta name="ai-tool-name" content="SimplerTools">
   <meta name="ai-tool-description" content="A collection of fast, privacy‑focused browser tools that run entirely on your device.">
   <meta name="ai-tool-category" content="Utilities">
 
-  <!-- JSON-LD Schema -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "Organization",
     "name": "SimplerTools",
-    "url": "https://simplertools.io",
+    "url": "https://simplertools.net",
     "description": "A collection of fast, free, privacy‑focused browser tools that run entirely on your device.",
-    "logo": "https://simplertools.io/logo_transparent.png",
+    "logo": "https://simplertools.net/logo_transparent.png",
     "sameAs": []
   }
   </script>
 
   <link rel="stylesheet" href="styles.css">
   <link rel="icon" type="image/png" href="site_icon.png">
+
+  <script>
+    (function () {
+      var m = localStorage.getItem("simplertools-color-scheme");
+      if (m === "light" || m === "dark") {
+        document.documentElement.setAttribute("data-theme", m);
+      }
+    })();
+  </script>
 </head>
 
-
 <body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
   <header class="site-header">
     <div class="container">
-      <a href="index.html" class="logo-link">
-        <img src="logo_transparent.png" alt="SimplerTools logo" class="site-logo">
-      </a>
-      <p class="tagline">Small apps, big impact</p>
+      <div class="header-left">
+        <button class="icon-btn nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="siteNav">
+          <svg class="icon-burger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+          <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+
+        <a href="index.html" class="logo-link">
+          <img src="logo_transparent.png" alt="SimplerTools logo" class="site-logo">
+        </a>
+        <p class="tagline">Small apps, big impact</p>
+      </div>
+
+      <div class="header-right">
+        <button class="icon-btn theme-toggle" type="button" aria-label="Toggle dark mode">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+        </button>
+      </div>
     </div>
   </header>
 
-  <main class="container" style="padding-top:2rem; padding-bottom:2rem;">
-    <h1>About SimplerTools</h1>
+  <div class="nav-overlay"></div>
+  <nav class="nav-drawer" id="siteNav" aria-label="Site navigation">
+    <div class="nav-drawer-header">
+      <strong>Menu</strong>
+      <button class="icon-btn nav-drawer-close" type="button" aria-label="Close menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
 
-    <p>SimplerTools is a collection of fast, free, privacy‑focused browser tools designed to make everyday tasks easier. All tools run entirely on your device — nothing is uploaded, stored, or tracked.</p>
-
-    <h2>Our Mission</h2>
-    <p>We believe tools should be simple, private, and accessible to everyone. No clutter. No bloat. No unnecessary data collection.</p>
-
-    <h2>What We Offer</h2>
-    <ul>
-      <li>Browser‑based utilities</li>
-      <li>Fast, lightweight tools with no tracking</li>
+    <p class="nav-section-label">Tools</p>
+    <ul class="nav-list">
+      <li><a class="nav-link" data-category="audio" href="tools/mp3-trimmer.html"><span class="nav-dot"></span>Audio &amp; MP3 Trimmer</a></li>
+      <li><a class="nav-link" data-category="image" href="tools/image-metadata-cleaner.html"><span class="nav-dot"></span>Image Metadata Cleaner</a></li>
+      <li><a class="nav-link" data-category="image" href="tools/image-resizer.html"><span class="nav-dot"></span>Image Resizer</a></li>
+      <li><a class="nav-link" data-category="pdf" href="tools/pdf-joiner.html"><span class="nav-dot"></span>PDF Joiner</a></li>
+      <li><a class="nav-link" data-category="qr" href="tools/qr-generator.html"><span class="nav-dot"></span>QR Code Generator</a></li>
+      <li><a class="nav-link" data-category="video" href="tools/video-audio-extractor.html"><span class="nav-dot"></span>Video Audio Extractor</a></li>
     </ul>
 
-    <p>More tools are added regularly as we continue expanding the SimplerTools platform.</p>
+    <p class="nav-section-label">Site</p>
+    <ul class="nav-list">
+      <li><a class="nav-link" href="about.html">About</a></li>
+      <li><a class="nav-link" href="contact.html">Contact</a></li>
+      <li><a class="nav-link" href="privacy.html">Privacy Policy</a></li>
+    </ul>
+
+    <div class="nav-drawer-footer">
+      <div class="nav-theme-row">
+        <span>Appearance</span>
+        <div class="segmented" role="group" aria-label="Theme">
+          <button type="button" data-theme-option="light">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+            Light
+          </button>
+          <button type="button" data-theme-option="auto">Auto</button>
+          <button type="button" data-theme-option="dark">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+            Dark
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="tool-page container" id="main">
+    <section class="tool-section">
+      <p class="hero-eyebrow">Privacy-first • browser-based • no uploads</p>
+      <h1 class="tool-title">About SimplerTools</h1>
+      <p class="tool-subtitle">A small collection of tools designed to be quick, useful, and respectful of your privacy.</p>
+
+      <p>SimplerTools is a collection of fast, free, privacy-focused browser tools designed to make everyday tasks easier. All tools run entirely on your device — nothing is uploaded, stored, or tracked.</p>
+
+      <h2 style="margin-top:1.75rem;">Our Mission</h2>
+      <p>We believe tools should be simple, private, and accessible to everyone. No clutter. No bloat. No unnecessary data collection.</p>
+
+      <h2 style="margin-top:1.75rem;">What We Offer</h2>
+      <ul>
+        <li>Browser-based utilities for everyday tasks</li>
+        <li>Fast, lightweight tools that work locally in your browser</li>
+        <li>A straightforward experience with no account required</li>
+      </ul>
+
+      <p style="margin-top:1rem;">More tools are added regularly as we continue expanding the SimplerTools platform.</p>
+    </section>
   </main>
 
-  <!-- FOOTER (same on all pages) -->
   <footer class="site-footer">
     <div class="container">
       <div class="footer-content">
@@ -91,16 +159,6 @@
           <a href="contact.html">Contact</a>
           <a href="privacy.html">Privacy Policy</a>
         </nav>
-
-        <div class="theme-controls">
-          <select id="theme-select">
-            <option value="auto">Auto (by date)</option>
-            <option value="spring">Spring</option>
-            <option value="summer">Summer</option>
-            <option value="autumn">Autumn</option>
-            <option value="winter">Winter</option>
-          </select>
-        </div>
       </div>
     </div>
   </footer>

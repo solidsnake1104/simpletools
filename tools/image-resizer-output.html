@@ -1,33 +1,31 @@
 <!doctype html>
-<html lang="en" data-theme="auto">
+<html lang="en">
 <head>
-  <!-- AdSense (Option A: very top of head) -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2884785253571228"
     crossorigin="anonymous"></script>
 
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#f6f7f9" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0b0f16" media="(prefers-color-scheme: dark)" />
 
   <title>Image Resizer Output — SimplerTools</title>
   <meta name="description" content="Download your cropped and resized image. Fully private, processed in your browser.">
   <meta name="keywords" content="image resizer output, resized image, cropped image, download image, browser tools">
 
   <link rel="canonical" href="https://simplertools.net/tools/image-resizer-output">
-
-  <!-- OpenGraph -->
   <meta property="og:title" content="Image Resizer Output — SimplerTools">
   <meta property="og:description" content="Download your cropped and resized image. Fully private, processed in your browser.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://simplertools.net/tools/image-resizer-output">
   <meta property="og:image" content="https://simplertools.net/og-image.png">
 
-  <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Image Resizer Output — SimplerTools">
   <meta name="twitter:description" content="Download your cropped and resized image. Fully private, processed in your browser.">
   <meta name="twitter:image" content="https://simplertools.net/og-image.png">
 
-  <!-- Schema.org -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -46,87 +44,142 @@
 
   <link rel="stylesheet" href="../styles.css" />
   <link rel="icon" type="image/png" href="../site_icon.png" />
+  <link rel="shortcut icon" type="image/png" href="../site_icon.png" />
+  <link rel="apple-touch-icon" href="../site_icon.png" />
+
+  <script>
+    (function () {
+      var m = localStorage.getItem("simplertools-color-scheme");
+      if (m === "light" || m === "dark") {
+        document.documentElement.setAttribute("data-theme", m);
+      }
+    })();
+  </script>
 </head>
 
 <body>
+  <a class="skip-link" href="#main">Skip to content</a>
 
-<header class="site-header">
-  <div class="container">
-    <a href="../index.html" class="logo-link">
-      <img src="../logo_transparent.png" alt="SimplerTools logo" class="site-logo" />
-    </a>
-    <p class="tagline">Your edited image is ready</p>
-  </div>
-</header>
+  <header class="site-header">
+    <div class="container">
+      <div class="header-left">
+        <button class="icon-btn nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="siteNav">
+          <svg class="icon-burger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+          <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
 
-<main class="container" style="padding-top:1.5rem; padding-bottom:2rem;">
+        <a href="../index.html" class="logo-link">
+          <img src="../logo_transparent.png" alt="SimplerTools logo" class="site-logo" />
+        </a>
+        <p class="tagline">Your edited image is ready</p>
+      </div>
 
-  <h1>Image Ready</h1>
-  <p style="color:var(--muted); margin-bottom:1rem;">
-    Your edited image has been processed.  
-    <strong style="color:var(--accent);">⚠️ It will disappear if you reload this page.</strong>
-  </p>
-
-  <!-- Final Image -->
-  <div style="text-align:center; margin-top:1.5rem;">
-    <img id="finalImage" src="" alt="Final Output" style="max-width:100%; height:auto; border-radius:0;">
-  </div>
-
-  <!-- Buttons -->
-  <div style="margin-top:2rem; display:flex; gap:1rem; flex-wrap:wrap;">
-    <button class="glass-btn" id="downloadBtn">Download Image</button>
-    <a href="image-resizer.html" class="glass-btn" style="text-decoration:none;">Back to Editor</a>
-    <a href="../index.html" class="glass-btn" style="text-decoration:none;">Try Another Tool</a>
-  </div>
-
-</main>
-
-<footer class="site-footer">
-  <div class="container footer-content">
-    <p>&copy; <span id="year"></span> SimplerTools</p>
-
-    <nav class="footer-links">
-      <a href="../about.html">About</a>
-      <a href="../contact.html">Contact</a>
-      <a href="../privacy.html">Privacy Policy</a>
-    </nav>
-
-    <div class="theme-controls">
-      <select id="theme-select">
-        <option value="auto">Auto (by date)</option>
-        <option value="spring">Spring</option>
-        <option value="summer">Summer</option>
-        <option value="autumn">Autumn</option>
-        <option value="winter">Winter</option>
-      </select>
+      <div class="header-right">
+        <button class="icon-btn theme-toggle" type="button" aria-label="Toggle dark mode">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+        </button>
+      </div>
     </div>
-  </div>
-</footer>
+  </header>
 
-<script>
-// Load final image from sessionStorage
-const imgData = sessionStorage.getItem("finalImage");
-const imgEl = document.getElementById("finalImage");
+  <div class="nav-overlay"></div>
+  <nav class="nav-drawer" id="siteNav" aria-label="Site navigation">
+    <div class="nav-drawer-header">
+      <strong>Menu</strong>
+      <button class="icon-btn nav-drawer-close" type="button" aria-label="Close menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
 
-if (!imgData) {
-  imgEl.alt = "No image found. Please return to the editor.";
-} else {
-  imgEl.src = imgData;
-}
+    <p class="nav-section-label">Tools</p>
+    <ul class="nav-list">
+      <li><a class="nav-link" data-category="audio" href="mp3-trimmer.html"><span class="nav-dot"></span>Audio &amp; MP3 Trimmer</a></li>
+      <li><a class="nav-link" data-category="image" href="image-metadata-cleaner.html"><span class="nav-dot"></span>Image Metadata Cleaner</a></li>
+      <li><a class="nav-link" data-category="image" href="image-resizer.html"><span class="nav-dot"></span>Image Resizer</a></li>
+      <li><a class="nav-link" data-category="pdf" href="pdf-joiner.html"><span class="nav-dot"></span>PDF Joiner</a></li>
+      <li><a class="nav-link" data-category="qr" href="qr-generator.html"><span class="nav-dot"></span>QR Code Generator</a></li>
+      <li><a class="nav-link" data-category="video" href="video-audio-extractor.html"><span class="nav-dot"></span>Video Audio Extractor</a></li>
+    </ul>
 
-// Download button
-document.getElementById("downloadBtn").addEventListener("click", () => {
-  if (!imgData) return;
-  const a = document.createElement("a");
-  a.href = imgData;
-  a.download = "edited-image.png";
-  a.click();
-});
+    <p class="nav-section-label">Site</p>
+    <ul class="nav-list">
+      <li><a class="nav-link" href="../about.html">About</a></li>
+      <li><a class="nav-link" href="../contact.html">Contact</a></li>
+      <li><a class="nav-link" href="../privacy.html">Privacy Policy</a></li>
+    </ul>
 
-// Footer year
-document.getElementById("year").textContent = new Date().getFullYear();
-</script>
-<script src="../script.js"></script>
+    <div class="nav-drawer-footer">
+      <div class="nav-theme-row">
+        <span>Appearance</span>
+        <div class="segmented" role="group" aria-label="Theme">
+          <button type="button" data-theme-option="light">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+            Light
+          </button>
+          <button type="button" data-theme-option="auto">Auto</button>
+          <button type="button" data-theme-option="dark">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+            Dark
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
 
+  <main class="tool-page container" id="main">
+    <section class="tool-section">
+      <h1 class="tool-title">Image Ready</h1>
+      <p class="tool-subtitle">
+        Your edited image has been processed. <strong style="color:var(--accent);">⚠️ It will disappear if you reload this page.</strong>
+      </p>
+
+      <div style="text-align:center; margin-top:1.5rem;">
+        <img id="finalImage" src="" alt="Final Output" style="max-width:100%; height:auto; border-radius:12px;">
+      </div>
+
+      <div style="margin-top:2rem; display:flex; gap:1rem; flex-wrap:wrap;">
+        <button class="glass-btn" id="downloadBtn">Download Image</button>
+        <a href="image-resizer.html" class="glass-btn" style="text-decoration:none;">Back to Editor</a>
+        <a href="../index.html" class="glass-btn" style="text-decoration:none;">Try Another Tool</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-content">
+        <p>&copy; <span id="year"></span> SimplerTools • Small apps, big impact.</p>
+
+        <nav class="footer-links">
+          <a href="../about.html">About</a>
+          <a href="../contact.html">Contact</a>
+          <a href="../privacy.html">Privacy Policy</a>
+        </nav>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const imgData = sessionStorage.getItem("finalImage");
+    const imgEl = document.getElementById("finalImage");
+
+    if (!imgData) {
+      imgEl.alt = "No image found. Please return to the editor.";
+    } else {
+      imgEl.src = imgData;
+    }
+
+    document.getElementById("downloadBtn").addEventListener("click", () => {
+      if (!imgData) return;
+      const a = document.createElement("a");
+      a.href = imgData;
+      a.download = "edited-image.png";
+      a.click();
+    });
+
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+  <script src="../script.js"></script>
 </body>
 </html>

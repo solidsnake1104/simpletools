@@ -1,41 +1,36 @@
 <!doctype html>
+<html lang="en">
 <head>
-<html lang="en" data-theme="default">
- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2884785253571228"
-     crossorigin="anonymous"></script>
-
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2884785253571228"
+    crossorigin="anonymous"></script>
 
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#f6f7f9" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0b0f16" media="(prefers-color-scheme: dark)" />
 
-  <!-- Primary SEO -->
   <title>Video Audio Extractor — Extract Audio from Video • SimplerTools</title>
   <meta name="description" content="Extract audio from any video file instantly in your browser. No uploads, no servers. Supports MP4, MOV, WebM, AVI and more. Download as MP3, or WAV.">
   <meta name="keywords" content="video audio extractor, extract audio from video, mp4 to mp3, video to wav, video to m4a, browser tool, simplertools, no upload">
 
-  <!-- Canonical -->
   <link rel="canonical" href="https://simplertools.net/tools/video-audio-extractor.html">
-
-  <!-- OpenGraph -->
   <meta property="og:title" content="Video Audio Extractor — Extract Audio from Video • SimplerTools">
   <meta property="og:description" content="Extract audio from any video file instantly — no uploads, no tracking, 100% browser-based.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://simplertools.net/tools/video-audio-extractor.html">
   <meta property="og:image" content="https://simplertools.net/og-video-audio-extractor.png">
 
-  <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Video Audio Extractor — Extract Audio from Video • SimplerTools">
   <meta name="twitter:description" content="Extract audio from any video file instantly — no uploads required.">
   <meta name="twitter:image" content="https://simplertools.net/og-video-audio-extractor.png">
 
-  <!-- AI Crawler Metadata -->
   <meta name="ai-tool" content="Video Audio Extractor">
   <meta name="ai-category" content="Audio Utility">
   <meta name="ai-description" content="A fast, browser-based tool to extract audio from video files with no uploads.">
   <meta name="ai-content" content="video, audio, extract, wav, mp3, utility, browser-based">
 
-  <!-- Schema.org JSON-LD -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -62,10 +57,17 @@
   <link rel="icon" type="image/png" href="../site_icon.png" />
   <link rel="shortcut icon" type="image/png" href="../site_icon.png" />
   <link rel="apple-touch-icon" href="../site_icon.png" />
-</head>
-  <style>
-    /* ── Page-specific styles ── */
 
+  <script>
+    (function () {
+      var m = localStorage.getItem("simplertools-color-scheme");
+      if (m === "light" || m === "dark") {
+        document.documentElement.setAttribute("data-theme", m);
+      }
+    })();
+  </script>
+
+  <style>
     .vae-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -77,7 +79,6 @@
       .vae-grid { grid-template-columns: 1fr; }
     }
 
-    /* Video preview panel */
     #videoPreviewWrap {
       display: none;
       flex-direction: column;
@@ -104,7 +105,6 @@
       margin-right: 1.25rem;
     }
 
-    /* Progress / status bar */
     #extractStatus {
       display: none;
       margin-top: 1.25rem;
@@ -132,7 +132,6 @@
       margin-top: 0.4rem;
     }
 
-    /* Audio preview player */
     #audioPreviewWrap {
       display: none;
       margin-top: 1.5rem;
@@ -163,7 +162,6 @@
       margin-top: 0;
     }
 
-    /* Format selector */
     .format-row {
       display: flex;
       align-items: center;
@@ -189,7 +187,6 @@
       line-height: 1.5;
     }
 
-    /* Right panel — results */
     .vae-result-panel {
       background: var(--card-bg);
       border: 1px solid rgba(255,255,255,0.06);
@@ -209,16 +206,76 @@
 </head>
 
 <body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
   <header class="site-header">
     <div class="container">
-      <a href="../index.html" class="logo-link">
-        <img src="../logo_transparent.png" alt="SimplerTools logo" class="site-logo" />
-      </a>
-      <p class="tagline">Extract audio from any video file — no uploads</p>
+      <div class="header-left">
+        <button class="icon-btn nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="siteNav">
+          <svg class="icon-burger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+          <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+
+        <a href="../index.html" class="logo-link">
+          <img src="../logo_transparent.png" alt="SimplerTools logo" class="site-logo" />
+        </a>
+        <p class="tagline">Extract audio from any video file — no uploads</p>
+      </div>
+
+      <div class="header-right">
+        <button class="icon-btn theme-toggle" type="button" aria-label="Toggle dark mode">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+        </button>
+      </div>
     </div>
   </header>
 
-  <main class="tool-page container">
+  <div class="nav-overlay"></div>
+  <nav class="nav-drawer" id="siteNav" aria-label="Site navigation">
+    <div class="nav-drawer-header">
+      <strong>Menu</strong>
+      <button class="icon-btn nav-drawer-close" type="button" aria-label="Close menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+
+    <p class="nav-section-label">Tools</p>
+    <ul class="nav-list">
+      <li><a class="nav-link" data-category="audio" href="mp3-trimmer.html"><span class="nav-dot"></span>Audio &amp; MP3 Trimmer</a></li>
+      <li><a class="nav-link" data-category="image" href="image-metadata-cleaner.html"><span class="nav-dot"></span>Image Metadata Cleaner</a></li>
+      <li><a class="nav-link" data-category="image" href="image-resizer.html"><span class="nav-dot"></span>Image Resizer</a></li>
+      <li><a class="nav-link" data-category="pdf" href="pdf-joiner.html"><span class="nav-dot"></span>PDF Joiner</a></li>
+      <li><a class="nav-link" data-category="qr" href="qr-generator.html"><span class="nav-dot"></span>QR Code Generator</a></li>
+      <li><a class="nav-link" data-category="video" href="video-audio-extractor.html"><span class="nav-dot"></span>Video Audio Extractor</a></li>
+    </ul>
+
+    <p class="nav-section-label">Site</p>
+    <ul class="nav-list">
+      <li><a class="nav-link" href="../about.html">About</a></li>
+      <li><a class="nav-link" href="../contact.html">Contact</a></li>
+      <li><a class="nav-link" href="../privacy.html">Privacy Policy</a></li>
+    </ul>
+
+    <div class="nav-drawer-footer">
+      <div class="nav-theme-row">
+        <span>Appearance</span>
+        <div class="segmented" role="group" aria-label="Theme">
+          <button type="button" data-theme-option="light">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+            Light
+          </button>
+          <button type="button" data-theme-option="auto">Auto</button>
+          <button type="button" data-theme-option="dark">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+            Dark
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="tool-page container" id="main">
     <h1 class="tool-title">Video Audio Extractor (DESKTOP BROWSER ONLY)</h1>
 
     <section class="tool-section">
@@ -236,15 +293,12 @@
       </div>
 
       <div class="vae-grid">
-        <!-- Left: video preview + meta -->
         <div id="videoPreviewWrap">
           <video id="videoPreview" controls preload="metadata"></video>
           <div class="vae-meta" id="videoMeta"></div>
         </div>
 
-        <!-- Right: extract controls + result -->
         <div>
-          <!-- hidden until file loaded -->
           <div id="extractControls" style="display:none;">
             <div class="format-row">
               <label for="outputFmt">Output format:</label>
@@ -263,7 +317,6 @@
               <button class="glass-btn" id="extractBtn">⬇ Extract Audio</button>
             </div>
 
-            <!-- Progress -->
             <div id="extractStatus">
               <div class="progress-bar-wrap">
                 <div id="progressBar"></div>
@@ -271,7 +324,6 @@
               <p id="statusMsg">Preparing…</p>
             </div>
 
-            <!-- Audio preview + download -->
             <div id="audioPreviewWrap">
               <div class="vae-result-panel">
                 <h3>✓ Audio extracted</h3>
@@ -284,21 +336,19 @@
                 </div>
               </div>
             </div>
-          </div><!-- /extractControls -->
+          </div>
         </div>
-      </div><!-- /vae-grid -->
+      </div>
     </section>
 
     <section class="tool-section" style="margin-top:3rem;padding-top:2rem;border-top:1px solid rgba(255,255,255,0.06);">
       <h3>How it works</h3>
-      <p>
-        Your video file is processed entirely inside your browser — nothing is uploaded to a server.
-      </p>
+      <p>Your video file is processed entirely inside your browser — nothing is uploaded to a server.</p>
 
       <h3 style="margin-top:1.5rem;">Supported formats</h3>
       <p>
         Input: MP4, MOV, WebM, MKV, AVI, OGV — depending on browser and FFmpeg.wasm support.<br>
-        Output:  <strong>MP3</strong>, or <strong>WAV</strong>.
+        Output: <strong>MP3</strong>, or <strong>WAV</strong>.
       </p>
     </section>
   </main>
@@ -313,21 +363,10 @@
           <a href="../contact.html">Contact</a>
           <a href="../privacy.html">Privacy Policy</a>
         </nav>
-
-        <div class="theme-controls">
-          <label for="theme-select" class="visually-hidden">Theme</label>
-          <select id="theme-select" aria-label="Select seasonal theme">
-            <option value="auto">Auto (by date)</option>
-            <option value="spring">Spring</option>
-            <option value="summer">Summer</option>
-            <option value="autumn">Autumn</option>
-            <option value="winter">Winter</option>
-          </select>
-        </div>
       </div>
     </div>
   </footer>
 
-  <script src="../script.js?v=ffmpeg-fallback-3"></script>
+  <script src="../script.js"></script>
 </body>
 </html>

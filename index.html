@@ -1,11 +1,14 @@
 <!doctype html>
-<html lang="en" data-theme="default">
+<html lang="en">
 <head>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2884785253571228"
      crossorigin="anonymous"></script>
 
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#f6f7f9" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0b0f16" media="(prefers-color-scheme: dark)" />
 
   <!-- Primary SEO -->
   <title>SimplerTools — Fast, Free, No‑Upload Online Tools</title>
@@ -60,96 +63,170 @@
   <link rel="icon" type="image/png" href="site_icon.png" />
   <link rel="shortcut icon" type="image/png" href="site_icon.png" />
   <link rel="apple-touch-icon" href="site_icon.png" />
+
+  <!-- Inline no-flash theme init: applies saved theme before first paint -->
+  <script>
+    (function () {
+      var m = localStorage.getItem("simplertools-color-scheme");
+      if (m === "light" || m === "dark") {
+        document.documentElement.setAttribute("data-theme", m);
+      }
+    })();
+  </script>
 </head>
 
 <body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
   <header class="site-header">
     <div class="container">
-      <a href="index.html" class="logo-link">
-        <img src="logo_transparent.png" alt="SimplerTools logo" class="site-logo" />
-      </a>
-      <p class="tagline">Select a tool to get started</p>
+      <div class="header-left">
+        <button class="icon-btn nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="siteNav">
+          <svg class="icon-burger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+          <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+
+        <a href="index.html" class="logo-link">
+          <img src="logo_transparent.png" alt="SimplerTools logo" class="site-logo" />
+        </a>
+        <p class="tagline">Select a tool to get started</p>
+      </div>
+
+      <div class="header-right">
+        <button class="icon-btn theme-toggle" type="button" aria-label="Toggle dark mode">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+        </button>
+      </div>
     </div>
   </header>
 
-  <main>
+  <div class="nav-overlay"></div>
+  <nav class="nav-drawer" id="siteNav" aria-label="Site navigation">
+    <div class="nav-drawer-header">
+      <strong>Menu</strong>
+      <button class="icon-btn nav-drawer-close" type="button" aria-label="Close menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+
+    <p class="nav-section-label">Tools</p>
+    <ul class="nav-list">
+      <li><a class="nav-link" data-category="audio" href="tools/mp3-trimmer.html"><span class="nav-dot"></span>Audio &amp; MP3 Trimmer</a></li>
+      <li><a class="nav-link" data-category="image" href="tools/image-metadata-cleaner.html"><span class="nav-dot"></span>Image Metadata Cleaner</a></li>
+      <li><a class="nav-link" data-category="image" href="tools/image-resizer.html"><span class="nav-dot"></span>Image Resizer</a></li>
+      <li><a class="nav-link" data-category="pdf" href="tools/pdf-joiner.html"><span class="nav-dot"></span>PDF Joiner</a></li>
+      <li><a class="nav-link" data-category="qr" href="tools/qr-generator.html"><span class="nav-dot"></span>QR Code Generator</a></li>
+      <li><a class="nav-link" data-category="video" href="tools/video-audio-extractor.html"><span class="nav-dot"></span>Video Audio Extractor</a></li>
+    </ul>
+
+    <p class="nav-section-label">Site</p>
+    <ul class="nav-list">
+      <li><a class="nav-link" href="about.html">About</a></li>
+      <li><a class="nav-link" href="contact.html">Contact</a></li>
+      <li><a class="nav-link" href="privacy.html">Privacy Policy</a></li>
+    </ul>
+
+    <div class="nav-drawer-footer">
+      <div class="nav-theme-row">
+        <span>Appearance</span>
+        <div class="segmented" role="group" aria-label="Theme">
+          <button type="button" data-theme-option="light">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+            Light
+          </button>
+          <button type="button" data-theme-option="auto">Auto</button>
+          <button type="button" data-theme-option="dark">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+            Dark
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main id="main">
+    <section class="hero container">
+      <p class="hero-eyebrow">100% browser-based &middot; no uploads</p>
+      <h1>Small tools that just work.</h1>
+      <p class="hero-sub">A growing toolbox of fast, free utilities that run entirely on your device — nothing you open ever leaves your browser.</p>
+    </section>
+
     <section id="tools" class="tools-hub container">
       <h2 class="section-title">Available Tools</h2>
       <nav class="tools-list">
-     <!-- Audio & MP3 Trimmer -->
-    <a href="tools/mp3-trimmer.html" class="tool-item">
-      <h3>Audio & MP3 Trimmer</h3>
-      <p>Trim MP3 Audio files in browser.</p>
-    </a>
 
-    <!-- Image Metadata Cleaner Tool -->
-    <a href="tools/image-metadata-cleaner.html" class="tool-item">
-      <h3>Image Metadata Cleaner</h3>
-      <p>Clean and remove image metadata.</p>
-    </a>
+        <!-- Audio & MP3 Trimmer -->
+        <a href="tools/mp3-trimmer.html" class="tool-item" data-category="audio">
+          <span class="tool-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h2l2-7 3 14 3-10 2 6h2"/><path d="M20 12h1"/></svg>
+          </span>
+          <h3>Audio &amp; MP3 Trimmer</h3>
+          <p>Trim MP3 audio files in your browser.</p>
+        </a>
 
-    <!-- Image Resizer -->
-    <a href="tools/image-resizer.html" class="tool-item">
-      <h3>Image Resizer</h3>
-      <p>Crop & resize images instantly.</p>
-    </a>
+        <!-- Image Metadata Cleaner Tool -->
+        <a href="tools/image-metadata-cleaner.html" class="tool-item" data-category="image">
+          <span class="tool-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+          </span>
+          <h3>Image Metadata Cleaner</h3>
+          <p>Clean and remove image metadata.</p>
+        </a>
+
+        <!-- Image Resizer -->
+        <a href="tools/image-resizer.html" class="tool-item" data-category="image">
+          <span class="tool-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+          </span>
+          <h3>Image Resizer</h3>
+          <p>Crop &amp; resize images instantly.</p>
+        </a>
 
         <!-- PDF Joiner -->
-    <a href="tools/pdf-joiner.html" class="tool-item">
-      <h3>PDF Joiner</h3>
-      <p>Combine PDFs.</p>
-    </a>
+        <a href="tools/pdf-joiner.html" class="tool-item" data-category="pdf">
+          <span class="tool-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15h6M9 11h3"/></svg>
+          </span>
+          <h3>PDF Joiner</h3>
+          <p>Combine PDFs.</p>
+        </a>
 
-    <!-- QR Code Generator -->
-    <a href="tools/qr-generator.html" class="tool-item">
-      <h3>QR Code Generator</h3>
-      <p>Turn any text or URL into a QR code.</p>
-    </a>
+        <!-- QR Code Generator -->
+        <a href="tools/qr-generator.html" class="tool-item" data-category="qr">
+          <span class="tool-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM19 14h2M14 19h2M19 19h2"/></svg>
+          </span>
+          <h3>QR Code Generator</h3>
+          <p>Turn any text or URL into a QR code.</p>
+        </a>
 
-    <!-- QR Code Scanner 
-    <a href="tools/qr-scanner.html" class="tool-item">
-      <h3>QR CodeScanner</h3>
-      <p>Scan QR codes from your camera or an uploaded image.</p>
-    </a> -->
+        <!-- Video Audio Extractor -->
+        <a href="tools/video-audio-extractor.html" class="tool-item" data-category="video">
+          <span class="tool-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="15" height="14" rx="2"/><path d="M17 10l5-3v10l-5-3"/></svg>
+          </span>
+          <h3>Video Audio Extractor</h3>
+          <p>Extract audio from video files. Desktop browser only.</p>
+        </a>
 
-    <!-- Video Audio Extractor -->
-    <a href="tools/video-audio-extractor.html" class="tool-item">
-      <h3>Video Audio Extractor</h3>
-      <p>(DESKTOP BROWSER ONLY) - Extract audio from video files in browser.</p>
-    </a>
-  
-
-    
-</nav>
-
+      </nav>
     </section>
   </main>
 
- <footer class="site-footer">
-  <div class="container">
-    <div class="footer-content">
-      <p>&copy; <span id="year"></span> SimplerTools • Small apps, big impact.</p>
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-content">
+        <p>&copy; <span id="year"></span> SimplerTools • Small apps, big impact.</p>
 
-      <nav class="footer-links">
-        <a href="about.html">About</a>
-        <a href="contact.html">Contact</a>
-        <a href="privacy.html">Privacy Policy</a>
-      </nav>
-
-      <div class="theme-controls">
-        <label for="theme-select" class="visually-hidden">Theme</label>
-        <select id="theme-select" aria-label="Select seasonal theme">
-          <option value="auto">Auto (by date)</option>
-          <option value="spring">Spring</option>
-          <option value="summer">Summer</option>
-          <option value="autumn">Autumn</option>
-          <option value="winter">Winter</option>
-        </select>
+        <nav class="footer-links">
+          <a href="about.html">About</a>
+          <a href="contact.html">Contact</a>
+          <a href="privacy.html">Privacy Policy</a>
+        </nav>
       </div>
     </div>
-  </div>
-</footer>
-
+  </footer>
 
   <script src="script.js"></script>
 </body>
