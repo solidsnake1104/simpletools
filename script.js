@@ -67,6 +67,7 @@ SimplerTools.formatBytes = function (bytes) {
     { name: "Image Compressor", slug: "image-compressor.html", category: "image" },
     { name: "Image Metadata Cleaner", slug: "image-metadata-cleaner.html", category: "image" },
     { name: "Image Resizer", slug: "image-resizer.html", category: "image" },
+    { name: "Photo Map Explorer", slug: "photo-map-explorer.html", category: "image" },
     { name: "PDF Joiner", slug: "pdf-joiner.html", category: "pdf" },
     { name: "QR Code Generator", slug: "qr-generator.html", category: "qr" },
     { name: "Video Audio Extractor", slug: "video-audio-extractor.html", category: "video" },

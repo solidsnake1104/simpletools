@@ -1,0 +1,2320 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <meta
+      name="theme-color"
+      content="#f6f7f9"
+      media="(prefers-color-scheme: light)"
+    />
+    <meta
+      name="theme-color"
+      content="#0b0f16"
+      media="(prefers-color-scheme: dark)"
+    />
+    <title>
+      Photo Map Explorer — View Photos on a World Map | SimplerTools
+    </title>
+    <meta
+      name="description"
+      content="Explore your photo library on a world map using GPS EXIF data. Everything runs locally in your browser and no files leave your computer."
+    />
+    <meta
+      name="keywords"
+      content="photo map explorer, exif gps map, view photos on map, photo geotagging, SimplerTools"
+    />
+    <link
+      rel="canonical"
+      href="https://simplertools.net/tools/photo-map-explorer.html"
+    />
+    <meta
+      property="og:title"
+      content="Photo Map Explorer — View Photos on a World Map"
+    />
+    <meta
+      property="og:description"
+      content="Explore your photo library on a world map using GPS EXIF metadata. All processing stays on your device."
+    />
+    <meta property="og:type" content="website" />
+    <meta
+      property="og:url"
+      content="https://simplertools.net/tools/photo-map-explorer.html"
+    />
+    <meta property="og:image" content="https://simplertools.net/og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="Photo Map Explorer — View Photos on a World Map"
+    />
+    <meta
+      name="twitter:description"
+      content="Explore your photo library on a world map using GPS EXIF metadata. All processing stays on your device."
+    />
+    <meta
+      name="twitter:image"
+      content="https://simplertools.net/og-image.png"
+    />
+    <meta name="ai-tool-name" content="Photo Map Explorer" />
+    <meta
+      name="ai-tool-description"
+      content="View photos on a world map using GPS EXIF metadata without uploading files."
+    />
+    <meta name="ai-tool-category" content="Image Tools" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Photo Map Explorer",
+        "url": "https://simplertools.net/tools/photo-map-explorer.html",
+        "description": "Explore your photo library on a world map using GPS EXIF metadata while keeping everything on your device.",
+        "applicationCategory": "Utility",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript",
+        "provider": {
+          "@type": "Organization",
+          "name": "SimplerTools",
+          "url": "https://simplertools.net"
+        }
+      }
+    </script>
+    <link rel="stylesheet" href="../styles.css" />
+    <link rel="icon" type="image/png" href="../site_icon.png" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"
+    />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/exifreader@4.41.0/dist/exif-reader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/heic-to@1.5.2/dist/iife/heic-to.js"></script>
+    <script>
+      (function () {
+        var m = localStorage.getItem("simplertools-color-scheme");
+        if (m === "light" || m === "dark") {
+          document.documentElement.setAttribute("data-theme", m);
+        }
+      })();
+    </script>
+    <style>
+      :root {
+        --panel: rgba(255, 255, 255, 0.11);
+        --panel2: rgba(0, 0, 0, 0.28);
+        --stroke: rgba(255, 255, 255, 0.18);
+        --text: #eef8f1;
+        --muted: rgba(238, 248, 241, 0.68);
+        --green: #2f6bed;
+        --green2: #6d9bff;
+        --gold: #f2c94c;
+        --red: #ff6961;
+        --shadow: 0 24px 80px rgba(0, 0, 0, 0.38);
+        --r: 22px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+      body {
+        font-family: Inter, "Segoe UI", system-ui, sans-serif;
+        color: var(--text);
+        background: radial-gradient(
+            circle at 12% 8%,
+            rgba(47, 107, 237, 0.42),
+            transparent 34%
+          ),
+          radial-gradient(
+            circle at 90% 95%,
+            rgba(109, 155, 255, 0.18),
+            transparent 30%
+          ),
+          linear-gradient(135deg, #071022, #0f172a 52%, #111827);
+        overflow: auto;
+        min-height: 100vh;
+      }
+      .photo-map-page {
+        min-height: calc(100dvh - var(--header-h) - 72px);
+      }
+      .app {
+        height: 100%;
+        min-height: 700px;
+        padding: 14px;
+        display: grid;
+        grid-template-columns: 455px 1fr;
+        gap: 14px;
+      }
+      .sidebar,
+      .map-shell,
+      .filmstrip {
+        border: 1px solid var(--stroke);
+        background: var(--panel);
+        backdrop-filter: blur(24px) saturate(145%);
+        box-shadow: var(--shadow);
+        border-radius: var(--r);
+        overflow: hidden;
+      }
+      .sidebar {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        max-height: calc(100vh - 28px);
+      }
+      .header {
+        padding: 16px 18px 13px;
+        border-bottom: 1px solid var(--stroke);
+        background: linear-gradient(
+          135deg,
+          rgba(255, 255, 255, 0.15),
+          rgba(255, 255, 255, 0.055)
+        );
+        flex-shrink: 0;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      h1 {
+        margin: 0;
+        font-size: 23px;
+        letter-spacing: -0.04em;
+      }
+      .tag {
+        font-size: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: rgba(47, 107, 237, 0.34);
+        padding: 7px 10px;
+        border-radius: 999px;
+        white-space: nowrap;
+      }
+      .sub,
+      .status,
+      .empty,
+      .nearbySummary,
+      .caption,
+      .meta .date,
+      .meta .path,
+      .meta .coord {
+        color: rgba(255, 255, 255, 0.9);
+      }
+      .sub {
+        margin: 8px 0 0;
+        font-size: 13px;
+        line-height: 1.35;
+      }
+      .controls,
+      .filters,
+      .addressBox,
+      .years,
+      .folders {
+        padding: 10px 14px;
+        display: grid;
+        gap: 8px;
+        border-bottom: 1px solid var(--stroke);
+        flex-shrink: 0;
+      }
+      .addressBox {
+        background: rgba(0, 0, 0, 0.13);
+      }
+      .drop {
+        border: 1.5px dashed rgba(255, 255, 255, 0.3);
+        border-radius: 18px;
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.07);
+      }
+      .drop.drag {
+        border-color: var(--gold);
+        background: rgba(242, 201, 76, 0.13);
+      }
+      .btn {
+        border: 0;
+        border-radius: 14px;
+        padding: 11px 13px;
+        font-weight: 800;
+        color: white;
+        background: linear-gradient(135deg, var(--green), var(--green2));
+        display: block;
+        text-align: center;
+        cursor: pointer;
+        box-shadow: 0 12px 30px rgba(0, 132, 61, 0.25);
+      }
+      .btn.secondary {
+        background: rgba(255, 255, 255, 0.11);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        box-shadow: none;
+      }
+      .btn.danger {
+        background: rgba(255, 105, 97, 0.16);
+        border: 1px solid rgba(255, 105, 97, 0.38);
+        box-shadow: none;
+      }
+      .file {
+        display: none;
+      }
+      .status,
+      .nearbySummary {
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.35;
+      }
+      .barwrap {
+        height: 8px;
+        background: rgba(0, 0, 0, 0.31);
+        border-radius: 999px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.09);
+      }
+      .bar {
+        height: 100%;
+        width: 0;
+        background: linear-gradient(
+          90deg,
+          var(--green),
+          var(--green2),
+          var(--gold)
+        );
+        transition: width 0.12s ease;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--stroke);
+        flex-shrink: 0;
+      }
+      .stat {
+        background: var(--panel2);
+        border: 1px solid rgba(255, 255, 255, 0.13);
+        border-radius: 14px;
+        padding: 8px;
+        min-width: 0;
+      }
+      .stat b {
+        font-size: 18px;
+        display: block;
+        line-height: 1;
+      }
+      .stat span {
+        margin-top: 5px;
+        display: block;
+        color: var(--muted);
+        font-size: 10.5px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      input,
+      select {
+        width: 100%;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        background: rgba(0, 0, 0, 0.22);
+        color: var(--text);
+        border-radius: 13px;
+        padding: 9px 10px;
+        outline: none;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .check {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        color: var(--muted);
+        font-size: 12.5px;
+      }
+      .check input {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--green2);
+      }
+      .addressTitle,
+      .ftitle {
+        font-size: 11px;
+        color: var(--muted);
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+      }
+      .nearbyResults {
+        max-height: 145px;
+        overflow: auto;
+        display: none;
+      }
+      .nearbyResults.open {
+        display: block;
+      }
+      .nearbyCard {
+        display: grid;
+        grid-template-columns: 48px 1fr auto;
+        gap: 8px;
+        align-items: center;
+        padding: 7px;
+        margin-bottom: 7px;
+        border: 1px solid rgba(255, 255, 255, 0.13);
+        border-radius: 13px;
+        background: rgba(255, 255, 255, 0.075);
+        cursor: pointer;
+      }
+      .nearbyCard:hover {
+        background: rgba(0, 132, 61, 0.22);
+      }
+      .nearbyCard img {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        object-fit: cover;
+      }
+      .nearbyCard b {
+        font-size: 12px;
+        display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .nearbyCard small {
+        font-size: 10.5px;
+        color: var(--muted);
+        display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-top: 2px;
+      }
+      .distancePill {
+        font-size: 10.5px;
+        white-space: nowrap;
+        color: #fff;
+        background: rgba(0, 132, 61, 0.52);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 999px;
+        padding: 5px 7px;
+      }
+      .yearPicker {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        max-height: 82px;
+        overflow: auto;
+      }
+      .yearChip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.075);
+        padding: 7px 9px;
+        font-size: 12px;
+        color: var(--muted);
+        cursor: pointer;
+      }
+      .yearChip input {
+        width: 14px;
+        height: 14px;
+        accent-color: var(--green2);
+      }
+      .yearChip.allYears {
+        border-color: rgba(242, 201, 76, 0.45);
+        background: rgba(242, 201, 76, 0.12);
+        color: #fff1b5;
+      }
+      .folders {
+        max-height: 112px;
+        overflow: auto;
+      }
+      .fchip {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.075);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 12px;
+        padding: 7px 8px;
+        margin-bottom: 6px;
+        font-size: 12px;
+        cursor: pointer;
+      }
+      .fchip.active {
+        background: rgba(0, 132, 61, 0.28);
+        border-color: rgba(0, 168, 90, 0.5);
+      }
+      .fchip small {
+        color: var(--muted);
+      }
+      .list {
+        flex: 1;
+        min-height: 150px;
+        overflow: auto;
+        padding: 10px;
+      }
+      .card {
+        display: grid;
+        grid-template-columns: 68px 1fr;
+        gap: 10px;
+        padding: 8px;
+        margin-bottom: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.13);
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.075);
+        cursor: pointer;
+      }
+      .card:hover,
+      .card.active {
+        background: rgba(0, 132, 61, 0.22);
+        border-color: rgba(0, 168, 90, 0.55);
+      }
+      .thumb {
+        width: 68px;
+        height: 68px;
+        border-radius: 13px;
+        object-fit: cover;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        background: rgba(0, 0, 0, 0.24);
+      }
+      .meta {
+        min-width: 0;
+        align-self: center;
+      }
+      .name {
+        font-size: 13px;
+        font-weight: 800;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .path,
+      .coord,
+      .date {
+        margin-top: 4px;
+        font-size: 11px;
+        color: var(--muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .nogps {
+        color: #ffd1d1;
+      }
+      .cached {
+        color: #bfe8c9;
+      }
+      .live {
+        color: #ffec99;
+      }
+      .empty {
+        color: var(--muted);
+        text-align: center;
+        padding: 18px 10px;
+        font-size: 13px;
+        line-height: 1.45;
+      }
+      .main {
+        min-width: 0;
+        display: grid;
+        grid-template-rows: 1fr 132px;
+        gap: 14px;
+      }
+      .map-shell {
+        position: relative;
+      }
+      #map {
+        width: 100%;
+        height: 100%;
+        background: #111b15;
+      }
+      .toolbar {
+        position: absolute;
+        left: 14px;
+        right: 270px;
+        top: 14px;
+        z-index: 701;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 9px;
+        pointer-events: none;
+      }
+      .chip {
+        pointer-events: auto;
+        color: var(--text);
+        background: rgba(7, 17, 13, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        backdrop-filter: blur(16px);
+        box-shadow: 0 10px 26px rgba(0, 0, 0, 0.24);
+        border-radius: 999px;
+        padding: 9px 12px;
+        font-size: 12px;
+      }
+      .chip button {
+        border: 0;
+        background: transparent;
+        color: var(--text);
+        cursor: pointer;
+        font-weight: 800;
+        padding: 0;
+      }
+      .modern-basemap-control {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        z-index: 702;
+        display: flex;
+        gap: 6px;
+        padding: 7px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 999px;
+        background: rgba(7, 17, 13, 0.78);
+        backdrop-filter: blur(18px) saturate(150%);
+        box-shadow: 0 12px 34px rgba(0, 0, 0, 0.27);
+      }
+      .basemap-btn {
+        border: 0;
+        border-radius: 999px;
+        padding: 9px 12px;
+        color: rgba(238, 248, 241, 0.72);
+        background: transparent;
+        font-family: Inter, "Segoe UI", system-ui, sans-serif;
+        font-size: 12px;
+        font-weight: 800;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .basemap-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+      }
+      .basemap-btn.active {
+        color: #06100c;
+        background: linear-gradient(135deg, #f2c94c, #fff);
+        box-shadow: 0 8px 22px rgba(242, 201, 76, 0.24);
+      }
+      .leaflet-top.leaflet-right {
+        top: 10px;
+        right: 10px;
+      }
+      .leaflet-control-zoom {
+        margin-top: 62px !important;
+      }
+      .filmstrip {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        overflow-x: auto;
+        padding: 12px;
+      }
+      .film {
+        flex: 0 0 auto;
+        width: 105px;
+        cursor: pointer;
+        border-radius: 15px;
+        padding: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.13);
+        background: rgba(255, 255, 255, 0.075);
+      }
+      .film.active {
+        background: rgba(0, 132, 61, 0.28);
+        border-color: rgba(0, 168, 90, 0.55);
+      }
+      .film img {
+        width: 100%;
+        height: 72px;
+        object-fit: cover;
+        border-radius: 11px;
+        display: block;
+        background: rgba(0, 0, 0, 0.24);
+      }
+      .film div {
+        margin-top: 5px;
+        font-size: 10px;
+        color: var(--muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .popup {
+        width: 255px;
+        color: #101510;
+      }
+      .popup img {
+        width: 100%;
+        max-height: 170px;
+        object-fit: cover;
+        border-radius: 11px;
+        margin-bottom: 8px;
+        cursor: pointer;
+        background: #ddd;
+      }
+      .popup b,
+      .popup small {
+        display: block;
+        word-break: break-word;
+      }
+      .popup small {
+        color: #536057;
+        line-height: 1.35;
+        margin-top: 4px;
+      }
+      .cluster-popup {
+        width: 310px;
+        max-height: 360px;
+        overflow: auto;
+        color: #101510;
+      }
+      .cluster-popup h3 {
+        margin: 0 0 8px;
+        font-size: 14px;
+      }
+      .cluster-note {
+        color: #536057;
+        font-size: 11px;
+        line-height: 1.3;
+        margin: 3px 0 8px;
+      }
+      .cluster-row {
+        display: grid;
+        grid-template-columns: 48px 1fr;
+        gap: 8px;
+        align-items: center;
+        padding: 7px;
+        border-radius: 10px;
+        cursor: pointer;
+        border: 1px solid rgba(0, 0, 0, 0.07);
+        margin-bottom: 6px;
+        background: rgba(0, 132, 61, 0.06);
+      }
+      .cluster-row:hover {
+        background: rgba(0, 132, 61, 0.16);
+      }
+      .cluster-row img {
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        object-fit: cover;
+        background: #ddd;
+      }
+      .cluster-row b {
+        display: block;
+        font-size: 12px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .cluster-row small {
+        display: block;
+        color: #536057;
+        font-size: 10.5px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-top: 2px;
+      }
+      .viewer {
+        position: fixed;
+        inset: 0;
+        z-index: 2000;
+        background: rgba(0, 0, 0, 0.82);
+        backdrop-filter: blur(14px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+      .viewer.open {
+        display: flex;
+      }
+      .viewer-inner {
+        max-width: min(92vw, 1300px);
+        max-height: 92vh;
+        display: grid;
+        gap: 12px;
+      }
+      .viewer img {
+        max-width: 100%;
+        max-height: 78vh;
+        object-fit: contain;
+        border-radius: 18px;
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+      }
+      .caption {
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 15px;
+        padding: 10px 12px;
+        font-size: 13px;
+      }
+      .close {
+        position: fixed;
+        top: 18px;
+        right: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        background: rgba(255, 255, 255, 0.12);
+        color: white;
+        border-radius: 999px;
+        padding: 10px 14px;
+        cursor: pointer;
+        font-weight: 800;
+      }
+      .address-label {
+        background: rgba(7, 17, 13, 0.82);
+        color: #fff;
+        border: 1px solid rgba(242, 201, 76, 0.8);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+        border-radius: 12px;
+        padding: 7px 10px;
+        font-weight: 800;
+        font-size: 12px;
+        line-height: 1.25;
+        white-space: normal;
+        max-width: 260px;
+      }
+      .address-label::before {
+        display: none;
+      }
+      @media (max-width: 1050px) {
+        body {
+          overflow: auto;
+        }
+        .app {
+          height: auto;
+          grid-template-columns: 1fr;
+        }
+        .sidebar {
+          max-height: none;
+        }
+        .main {
+          min-height: 760px;
+        }
+        .toolbar {
+          right: 14px;
+          top: 70px;
+        }
+        .modern-basemap-control {
+          left: 14px;
+          right: auto;
+        }
+        .leaflet-control-zoom {
+          margin-top: 110px !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Header, nav drawer, and footer are injected by script.js -->
+    <main id="main" class="photo-map-page">
+      <div class="app">
+        <aside class="sidebar">
+          <section class="header">
+            <div class="brand">
+              <h1>Photo Map Explorer (EXPERIMENTAL)</h1>
+              <span class="tag" id="cacheMode">Cache loading...</span>
+            </div>
+            <p class="sub">
+              Preloaded cached photo map with modern basemap toggle, address
+              search, year filtering, and nearby photo previews.
+            </p>
+          </section>
+          <section class="controls">
+            <div id="drop" class="drop">
+              <label class="btn" for="folderInput"
+                >Select folder / refresh photos</label
+              ><input
+                id="folderInput"
+                class="file"
+                type="file"
+                webkitdirectory
+                directory
+                multiple
+                accept="image/*,.jpg,.jpeg,.png,.heic,.heif,.tif,.tiff,.webp"
+              />
+            </div>
+            <div class="status" id="status">
+              Loading cached photo library...
+            </div>
+            <div class="barwrap"><div class="bar" id="bar"></div></div>
+            <label
+              class="btn secondary"
+              for="debugFileInput"
+              style="font-size: 11px"
+              >Debug: inspect raw metadata of 1 photo</label
+            ><input
+              id="debugFileInput"
+              class="file"
+              type="file"
+              accept=".heic,.heif,image/heic,image/heif,image/*"
+            />
+          </section>
+          <section class="stats">
+            <div class="stat"><b id="total">0</b><span>Photos</span></div>
+            <div class="stat"><b id="mapped">0</b><span>Mapped</span></div>
+            <div class="stat"><b id="missing">0</b><span>No GPS</span></div>
+            <div class="stat">
+              <b id="cacheHits">0</b><span>Cache hits</span>
+            </div>
+          </section>
+          <section class="addressBox">
+            <div class="addressTitle">Address Search</div>
+            <input
+              id="addressInput"
+              type="search"
+              placeholder="Search address, e.g. 123 Main St, St. Louis, MO"
+            />
+            <div class="row">
+              <select id="radiusSelect">
+                <option value="402">1/4 mile walking radius</option>
+                <option value="805">1/2 mile walking radius</option>
+                <option value="1210">3/4 mile walking radius</option>
+                <option value="1609">1 mile walking radius</option>
+                <option value="200">650 ft close radius</option></select
+              ><button
+                class="btn secondary"
+                id="addressSearchBtn"
+                type="button"
+              >
+                Search
+              </button>
+            </div>
+            <div class="row">
+              <button class="btn secondary" id="showNearbyOnly" type="button">
+                Show nearby only</button
+              ><button
+                class="btn secondary"
+                id="clearAddressSearch"
+                type="button"
+              >
+                Clear address
+              </button>
+            </div>
+            <div id="nearbySummary" class="nearbySummary">
+              Address search requires internet access.
+            </div>
+            <div id="nearbyResults" class="nearbyResults"></div>
+          </section>
+          <section class="filters">
+            <input
+              id="search"
+              type="search"
+              placeholder="Search file or folder name"
+            />
+            <div class="row">
+              <select id="sort">
+                <option value="path">Sort by folder/name</option>
+                <option value="name">Sort by file name</option>
+                <option value="date">Sort by date taken</option>
+                <option value="gps">GPS photos first</option>
+                <option value="distance">
+                  Distance from searched address
+                </option></select
+              ><select id="gpsFilter">
+                <option value="all">Show all photos</option>
+                <option value="mapped">Mapped only</option>
+                <option value="missing">No GPS only</option>
+                <option value="nearby">Nearby address photos only</option>
+              </select>
+            </div>
+            <div class="row">
+              <button class="btn secondary" id="clearFilters" type="button">
+                Clear filters</button
+              ><button class="btn danger" id="clearCache" type="button">
+                Clear cache
+              </button>
+            </div>
+            <label class="check"
+              ><span>Use clustered markers</span
+              ><input id="clusterToggle" type="checkbox" checked
+            /></label>
+          </section>
+          <section class="years">
+            <div class="ftitle">Photo Years</div>
+            <div id="yearPicker" class="yearPicker">
+              <div class="empty">
+                Years will appear after photo metadata loads.
+              </div>
+            </div>
+          </section>
+          <section class="folders">
+            <div class="ftitle">Folders</div>
+            <div id="folderTree">
+              <div class="empty">Folders will appear after photos load.</div>
+            </div>
+          </section>
+          <section id="list" class="list">
+            <div class="empty">Loading cached photo library...</div>
+          </section>
+        </aside>
+        <section class="main">
+          <section class="map-shell">
+            <div class="modern-basemap-control">
+              <button
+                id="streetMapBtn"
+                class="basemap-btn active"
+                type="button"
+              >
+                Street Map</button
+              ><button
+                id="satelliteLabelsBtn"
+                class="basemap-btn"
+                type="button"
+              >
+                Satellite + Labels
+              </button>
+            </div>
+            <div class="toolbar">
+              <span class="chip"
+                ><button id="fitTop" type="button">
+                  Fit mapped photos
+                </button></span
+              ><span class="chip"
+                ><button id="clearSel" type="button">
+                  Clear selection
+                </button></span
+              ><span class="chip" id="mapMsg">Loading cached map data...</span>
+            </div>
+            <div id="map"></div>
+          </section>
+          <section id="filmstrip" class="filmstrip">
+            <div class="empty">Mapped cached previews will appear here.</div>
+          </section>
+        </section>
+      </div>
+    </main>
+    <section id="viewer" class="viewer">
+      <button id="viewerClose" class="close" type="button">Close</button>
+      <div class="viewer-inner">
+        <img id="viewerImg" alt="Selected photo" />
+        <div id="caption" class="caption"></div>
+      </div>
+    </section>
+    <script>
+      const DB_NAME = "PhotoMapExplorerModernBasemap";
+      const DB_VERSION = 1;
+      const STORE = "photos";
+      const LS_INDEX = "PME_MODERN_BM_INDEX";
+      const LS_PREFIX = "PME_MODERN_BM_PHOTO::";
+      let db = null,
+        dbReady = false,
+        backend = "none";
+      const $ = (id) => document.getElementById(id);
+      const currentYear = new Date().getFullYear();
+      const state = {
+        photos: [],
+        urls: [],
+        markers: new Map(),
+        activeId: null,
+        activeFolder: "ALL",
+        cacheHits: 0,
+        cacheMisses: 0,
+        preloaded: 0,
+        address: null,
+        nearbyIds: new Set(),
+        nearbyList: [],
+        addressMarker: null,
+        addressCircle: null,
+        addressLabel: null,
+        allYears: false,
+        convertHeic: false,
+        selectedYears: new Set([currentYear, currentYear - 1]),
+      };
+      const els = {
+        folder: $("folderInput"),
+        debugFile: $("debugFileInput"),
+        drop: $("drop"),
+        status: $("status"),
+        bar: $("bar"),
+        total: $("total"),
+        mapped: $("mapped"),
+        missing: $("missing"),
+        cacheHits: $("cacheHits"),
+        search: $("search"),
+        sort: $("sort"),
+        gpsFilter: $("gpsFilter"),
+        clearFilters: $("clearFilters"),
+        clearCache: $("clearCache"),
+        clusterToggle: $("clusterToggle"),
+        folderTree: $("folderTree"),
+        yearPicker: $("yearPicker"),
+        list: $("list"),
+        film: $("filmstrip"),
+        fitTop: $("fitTop"),
+        clearSel: $("clearSel"),
+        mapMsg: $("mapMsg"),
+        viewer: $("viewer"),
+        viewerImg: $("viewerImg"),
+        caption: $("caption"),
+        viewerClose: $("viewerClose"),
+        cacheMode: $("cacheMode"),
+        addressInput: $("addressInput"),
+        radiusSelect: $("radiusSelect"),
+        addressSearchBtn: $("addressSearchBtn"),
+        showNearbyOnly: $("showNearbyOnly"),
+        clearAddressSearch: $("clearAddressSearch"),
+        nearbySummary: $("nearbySummary"),
+        nearbyResults: $("nearbyResults"),
+        streetBtn: $("streetMapBtn"),
+        satBtn: $("satelliteLabelsBtn"),
+      };
+      const map = L.map("map", {
+        preferCanvas: true,
+        minZoom: 3,
+        maxZoom: 19,
+        zoomControl: false,
+      }).setView([39.8283, -98.5795], 4);
+      L.control.zoom({ position: "topright" }).addTo(map);
+      const street = L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+          maxZoom: 19,
+          maxNativeZoom: 19,
+          attribution: "&copy; OpenStreetMap contributors",
+        },
+      );
+      const sat = L.tileLayer(
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        { maxZoom: 19, maxNativeZoom: 19, attribution: "Tiles &copy; Esri" },
+      );
+      const labels = L.tileLayer(
+        "https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
+        { maxZoom: 19, maxNativeZoom: 19, attribution: "Labels &copy; Esri" },
+      );
+      const roads = null;
+      const satellite = L.layerGroup([sat, labels]);
+      street.addTo(map);
+      function setBasemap(mode) {
+        [street, sat, labels, satellite].forEach((l) => {
+          if (map.hasLayer(l)) map.removeLayer(l);
+        });
+        if (mode === "satellite") {
+          satellite.addTo(map);
+          els.streetBtn.classList.remove("active");
+          els.satBtn.classList.add("active");
+          status("Basemap changed to Satellite + Labels.");
+        } else {
+          street.addTo(map);
+          els.satBtn.classList.remove("active");
+          els.streetBtn.classList.add("active");
+          status("Basemap changed to Street Map.");
+        }
+      }
+      let cluster = L.markerClusterGroup({
+        maxClusterRadius: 62,
+        spiderfyOnMaxZoom: true,
+        showCoverageOnHover: false,
+        zoomToBoundsOnClick: false,
+      });
+      let plain = L.layerGroup();
+      map.addLayer(cluster);
+      const colors = [
+        "#00843d",
+        "#00a85a",
+        "#f2c94c",
+        "#56a7ff",
+        "#b77cff",
+        "#ff8a42",
+        "#ff6961",
+        "#38d9c5",
+      ];
+      function status(t, e = false) {
+        els.status.textContent = t;
+        els.status.style.color = e ? "var(--red)" : "var(--muted)";
+      }
+      function progress(p) {
+        els.bar.style.width = Math.max(0, Math.min(100, p)) + "%";
+      }
+      function esc(v) {
+        return String(v ?? "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+      function coord(v) {
+        return Number.isFinite(v) ? v.toFixed(6) : "";
+      }
+      function frame() {
+        return new Promise((r) => requestAnimationFrame(r));
+      }
+      async function initCache() {
+        try {
+          db = await new Promise((res, rej) => {
+            if (!("indexedDB" in window)) return rej(Error("No IndexedDB"));
+            const r = indexedDB.open(DB_NAME, DB_VERSION);
+            r.onupgradeneeded = () => {
+              const d = r.result;
+              if (!d.objectStoreNames.contains(STORE))
+                d.createObjectStore(STORE, { keyPath: "key" });
+            };
+            r.onsuccess = () => res(r.result);
+            r.onerror = () => rej(r.error);
+          });
+          dbReady = true;
+          backend = "IndexedDB";
+          els.cacheMode.textContent = "IndexedDB preload cache";
+        } catch (e) {
+          try {
+            localStorage.setItem(LS_PREFIX + "test", "1");
+            localStorage.removeItem(LS_PREFIX + "test");
+            backend = "localStorage";
+            els.cacheMode.textContent = "localStorage preload cache";
+          } catch {
+            backend = "none";
+            els.cacheMode.textContent = "Cache unavailable";
+          }
+        }
+      }
+      function store(mode) {
+        return db.transaction(STORE, mode).objectStore(STORE);
+      }
+      async function cacheGet(key) {
+        if (backend === "IndexedDB" && dbReady) {
+          try {
+            return await new Promise((res, rej) => {
+              const req = store("readonly").get(key);
+              req.onsuccess = () => res(req.result || null);
+              req.onerror = () => rej(req.error);
+            });
+          } catch {
+            backend = "localStorage";
+          }
+        }
+        if (backend === "localStorage") {
+          try {
+            return JSON.parse(localStorage.getItem(LS_PREFIX + key) || "null");
+          } catch {
+            return null;
+          }
+        }
+        return null;
+      }
+      async function cachePut(rec) {
+        if (backend === "IndexedDB" && dbReady) {
+          try {
+            return await new Promise((res, rej) => {
+              const t = db.transaction(STORE, "readwrite");
+              t.objectStore(STORE).put(rec);
+              t.oncomplete = () => res();
+              t.onerror = () => rej(t.error);
+            });
+          } catch {
+            backend = "localStorage";
+          }
+        }
+        if (backend === "localStorage") {
+          let idx = JSON.parse(localStorage.getItem(LS_INDEX) || "[]");
+          if (!idx.includes(rec.key)) {
+            idx.push(rec.key);
+            localStorage.setItem(LS_INDEX, JSON.stringify(idx));
+          }
+          localStorage.setItem(LS_PREFIX + rec.key, JSON.stringify(rec));
+        }
+      }
+      async function cacheAll() {
+        if (backend === "IndexedDB" && dbReady) {
+          try {
+            return await new Promise((res, rej) => {
+              const req = store("readonly").getAll();
+              req.onsuccess = () => res(req.result || []);
+              req.onerror = () => rej(req.error);
+            });
+          } catch {
+            backend = "localStorage";
+          }
+        }
+        if (backend === "localStorage") {
+          let idx = JSON.parse(localStorage.getItem(LS_INDEX) || "[]");
+          return idx
+            .map((k) => {
+              try {
+                return JSON.parse(
+                  localStorage.getItem(LS_PREFIX + k) || "null",
+                );
+              } catch {
+                return null;
+              }
+            })
+            .filter(Boolean);
+        }
+        return [];
+      }
+      async function cacheClear() {
+        if (backend === "IndexedDB" && dbReady) {
+          await new Promise((res, rej) => {
+            const t = db.transaction(STORE, "readwrite");
+            t.objectStore(STORE).clear();
+            t.oncomplete = () => res();
+            t.onerror = () => rej(t.error);
+          });
+        }
+        Object.keys(localStorage)
+          .filter((k) => k.startsWith(LS_PREFIX) || k === LS_INDEX)
+          .forEach((k) => localStorage.removeItem(k));
+      }
+      function isImg(f) {
+        return (
+          f.type.startsWith("image/") ||
+          /\.(jpe?g|png|heic|heif|tiff?|webp)$/i.test(f.name)
+        );
+      }
+      function isHeic(f) {
+        return (
+          /\.(heic|heif)$/i.test(f.name) ||
+          f.type === "image/heic" ||
+          f.type === "image/heif"
+        );
+      }
+      async function convertHeicToJpegBlob(file) {
+        if (typeof HeicTo !== "function") return null;
+        try {
+          return await HeicTo({
+            blob: file,
+            type: "image/jpeg",
+            quality: 0.82,
+          });
+        } catch (e) {
+          console.warn("HEIC conversion failed for", file.name, e);
+          return null;
+        }
+      }
+      function displayPathOf(f) {
+        return (f.webkitRelativePath || f.name).replaceAll("\\", "/");
+      }
+      function normPathOf(f) {
+        return displayPathOf(f).toLowerCase().replace(/^\/+/, "");
+      }
+      function fileKey(f) {
+        return encodeURIComponent(
+          `${normPathOf(f)}|${f.size}|${f.lastModified}`,
+        );
+      }
+      function folderOf(p) {
+        let a = p.split("/");
+        if (a.length <= 1) return "(root)";
+        a.pop();
+        return a.join("/");
+      }
+      function photoYear(p) {
+        if (Number.isFinite(p.originalYear)) return p.originalYear;
+        if (p.originalDate) {
+          const m = String(p.originalDate).match(/(19|20)\d{2}/);
+          if (m) return Number(m[0]);
+        }
+        if (p.dateTaken) {
+          const m = String(p.dateTaken).match(/(19|20)\d{2}/);
+          if (m) return Number(m[0]);
+          const d = new Date(p.dateTaken);
+          if (!isNaN(d)) return d.getFullYear();
+        }
+        if (Number.isFinite(p.yearTaken)) return p.yearTaken;
+        if (p.lastModified) {
+          const d = new Date(p.lastModified);
+          if (!isNaN(d)) return d.getFullYear();
+        }
+        return "Unknown";
+      }
+      function color(folder) {
+        let h = 0;
+        for (let i = 0; i < folder.length; i++)
+          h = (h << 5) - h + folder.charCodeAt(i);
+        return colors[Math.abs(h) % colors.length];
+      }
+      function icon(p) {
+        let c = color(p.folder),
+          border = state.nearbyIds.has(p.id) ? "#f2c94c" : "#fff",
+          size = state.nearbyIds.has(p.id) ? 28 : 24;
+        return L.divIcon({
+          className: "",
+          html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:linear-gradient(135deg,${c},#fff);border:3px solid ${border};box-shadow:0 8px 23px rgba(0,0,0,.36)"></div>`,
+          iconSize: [size, size],
+          iconAnchor: [size / 2, size / 2],
+          popupAnchor: [0, -13],
+        });
+      }
+      function parseExifDateStr(s) {
+        if (!s) return null;
+        const v = Array.isArray(s) ? s[0] : s,
+          m = String(v).match(
+            /(\d{4}):(\d{2}):(\d{2})\s+(\d{2}):(\d{2}):(\d{2})/,
+          );
+        if (!m) return null;
+        const d = new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]);
+        return isNaN(d) ? null : d;
+      }
+      async function readExif(file) {
+        let gps = null,
+          date = "",
+          dir = null,
+          yearTaken = null,
+          originalDate = "",
+          originalYear = null;
+        try {
+          const tags = await ExifReader.load(file, {
+            expanded: true,
+            length: "auto",
+          });
+          if (
+            tags.gps &&
+            Number.isFinite(tags.gps.Latitude) &&
+            Number.isFinite(tags.gps.Longitude)
+          )
+            gps = {
+              latitude: tags.gps.Latitude,
+              longitude: tags.gps.Longitude,
+            };
+          const exif = tags.exif || {},
+            get = (k) => exif[k]?.description ?? exif[k]?.value;
+          const dtoDate = parseExifDateStr(get("DateTimeOriginal"));
+          const anyDate =
+            dtoDate ||
+            parseExifDateStr(get("CreateDate")) ||
+            parseExifDateStr(get("DateTimeDigitized")) ||
+            parseExifDateStr(get("ModifyDate"));
+          if (dtoDate) {
+            originalDate = dtoDate.toLocaleString();
+            originalYear = dtoDate.getFullYear();
+          }
+          if (anyDate) {
+            date = anyDate.toLocaleString();
+            yearTaken = anyDate.getFullYear();
+          }
+          const dirRaw = get("GPSImgDirection"),
+            dv = parseFloat(Array.isArray(dirRaw) ? dirRaw[0] : dirRaw);
+          if (Number.isFinite(dv)) dir = dv;
+        } catch (e) {
+          console.warn("EXIF read failed for", file.name, e);
+        }
+        return { gps, date, dir, yearTaken, originalDate, originalYear };
+      }
+      async function makeThumb(file, max = 260, quality = 0.72) {
+        return new Promise((resolve) => {
+          const url = URL.createObjectURL(file),
+            img = new Image();
+          img.onload = () => {
+            try {
+              const s = Math.min(max / img.width, max / img.height, 1),
+                w = Math.max(1, Math.round(img.width * s)),
+                h = Math.max(1, Math.round(img.height * s)),
+                c = document.createElement("canvas");
+              c.width = w;
+              c.height = h;
+              c.getContext("2d").drawImage(img, 0, 0, w, h);
+              URL.revokeObjectURL(url);
+              resolve(c.toDataURL("image/jpeg", quality));
+            } catch {
+              URL.revokeObjectURL(url);
+              resolve("");
+            }
+          };
+          img.onerror = () => {
+            URL.revokeObjectURL(url);
+            resolve("");
+          };
+          img.src = url;
+        });
+      }
+      function photoImg(p) {
+        return p.liveUrl || p.thumb || "";
+      }
+      function layer() {
+        return els.clusterToggle.checked ? cluster : plain;
+      }
+      function resetLive() {
+        state.urls.forEach(URL.revokeObjectURL);
+        state.urls = [];
+        state.photos = [];
+        state.markers.clear();
+        state.activeId = null;
+        state.activeFolder = "ALL";
+        state.cacheHits = 0;
+        state.cacheMisses = 0;
+        state.preloaded = 0;
+        cluster.clearLayers();
+        plain.clearLayers();
+        clearAddress(false);
+        progress(0);
+        update();
+      }
+      function addMarker(p) {
+        const img = photoImg(p),
+          source = p.liveUrl
+            ? "Full file loaded"
+            : p.thumb
+              ? "Cached preview only"
+              : "No preview",
+          near = state.nearbyIds.has(p.id)
+            ? `<small>Distance from searched address: ${formatDistance(p.distanceFromAddress)}</small>`
+            : "";
+        const pop = `<div class="popup">${img ? `<img src="${img}" onclick="window.__openViewer('${p.id}')">` : ""}<b>${esc(p.name)}</b><small>${esc(p.path)}</small><small>${coord(p.latitude)}, ${coord(p.longitude)}</small>${near}${p.dateTaken ? `<small>${esc(p.dateTaken)}</small>` : ""}<small>${source}</small>${Number.isFinite(p.direction) ? `<small>Camera direction: ${Number(p.direction).toFixed(0)}°</small>` : ""}</div>`;
+        const m = L.marker([p.latitude, p.longitude], {
+          icon: icon(p),
+          title: p.name,
+        });
+        m.photoId = p.id;
+        m.bindPopup(pop).on("click", () => select(p.id, false));
+        state.markers.set(p.id, m);
+        layer().addLayer(m);
+      }
+      function rebuildMarkers() {
+        cluster.clearLayers();
+        plain.clearLayers();
+        state.markers.clear();
+        if (map.hasLayer(cluster)) map.removeLayer(cluster);
+        if (map.hasLayer(plain)) map.removeLayer(plain);
+        map.addLayer(layer());
+        filtered(true)
+          .filter((p) => p.hasGps)
+          .forEach(addMarker);
+      }
+      async function preloadCachedLibrary() {
+        await initCache();
+        status("Loading cached photo library...");
+        const records = await cacheAll();
+        state.preloaded = records.length;
+        state.photos = [];
+        state.markers.clear();
+        cluster.clearLayers();
+        plain.clearLayers();
+        for (let i = 0; i < records.length; i++) {
+          state.photos.push({
+            ...records[i],
+            id: "cached-" + i,
+            fromCache: true,
+            liveUrl: null,
+            distanceFromAddress: null,
+          });
+          if ((i + 1) % 100 === 0) {
+            status(
+              `Loading cached photo library ${i + 1} of ${records.length}...`,
+            );
+            progress(((i + 1) / Math.max(records.length, 1)) * 100);
+            await frame();
+          }
+        }
+        update();
+        rebuildMarkers();
+        fitAll();
+        progress(0);
+        status(
+          records.length
+            ? `Preloaded ${records.length} cached photos. Current year and last year are selected by default.`
+            : "No cached photos yet. Select a folder to build the local photo cache.",
+        );
+      }
+      async function process(filesIn) {
+        await initCache();
+        const files = [...filesIn].filter(isImg);
+        if (!files.length) {
+          status("No image files were found in the selected folder.", true);
+          return;
+        }
+        const heicCount = files.filter(isHeic).length;
+        state.convertHeic = false;
+        if (heicCount > 0) {
+          const ok = confirm(
+            `${heicCount} HEIC photo${heicCount === 1 ? "" : "s"} detected in the selected folder.\n\nConverting HEIC to JPEG previews lets you see the images in the browser, but each conversion takes 1-3 seconds. For ${heicCount} photos this could add about ${Math.round(heicCount * 2)} seconds.\n\nProceed with HEIC conversion?\n\nOK = Convert and preview HEIC photos\nCancel = Skip previews, still read GPS and metadata`,
+          );
+          state.convertHeic = ok;
+        }
+        let start = performance.now();
+        status(
+          `Reconciling ${files.length} files with existing cache. Keeping existing markers...`,
+        );
+        await frame();
+        const byKey = new Map();
+        state.photos.forEach((p) => {
+          if (p.key) byKey.set(p.key, p);
+        });
+        state.cacheHits = 0;
+        state.cacheMisses = 0;
+        const cachedNewList = [];
+        const trulyNewList = [];
+        const matchedExisting = [];
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i],
+            key = fileKey(file);
+          if (byKey.has(key)) {
+            matchedExisting.push({ file, key });
+          } else {
+            const rec = await cacheGet(key);
+            if (rec) cachedNewList.push({ file, key, rec });
+            else trulyNewList.push({ file, key });
+          }
+          if ((i + 1) % 50 === 0 || i === files.length - 1) {
+            status(`Scanning folder: ${i + 1} of ${files.length}`);
+            progress(((i + 1) / files.length) * 25);
+            await frame();
+          }
+        }
+        status(
+          `${matchedExisting.length} already loaded. Attaching live files...`,
+        );
+        for (let i = 0; i < matchedExisting.length; i++) {
+          const { file, key } = matchedExisting[i];
+          const existing = byKey.get(key);
+          if (existing) {
+            const liveUrl = URL.createObjectURL(file);
+            state.urls.push(liveUrl);
+            existing.liveUrl = liveUrl;
+            if (
+              !existing.originalDate ||
+              !Number.isFinite(existing.originalYear)
+            ) {
+              try {
+                const ex = await readExif(file);
+                if (ex.originalDate) {
+                  existing.originalDate = ex.originalDate;
+                  existing.originalYear = ex.originalYear;
+                  await cachePut({ ...existing });
+                }
+              } catch {}
+            }
+            state.cacheHits++;
+          }
+          if (i % 50 === 0 || i === matchedExisting.length - 1) {
+            progress(25 + ((i + 1) / Math.max(matchedExisting.length, 1)) * 15);
+            await frame();
+          }
+        }
+        if (cachedNewList.length) {
+          status(`Loading ${cachedNewList.length} additional cached photos...`);
+          await frame();
+        }
+        for (let i = 0; i < cachedNewList.length; i++) {
+          const { file, rec } = cachedNewList[i];
+          const liveUrl = URL.createObjectURL(file);
+          state.urls.push(liveUrl);
+          state.cacheHits++;
+          let useRec = rec;
+          if (!rec.originalDate || !Number.isFinite(rec.originalYear)) {
+            try {
+              const ex = await readExif(file);
+              if (ex.originalDate) {
+                useRec = {
+                  ...rec,
+                  originalDate: ex.originalDate,
+                  originalYear: ex.originalYear,
+                };
+                await cachePut(useRec);
+              }
+            } catch {}
+          }
+          const p = {
+            ...useRec,
+            id: crypto.randomUUID
+              ? crypto.randomUUID()
+              : Date.now() + "-c-" + i,
+            fromCache: true,
+            liveUrl,
+            distanceFromAddress: null,
+            isHeic: isHeic(file),
+          };
+          state.photos.push(p);
+          if (p.hasGps && yearAllowed(p)) addMarker(p);
+          if (i % 20 === 0 || i === cachedNewList.length - 1) {
+            status(
+              `Loading cached photo ${i + 1} of ${cachedNewList.length}: ${displayPathOf(file)}`,
+            );
+            progress(40 + ((i + 1) / Math.max(cachedNewList.length, 1)) * 20);
+            update();
+            await frame();
+          }
+        }
+        if (trulyNewList.length) {
+          status(`Reading ${trulyNewList.length} new or changed photos...`);
+          await frame();
+        }
+        for (let i = 0; i < trulyNewList.length; i++) {
+          const { file, key } = trulyNewList[i],
+            path = displayPathOf(file),
+            heic = isHeic(file);
+          if (heic && state.convertHeic) {
+            status(
+              `Converting HEIC photo ${i + 1} of ${trulyNewList.length}: ${path}`,
+            );
+          } else {
+            status(
+              `Reading new photo ${i + 1} of ${trulyNewList.length}: ${path}`,
+            );
+          }
+          progress(60 + ((i + 1) / Math.max(trulyNewList.length, 1)) * 40);
+          let sourceForThumb = file;
+          let jpegBlob = null;
+          if (heic && state.convertHeic) {
+            jpegBlob = await convertHeicToJpegBlob(file);
+            if (jpegBlob) sourceForThumb = jpegBlob;
+          }
+          const [ex, thumb] = await Promise.all([
+              readExif(file),
+              heic && !state.convertHeic
+                ? Promise.resolve("")
+                : makeThumb(sourceForThumb),
+            ]),
+            has = !!(
+              ex.gps &&
+              Number.isFinite(ex.gps.latitude) &&
+              Number.isFinite(ex.gps.longitude)
+            );
+          const rec = {
+            key,
+            name: file.name,
+            path,
+            normPath: normPathOf(file),
+            folder: folderOf(path),
+            size: file.size,
+            lastModified: file.lastModified,
+            latitude: has ? ex.gps.latitude : null,
+            longitude: has ? ex.gps.longitude : null,
+            hasGps: has,
+            dateTaken: ex.date || "",
+            originalDate: ex.originalDate || "",
+            originalYear: Number.isFinite(ex.originalYear)
+              ? ex.originalYear
+              : null,
+            yearTaken: Number.isFinite(ex.yearTaken) ? ex.yearTaken : null,
+            direction: Number.isFinite(ex.dir) ? ex.dir : null,
+            thumb,
+            heicConverted: heic && !!jpegBlob,
+            cachedAt: new Date().toISOString(),
+          };
+          await cachePut(rec);
+          state.cacheMisses++;
+          let liveUrl;
+          if (heic && jpegBlob) {
+            liveUrl = URL.createObjectURL(jpegBlob);
+          } else {
+            liveUrl = URL.createObjectURL(file);
+          }
+          state.urls.push(liveUrl);
+          const p = {
+            ...rec,
+            id: crypto.randomUUID
+              ? crypto.randomUUID()
+              : Date.now() + "-n-" + i,
+            fromCache: false,
+            liveUrl,
+            distanceFromAddress: null,
+            isHeic: heic,
+          };
+          state.photos.push(p);
+          if (p.hasGps && yearAllowed(p)) addMarker(p);
+          if (i % 4 === 0 || i === trulyNewList.length - 1) {
+            update();
+            await frame();
+          }
+        }
+        update();
+        let mapped = state.photos.filter((p) => p.hasGps).length,
+          miss = state.photos.length - mapped,
+          sec = ((performance.now() - start) / 1000).toFixed(1);
+        progress(100);
+        status(
+          `Refresh complete. ${state.photos.length} total photos (${matchedExisting.length} kept on map + ${cachedNewList.length} new cached + ${trulyNewList.length} freshly read), ${mapped} mapped, ${miss} without GPS. HEIC files detected: ${heicCount}. ${sec}s.`,
+        );
+      }
+      function haversineMeters(lat1, lon1, lat2, lon2) {
+        const R = 6371000,
+          toRad = (x) => (x * Math.PI) / 180,
+          dLat = toRad(lat2 - lat1),
+          dLon = toRad(lon2 - lon1),
+          a =
+            Math.sin(dLat / 2) ** 2 +
+            Math.cos(toRad(lat1)) *
+              Math.cos(toRad(lat2)) *
+              Math.sin(dLon / 2) ** 2;
+        return 2 * R * Math.asin(Math.sqrt(a));
+      }
+      function formatDistance(m) {
+        if (!Number.isFinite(m)) return "";
+        const ft = m * 3.28084;
+        return ft < 900
+          ? Math.round(ft) + " ft"
+          : (ft / 5280).toFixed(2) + " mi";
+      }
+      async function searchAddress() {
+        const q = els.addressInput.value.trim();
+        if (!q) {
+          status("Enter an address first.", true);
+          return;
+        }
+        status("Searching address...");
+        try {
+          const res = await fetch(
+            "https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=1&q=" +
+              encodeURIComponent(q),
+            { headers: { Accept: "application/json" } },
+          );
+          if (!res.ok) throw Error("Address search failed");
+          const data = await res.json();
+          if (!data.length) {
+            status("No address result found.", true);
+            els.nearbySummary.textContent = "No address result found.";
+            return;
+          }
+          const hit = data[0],
+            lat = Number(hit.lat),
+            lon = Number(hit.lon),
+            label = hit.display_name || q,
+            house = hit.address?.house_number || "",
+            road = hit.address?.road || hit.address?.residential || "",
+            houseLabel =
+              house || road
+                ? `${house} ${road}`.trim()
+                : label.split(",").slice(0, 2).join(",");
+          state.address = {
+            lat,
+            lon,
+            label,
+            houseLabel,
+            radius: Number(els.radiusSelect.value),
+          };
+          applyAddressSearch();
+        } catch (e) {
+          console.error(e);
+          status("Address search failed.", true);
+          els.nearbySummary.textContent =
+            "Address search failed. Check internet access or try a more specific address.";
+        }
+      }
+      function applyAddressSearch() {
+        if (!state.address) return;
+        state.nearbyIds.clear();
+        let r = state.address.radius;
+        state.nearbyList = state.photos
+          .filter((p) => p.hasGps)
+          .map((p) => ({
+            ...p,
+            distanceFromAddress: haversineMeters(
+              state.address.lat,
+              state.address.lon,
+              p.latitude,
+              p.longitude,
+            ),
+          }))
+          .filter((p) => p.distanceFromAddress <= r)
+          .sort((a, b) => a.distanceFromAddress - b.distanceFromAddress);
+        state.photos.forEach((p) => {
+          let f = state.nearbyList.find((n) => n.key === p.key);
+          p.distanceFromAddress = f ? f.distanceFromAddress : null;
+          if (f) state.nearbyIds.add(p.id);
+        });
+        [state.addressMarker, state.addressCircle, state.addressLabel].forEach(
+          (x) => {
+            if (x) map.removeLayer(x);
+          },
+        );
+        state.addressMarker = L.marker([state.address.lat, state.address.lon])
+          .addTo(map)
+          .bindPopup(`<b>Searched address</b><br>${esc(state.address.label)}`);
+        state.addressCircle = L.circle([state.address.lat, state.address.lon], {
+          radius: r,
+          weight: 2,
+          color: "#f2c94c",
+          fillColor: "#f2c94c",
+          fillOpacity: 0.11,
+        }).addTo(map);
+        state.addressLabel = L.marker([state.address.lat, state.address.lon], {
+          interactive: false,
+          icon: L.divIcon({
+            className: "address-label",
+            html: `${esc(state.address.houseLabel)}<br><span style="font-weight:600;color:#f2c94c">${formatDistance(r)} radius</span>`,
+            iconAnchor: [-14, 44],
+          }),
+        }).addTo(map);
+        renderNearbyResults();
+        rebuildMarkers();
+        update();
+        map.fitBounds(
+          L.latLngBounds([
+            [state.address.lat, state.address.lon],
+            ...state.nearbyList.map((p) => [p.latitude, p.longitude]),
+          ]).pad(0.18),
+          { maxZoom: 17 },
+        );
+        status(
+          `Address search found ${state.nearbyList.length} mapped photos within ${formatDistance(r)}.`,
+        );
+      }
+      function renderNearbyResults() {
+        if (!state.address) {
+          els.nearbyResults.classList.remove("open");
+          els.nearbyResults.innerHTML = "";
+          els.nearbySummary.textContent =
+            "Address search requires internet access.";
+          return;
+        }
+        let c = state.nearbyList.length;
+        els.nearbySummary.textContent = `${c} mapped photo${c === 1 ? "" : "s"} within ${formatDistance(state.address.radius)} of: ${state.address.label}`;
+        els.nearbyResults.classList.add("open");
+        els.nearbyResults.innerHTML = c
+          ? state.nearbyList
+              .map(
+                (p) =>
+                  `<div class="nearbyCard" data-id="${p.id}"><img src="${photoImg(p)}"><div><b>${esc(p.name)}</b><small>${esc(p.folder)}</small><small>${coord(p.latitude)}, ${coord(p.longitude)}</small></div><span class="distancePill">${formatDistance(p.distanceFromAddress)}</span></div>`,
+              )
+              .join("")
+          : '<div class="empty">No mapped photos found within the selected walking distance.</div>';
+        els.nearbyResults
+          .querySelectorAll(".nearbyCard")
+          .forEach((c) => (c.onclick = () => select(c.dataset.id, true)));
+      }
+      function clearAddress(doUpdate = true) {
+        state.address = null;
+        state.nearbyIds.clear();
+        state.nearbyList = [];
+        state.photos.forEach((p) => (p.distanceFromAddress = null));
+        [state.addressMarker, state.addressCircle, state.addressLabel].forEach(
+          (x) => {
+            if (x) map.removeLayer(x);
+          },
+        );
+        state.addressMarker = state.addressCircle = state.addressLabel = null;
+        renderNearbyResults();
+        if (doUpdate) {
+          if (els.gpsFilter.value === "nearby") els.gpsFilter.value = "all";
+          rebuildMarkers();
+          update();
+          status("Address search cleared.");
+        }
+      }
+      function availableYears() {
+        return [...new Set(state.photos.map(photoYear))].sort((a, b) => {
+          if (a === "Unknown") return 1;
+          if (b === "Unknown") return -1;
+          return b - a;
+        });
+      }
+      function renderYears() {
+        let years = availableYears();
+        let allHtml = `<label class="yearChip allYears"><input type="checkbox" id="allYearsCb" ${state.allYears ? "checked" : ""}>All Years</label>`;
+        if (!years.length) {
+          els.yearPicker.innerHTML =
+            allHtml +
+            '<div class="empty">Years will appear after photo metadata loads.</div>';
+          let cb0 = els.yearPicker.querySelector("#allYearsCb");
+          if (cb0)
+            cb0.onchange = (e) => {
+              state.allYears = e.target.checked;
+              rebuildMarkers();
+              update();
+            };
+          return;
+        }
+        els.yearPicker.innerHTML =
+          allHtml +
+          years
+            .map(
+              (y) =>
+                `<label class="yearChip"><input type="checkbox" value="${y}" ${!state.allYears && (state.selectedYears.has(y) || state.selectedYears.has(Number(y))) ? "checked" : ""}>${y}</label>`,
+            )
+            .join("");
+        els.yearPicker.querySelector("#allYearsCb").onchange = (e) => {
+          state.allYears = e.target.checked;
+          rebuildMarkers();
+          update();
+        };
+        els.yearPicker
+          .querySelectorAll("input[type=checkbox]:not(#allYearsCb)")
+          .forEach(
+            (cb) =>
+              (cb.onchange = () => {
+                let val = cb.value === "Unknown" ? "Unknown" : Number(cb.value);
+                if (cb.checked) {
+                  state.allYears = false;
+                  state.selectedYears.add(val);
+                } else state.selectedYears.delete(val);
+                rebuildMarkers();
+                update();
+              }),
+          );
+      }
+      function folders() {
+        const m = new Map();
+        filtered(true).forEach((p) =>
+          m.set(p.folder, (m.get(p.folder) || 0) + 1),
+        );
+        return [...m.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+      }
+      function yearAllowed(p) {
+        if (state.allYears) return true;
+        let y = photoYear(p);
+        return state.selectedYears.has(y);
+      }
+      function filtered(ignoreFolder = false) {
+        const q = els.search.value.trim().toLowerCase(),
+          g = els.gpsFilter.value;
+        let a = state.photos.filter((p) => {
+          if (!yearAllowed(p)) return false;
+          if (
+            !ignoreFolder &&
+            state.activeFolder !== "ALL" &&
+            p.folder !== state.activeFolder
+          )
+            return false;
+          if (g === "mapped" && !p.hasGps) return false;
+          if (g === "missing" && p.hasGps) return false;
+          if (g === "nearby" && !state.nearbyIds.has(p.id)) return false;
+          if (
+            q &&
+            !(
+              p.name.toLowerCase().includes(q) ||
+              p.path.toLowerCase().includes(q)
+            )
+          )
+            return false;
+          return true;
+        });
+        let s = els.sort.value;
+        a.sort((a, b) =>
+          s === "name"
+            ? a.name.localeCompare(b.name)
+            : s === "date"
+              ? String(b.dateTaken || "").localeCompare(
+                  String(a.dateTaken || ""),
+                )
+              : s === "gps"
+                ? Number(b.hasGps) - Number(a.hasGps) ||
+                  a.path.localeCompare(b.path)
+                : s === "distance"
+                  ? (a.distanceFromAddress ?? Infinity) -
+                    (b.distanceFromAddress ?? Infinity)
+                  : a.path.localeCompare(b.path),
+        );
+        return a;
+      }
+      function updateStats() {
+        let visible = filtered(true),
+          t = visible.length,
+          m = visible.filter((p) => p.hasGps).length;
+        els.total.textContent = t;
+        els.mapped.textContent = m;
+        els.missing.textContent = t - m;
+        els.cacheHits.textContent = state.cacheHits || state.preloaded;
+        els.mapMsg.textContent = m
+          ? `${m} mapped photos shown. ${state.address ? state.nearbyList.length + " near searched address." : "Year filter active."}`
+          : "No mapped photos visible.";
+      }
+      function renderFolders() {
+        let f = folders();
+        if (!f.length) {
+          els.folderTree.innerHTML =
+            '<div class="empty">Folders will appear after photos load.</div>';
+          return;
+        }
+        els.folderTree.innerHTML =
+          `<div class="fchip ${state.activeFolder === "ALL" ? "active" : ""}" data-folder="ALL"><span>All folders</span><small>${filtered(true).length}</small></div>` +
+          f
+            .map(
+              ([n, c]) =>
+                `<div class="fchip ${state.activeFolder === n ? "active" : ""}" data-folder="${esc(n)}"><span>${esc(n)}</span><small>${c}</small></div>`,
+            )
+            .join("");
+        els.folderTree.querySelectorAll(".fchip").forEach(
+          (x) =>
+            (x.onclick = () => {
+              state.activeFolder = x.dataset.folder;
+              update();
+            }),
+        );
+      }
+      function renderList() {
+        let a = filtered();
+        if (!state.photos.length) {
+          els.list.innerHTML =
+            '<div class="empty">No cached photos yet. Select a folder to build the cache.</div>';
+          return;
+        }
+        if (!a.length) {
+          els.list.innerHTML =
+            '<div class="empty">No photos match the current filters or selected years.</div>';
+          return;
+        }
+        els.list.innerHTML = a
+          .map(
+            (p) =>
+              `<article class="card ${state.activeId === p.id ? "active" : ""}" data-id="${p.id}"><img class="thumb" src="${photoImg(p)}" loading="lazy"><div class="meta"><div class="name">${esc(p.name)}</div><div class="path">${esc(p.path)}</div><div class="coord ${p.hasGps ? "" : "nogps"}">${p.hasGps ? `${coord(p.latitude)}, ${coord(p.longitude)}` : "No GPS metadata found"}</div>${Number.isFinite(p.distanceFromAddress) ? `<div class="date">${formatDistance(p.distanceFromAddress)} from searched address</div>` : ""}${p.dateTaken ? `<div class="date">${esc(p.dateTaken)}</div>` : ""}<div class="date ${p.liveUrl ? "live" : "cached"}">${p.liveUrl ? "Full file currently loaded" : "Cached preview / metadata"}</div></div></article>`,
+          )
+          .join("");
+        els.list
+          .querySelectorAll(".card")
+          .forEach((c) => (c.onclick = () => select(c.dataset.id, true)));
+      }
+      function renderFilm() {
+        let a = filtered().filter((p) => p.hasGps);
+        els.film.innerHTML = a.length
+          ? a
+              .map(
+                (p) =>
+                  `<div class="film ${state.activeId === p.id ? "active" : ""}" data-id="${p.id}"><img src="${photoImg(p)}" loading="lazy"><div>${esc(p.name)}</div></div>`,
+              )
+              .join("")
+          : '<div class="empty">Mapped cached previews will appear here.</div>';
+        els.film
+          .querySelectorAll(".film")
+          .forEach((c) => (c.onclick = () => select(c.dataset.id, true)));
+      }
+      function update() {
+        updateStats();
+        renderYears();
+        renderFolders();
+        renderList();
+        renderFilm();
+      }
+      function select(id, open = true) {
+        state.activeId = id;
+        update();
+        const p = state.photos.find((x) => x.id === id);
+        if (!p) return;
+        if (p.hasGps) {
+          let m = state.markers.get(id);
+          map.setView(
+            [p.latitude, p.longitude],
+            Math.min(Math.max(map.getZoom(), 17), 18),
+            { animate: true },
+          );
+          if (m && open) m.openPopup();
+        } else openViewer(id);
+      }
+      function fitAll() {
+        let a = filtered(true).filter((p) => p.hasGps);
+        if (a.length)
+          map.fitBounds(
+            L.latLngBounds(a.map((p) => [p.latitude, p.longitude])).pad(0.18),
+            { maxZoom: 17 },
+          );
+      }
+      function openViewer(id) {
+        let p = state.photos.find((x) => x.id === id);
+        if (!p) return;
+        els.viewerImg.src = photoImg(p);
+        els.caption.innerHTML = `<b>${esc(p.name)}</b><br>${esc(p.path)}${p.hasGps ? `<br>${coord(p.latitude)}, ${coord(p.longitude)}` : "<br>No GPS metadata found"}${Number.isFinite(p.distanceFromAddress) ? `<br>${formatDistance(p.distanceFromAddress)} from searched address` : ""}<br>${p.liveUrl ? "Full-resolution file is currently accessible." : "Showing cached low-resolution preview. Select the folder again for full-resolution access."}`;
+        els.viewer.classList.add("open");
+      }
+      window.__openViewer = openViewer;
+      function closeViewer() {
+        els.viewer.classList.remove("open");
+        els.viewerImg.removeAttribute("src");
+      }
+      function clusterList(c) {
+        let photos = (c.getAllChildMarkers ? c.getAllChildMarkers() : [])
+          .map((m) => state.photos.find((p) => p.id === m.photoId))
+          .filter(Boolean)
+          .sort(
+            (a, b) =>
+              (a.distanceFromAddress ?? Infinity) -
+                (b.distanceFromAddress ?? Infinity) ||
+              a.path.localeCompare(b.path),
+          );
+        if (!photos.length) return;
+        let rows = photos
+          .map(
+            (p) =>
+              `<div class="cluster-row" onclick="window.__clusterSelect('${p.id}')"><img src="${photoImg(p)}"><div><b>${esc(p.name)}</b><small>${esc(p.folder)}</small><small>${Number.isFinite(p.distanceFromAddress) ? formatDistance(p.distanceFromAddress) + " from address" : coord(p.latitude) + ", " + coord(p.longitude)}</small></div></div>`,
+          )
+          .join("");
+        L.popup({ maxWidth: 340, autoPan: true })
+          .setLatLng(c.getLatLng())
+          .setContent(
+            `<div class="cluster-popup"><h3>${photos.length} photos in this cluster</h3><div class="cluster-note">Select a photo to zoom to its exact location.</div>${rows}</div>`,
+          )
+          .openOn(map);
+      }
+      window.__clusterSelect = (id) => {
+        select(id, true);
+        openViewer(id);
+      };
+      cluster.on("clusterclick", (e) => clusterList(e.layer));
+      els.folder.onchange = (e) => process(e.target.files);
+      els.search.oninput = () => {
+        rebuildMarkers();
+        update();
+      };
+      els.sort.onchange = update;
+      els.gpsFilter.onchange = () => {
+        rebuildMarkers();
+        update();
+      };
+      els.clearFilters.onclick = () => {
+        els.search.value = "";
+        els.sort.value = "path";
+        els.gpsFilter.value = "all";
+        state.activeFolder = "ALL";
+        state.allYears = false;
+        state.selectedYears = new Set([currentYear, currentYear - 1]);
+        rebuildMarkers();
+        update();
+        status("Filters cleared. Current year and last year selected.");
+      };
+      els.fitTop.onclick = fitAll;
+      els.clearSel.onclick = () => {
+        state.activeId = null;
+        update();
+        map.closePopup();
+      };
+      els.clearCache.onclick = async () => {
+        const ok = confirm(
+          "Clear all cached photos, low-resolution previews, GPS data, and metadata?\n\nThis cannot be undone.",
+        );
+        if (!ok) return;
+        await cacheClear();
+        resetLive();
+        alert("Photo cache cleared successfully.");
+        status(
+          "Cache cleared. Select a folder to rebuild cached GPS data and low-res previews.",
+        );
+      };
+      els.clusterToggle.onchange = rebuildMarkers;
+      els.viewerClose.onclick = closeViewer;
+      els.viewer.onclick = (e) => {
+        if (e.target === els.viewer) closeViewer();
+      };
+      document.onkeydown = (e) => {
+        if (e.key === "Escape") closeViewer();
+      };
+      els.addressSearchBtn.onclick = searchAddress;
+      els.addressInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") searchAddress();
+      });
+      els.showNearbyOnly.onclick = () => {
+        if (!state.address) {
+          status("Search an address first.", true);
+          return;
+        }
+        els.gpsFilter.value = "nearby";
+        els.sort.value = "distance";
+        rebuildMarkers();
+        update();
+      };
+      els.clearAddressSearch.onclick = () => clearAddress(true);
+      els.radiusSelect.onchange = () => {
+        if (state.address) {
+          state.address.radius = Number(els.radiusSelect.value);
+          applyAddressSearch();
+        }
+      };
+      els.streetBtn.onclick = () => setBasemap("street");
+      els.satBtn.onclick = () => setBasemap("satellite");
+      ["dragenter", "dragover"].forEach((ev) =>
+        els.drop.addEventListener(ev, (e) => {
+          e.preventDefault();
+          els.drop.classList.add("drag");
+        }),
+      );
+      ["dragleave", "drop"].forEach((ev) =>
+        els.drop.addEventListener(ev, (e) => {
+          e.preventDefault();
+          els.drop.classList.remove("drag");
+        }),
+      );
+      els.drop.addEventListener("drop", (e) => {
+        if (e.dataTransfer.files?.length) process(e.dataTransfer.files);
+      });
+      els.debugFile.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        e.target.value = "";
+        console.clear();
+        console.log(
+          "%c=== METADATA DEBUG: " + file.name + " ===",
+          "font-weight:bold;font-size:14px",
+        );
+        console.log(
+          "File size:",
+          file.size,
+          "bytes (" + (file.size / 1048576).toFixed(2) + " MB), lastModified:",
+          new Date(file.lastModified).toString(),
+        );
+        let report = [
+          `File: ${file.name}`,
+          `Size: ${(file.size / 1048576).toFixed(2)} MB`,
+        ];
+        try {
+          const tags = await ExifReader.load(file, {
+            expanded: true,
+            includeOffsets: true,
+          });
+          console.log("Full expanded tags object:", tags);
+          console.log("GPS group:", tags.gps);
+          console.log("Exif group:", tags.exif);
+          console.log("File/metadataRange:", tags.file, tags.metadataRange);
+          const hasGps =
+            tags.gps &&
+            Number.isFinite(tags.gps.Latitude) &&
+            Number.isFinite(tags.gps.Longitude);
+          report.push(`ExifReader GPS group present: ${!!tags.gps}`);
+          report.push(
+            `ExifReader Latitude/Longitude found: ${hasGps ? tags.gps.Latitude + ", " + tags.gps.Longitude : "NO"}`,
+          );
+          const exifKeys = tags.exif ? Object.keys(tags.exif) : [];
+          const gpsLikeKeys = exifKeys.filter((k) => /gps/i.test(k));
+          report.push(
+            `Exif tag keys containing "GPS": ${gpsLikeKeys.length ? gpsLikeKeys.join(", ") : "none found"}`,
+          );
+          report.push(`Total Exif tags read: ${exifKeys.length}`);
+          if (tags.metadataRange)
+            report.push(
+              `Metadata range end byte: ${tags.metadataRange.end} of ${file.size} (complete: ${tags.metadataRange.complete})`,
+            );
+        } catch (err) {
+          console.error("ExifReader threw an error:", err);
+          report.push(`ExifReader ERROR: ${err.message}`);
+        }
+        try {
+          const buf = await file.arrayBuffer();
+          const bytes = new Uint8Array(buf);
+          let text = "";
+          const step = 1;
+          for (let i = 0; i < bytes.length; i += step)
+            text += String.fromCharCode(bytes[i] < 128 ? bytes[i] : 46);
+          const markers = [
+            "GPSLatitude",
+            "GPSInfo",
+            "GPS\0",
+            "Exif\0\0",
+            "GPSLongitude",
+          ];
+          const found = markers.filter((m) => text.indexOf(m) !== -1);
+          console.log(
+            "Raw byte scan for GPS-related ASCII markers found:",
+            found.length ? found : "NONE FOUND IN RAW FILE BYTES",
+          );
+          report.push(
+            `Raw byte scan found markers: ${found.length ? found.join(", ") : "NONE — GPS data is not present in this file at all"}`,
+          );
+        } catch (err) {
+          console.error("Raw byte scan failed:", err);
+        }
+        const summary = report.join("\n");
+        console.log("%cSUMMARY:\n" + summary, "color:#0a6;font-weight:bold");
+        alert(
+          "Metadata debug summary (full details in browser console, F12):\n\n" +
+            summary,
+        );
+      };
+      preloadCachedLibrary();
+    </script>
+    <div id="site-footer-mount"></div>
+    <script>
+      window.SITE_BASE = "../";
+    </script>
+    <script>
+      window.PAGE_TAGLINE = "Explore photos by GPS location";
+    </script>
+    <script src="../script.js"></script>
+  </body>
+</html>
