@@ -89,4 +89,20 @@
     <priority>0.9</priority>
   </url>
 
+  <!-- Image Compressor -->
+  <url>
+    <loc>https://simplertools.net/tools/image-compressor.html</loc>
+    <lastmod>2026-07-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Word Counter -->
+  <url>
+    <loc>https://simplertools.net/tools/word-counter.html</loc>
+    <lastmod>2026-07-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
 </urlset>

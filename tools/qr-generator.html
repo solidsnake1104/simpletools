@@ -76,74 +76,7 @@
 </head>
 
 <body>
-  <a class="skip-link" href="#main">Skip to content</a>
-
-  <header class="site-header">
-    <div class="container">
-      <div class="header-left">
-        <button class="icon-btn nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="siteNav">
-          <svg class="icon-burger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
-          <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
-        </button>
-
-        <a href="../index.html" class="logo-link">
-          <img src="../logo_transparent.png" alt="SimplerTools logo" class="site-logo" />
-        </a>
-        <p class="tagline">Turn any text or URL into a QR code</p>
-      </div>
-
-      <div class="header-right">
-        <button class="icon-btn theme-toggle" type="button" aria-label="Toggle dark mode">
-          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <div class="nav-overlay"></div>
-  <nav class="nav-drawer" id="siteNav" aria-label="Site navigation">
-    <div class="nav-drawer-header">
-      <strong>Menu</strong>
-      <button class="icon-btn nav-drawer-close" type="button" aria-label="Close menu">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
-      </button>
-    </div>
-
-    <p class="nav-section-label">Tools</p>
-    <ul class="nav-list">
-      <li><a class="nav-link" data-category="audio" href="mp3-trimmer.html"><span class="nav-dot"></span>Audio &amp; MP3 Trimmer</a></li>
-      <li><a class="nav-link" data-category="image" href="image-metadata-cleaner.html"><span class="nav-dot"></span>Image Metadata Cleaner</a></li>
-      <li><a class="nav-link" data-category="image" href="image-resizer.html"><span class="nav-dot"></span>Image Resizer</a></li>
-      <li><a class="nav-link" data-category="pdf" href="pdf-joiner.html"><span class="nav-dot"></span>PDF Joiner</a></li>
-      <li><a class="nav-link" data-category="qr" href="qr-generator.html"><span class="nav-dot"></span>QR Code Generator</a></li>
-      <li><a class="nav-link" data-category="video" href="video-audio-extractor.html"><span class="nav-dot"></span>Video Audio Extractor</a></li>
-    </ul>
-
-    <p class="nav-section-label">Site</p>
-    <ul class="nav-list">
-      <li><a class="nav-link" href="../about.html">About</a></li>
-      <li><a class="nav-link" href="../contact.html">Contact</a></li>
-      <li><a class="nav-link" href="../privacy.html">Privacy Policy</a></li>
-    </ul>
-
-    <div class="nav-drawer-footer">
-      <div class="nav-theme-row">
-        <span>Appearance</span>
-        <div class="segmented" role="group" aria-label="Theme">
-          <button type="button" data-theme-option="light">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-            Light
-          </button>
-          <button type="button" data-theme-option="auto">Auto</button>
-          <button type="button" data-theme-option="dark">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
-            Dark
-          </button>
-        </div>
-      </div>
-    </div>
-  </nav>
+  <!-- Header, nav drawer, and footer are injected by script.js -->
 
   <main class="tool-page container" id="main">
     <h1 class="tool-title">QR Code Generator</h1>
@@ -187,27 +120,17 @@
       </div>
     </section>
 
-    <section class="tool-section" style="margin-top:3rem;padding-top:2rem;border-top:1px solid rgba(255,255,255,0.06);">
+    <section class="tool-section" style="margin-top:3rem;padding-top:2rem;border-top:1px solid var(--border);">
       <h3>About This Tool</h3>
       <p>Generate QR codes directly in your browser — no files are uploaded to any server, and nothing you type ever leaves your device. Great for sharing links, Wi‑Fi details, contact info, or any short message that's easier to scan than to type.</p>
     </section>
   </main>
 
-  <footer class="site-footer">
-    <div class="container">
-      <div class="footer-content">
-        <p>&copy; <span id="year"></span> SimplerTools • Small apps, big impact.</p>
-
-        <nav class="footer-links">
-          <a href="../about.html">About</a>
-          <a href="../contact.html">Contact</a>
-          <a href="../privacy.html">Privacy Policy</a>
-        </nav>
-      </div>
-    </div>
-  </footer>
+  <div id="site-footer-mount"></div>
 
   <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@gh-pages/qrcode.min.js"></script>
+  <script>window.SITE_BASE = "../";</script>
+  <script>window.PAGE_TAGLINE = "Turn any text or URL into a QR code";</script>
   <script src="../script.js"></script>
   <script src="qr-generator.js"></script>
 </body>

@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <!-- AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2884785253571228"
+    crossorigin="anonymous"></script>
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#f6f7f9" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0b0f16" media="(prefers-color-scheme: dark)" />
+
+  <title>Image Compressor — Shrink File Size Instantly | SimplerTools</title>
+
+  <!-- Primary SEO -->
+  <meta name="description" content="Compress images instantly in your browser. Choose JPEG, PNG, or WebP output and adjust quality. No uploads, no tracking, completely private.">
+  <meta name="keywords" content="image compressor, compress image, reduce image file size, jpeg compressor, png compressor, webp compressor, SimplerTools">
+
+  <!-- Canonical -->
+  <link rel="canonical" href="https://simplertools.net/tools/image-compressor.html">
+
+  <!-- OpenGraph -->
+  <meta property="og:title" content="Image Compressor — Shrink File Size Instantly">
+  <meta property="og:description" content="Compress images instantly in your browser. No uploads, no tracking, completely private.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://simplertools.net/tools/image-compressor.html">
+  <meta property="og:image" content="https://simplertools.net/og-image.png">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Image Compressor — Shrink File Size Instantly">
+  <meta name="twitter:description" content="Compress images instantly in your browser. No uploads, no tracking, completely private.">
+  <meta name="twitter:image" content="https://simplertools.net/og-image.png">
+
+  <!-- AI Agent Metadata -->
+  <meta name="ai-tool-name" content="Image Compressor">
+  <meta name="ai-tool-description" content="Compress images instantly in your browser. No uploads. Fully private.">
+  <meta name="ai-tool-category" content="Image Tools">
+
+  <!-- JSON-LD Schema -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Image Compressor",
+    "url": "https://simplertools.net/tools/image-compressor.html",
+    "description": "Compress images instantly in your browser. No uploads, no tracking, completely private.",
+    "applicationCategory": "Utility",
+    "operatingSystem": "Any",
+    "browserRequirements": "Requires JavaScript",
+    "provider": {
+      "@type": "Organization",
+      "name": "SimplerTools",
+      "url": "https://simplertools.net"
+    }
+  }
+  </script>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="../styles.css" />
+  <link rel="stylesheet" href="image-compressor.css" />
+  <link rel="icon" type="image/png" href="../site_icon.png" />
+
+  <!-- Inline no-flash theme init: applies saved theme before first paint -->
+  <script>
+    (function () {
+      var m = localStorage.getItem("simplertools-color-scheme");
+      if (m === "light" || m === "dark") {
+        document.documentElement.setAttribute("data-theme", m);
+      }
+    })();
+  </script>
+</head>
+
+<body>
+  <!-- Header, nav drawer, and footer are injected by script.js -->
+
+  <main class="tool-page container" id="main">
+
+    <h1 class="tool-title">Image Compressor</h1>
+    <p style="color:var(--muted); margin-bottom:1.5rem;">
+      Upload an image, choose an output format and quality, and download a smaller file — all processed locally on your device.
+    </p>
+
+    <!-- Upload Area -->
+    <div class="upload-area" id="uploadAreaCompress">
+      <p><strong>Click to upload or drag an image here</strong></p>
+      <p style="color:var(--muted);font-size:0.9rem;">Supported: JPG, PNG, WebP, GIF, and most other image types</p>
+      <input type="file" id="fileInputCompress" class="file-input" accept="image/*" />
+    </div>
+
+    <!-- Compression Controls -->
+    <div id="compressControls" class="compress-controls" style="display:none;">
+
+      <h3>Compression Options</h3>
+
+      <div class="glass-input-row">
+        <div class="glass-input">
+          <label for="formatSelect">Output format</label>
+          <select id="formatSelect">
+            <option value="image/jpeg">JPEG</option>
+            <option value="image/webp">WebP</option>
+            <option value="image/png">PNG (lossless)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="quality-row" id="qualityRow">
+        <label for="qualitySlider" style="white-space:nowrap;">Quality</label>
+        <input type="range" id="qualitySlider" min="10" max="100" step="5" value="80">
+        <span class="quality-value" id="qualityValue">80%</span>
+      </div>
+
+      <button class="glass-btn" id="compressBtn">Compress Image</button>
+    </div>
+
+    <!-- Results -->
+    <div id="compressResults" style="display:none; margin-top:2rem;">
+      <h3>Result</h3>
+
+      <div class="compare-grid">
+        <div class="compare-card">
+          <h4>Original</h4>
+          <img id="originalPreview" alt="Original image">
+          <div><span class="size-badge" id="originalSizeBadge"></span></div>
+        </div>
+
+        <div class="compare-card">
+          <h4>Compressed</h4>
+          <img id="compressedPreview" alt="Compressed image">
+          <div><span class="size-badge" id="compressedSizeBadge"></span></div>
+        </div>
+      </div>
+
+      <p class="savings-line" id="savingsLine"></p>
+
+      <div style="text-align:center;">
+        <button class="glass-btn" id="downloadBtn" disabled>Download Compressed Image</button>
+      </div>
+    </div>
+
+  </main>
+
+  <div id="site-footer-mount"></div>
+
+  <script>window.SITE_BASE = "../";</script>
+  <script>window.PAGE_TAGLINE = "Shrink image file size instantly";</script>
+  <script src="../script.js"></script>
+  <script src="image-compressor.js"></script>
+
+</body>
+</html>

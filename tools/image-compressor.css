@@ -1,0 +1,93 @@
+/* Image Compressor */
+
+.compress-controls {
+  margin-top: 1.5rem;
+}
+
+.quality-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 0.75rem 0 1.25rem;
+}
+
+.quality-row input[type="range"] {
+  flex: 1;
+  accent-color: var(--accent);
+}
+
+.quality-value {
+  min-width: 3.2rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.compare-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+@media (max-width: 640px) {
+  .compare-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.compare-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  padding: 1rem;
+  text-align: center;
+}
+
+.compare-card h4 {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.compare-card img {
+  max-width: 100%;
+  max-height: 260px;
+  border-radius: var(--radius-sm);
+  margin: 0 auto;
+}
+
+.size-badge {
+  display: inline-block;
+  margin-top: 0.75rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  background: var(--surface-hover);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.size-badge.is-smaller {
+  color: var(--cat-qr);
+  background: color-mix(in srgb, var(--cat-qr) 16%, transparent);
+}
+
+.size-badge.is-larger {
+  color: var(--danger);
+  background: var(--danger-surface);
+}
+
+.savings-line {
+  margin-top: 1.25rem;
+  font-size: 0.95rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+.savings-line strong {
+  color: var(--text);
+}

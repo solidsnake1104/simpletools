@@ -1,4 +1,228 @@
 // -----------------------------------------------------------
+// Shared Utilities — reusable helpers for individual tool scripts
+// -----------------------------------------------------------
+window.SimplerTools = window.SimplerTools || {};
+
+// Wires up an upload-area + hidden file input with click / drag-drop /
+// change handling, and calls onFile(file) whenever a file is provided.
+// Tool-specific JS files should use this instead of re-implementing the
+// same click/dragover/dragleave/drop listeners each time.
+SimplerTools.bindUploadArea = function (options) {
+  var area = document.getElementById(options.areaId);
+  var input = document.getElementById(options.inputId);
+  var onFile = options.onFile || function () {};
+
+  if (!area || !input) return null;
+
+  area.addEventListener("click", function () {
+    input.click();
+  });
+
+  area.addEventListener("dragover", function (e) {
+    e.preventDefault();
+    area.classList.add("dragover");
+  });
+
+  area.addEventListener("dragleave", function () {
+    area.classList.remove("dragover");
+  });
+
+  area.addEventListener("drop", function (e) {
+    e.preventDefault();
+    area.classList.remove("dragover");
+    var file = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (file) onFile(file);
+  });
+
+  input.addEventListener("change", function () {
+    var file = input.files && input.files[0];
+    if (file) onFile(file);
+  });
+
+  return { area: area, input: input };
+};
+
+// Human-readable file size, e.g. 184320 -> "180 KB"
+SimplerTools.formatBytes = function (bytes) {
+  if (!bytes && bytes !== 0) return "";
+  if (bytes < 1024) return bytes + " B";
+  var units = ["KB", "MB", "GB"];
+  var value = bytes;
+  var i = -1;
+  do {
+    value /= 1024;
+    i++;
+  } while (value >= 1024 && i < units.length - 1);
+  return value.toFixed(value < 10 ? 1 : 0) + " " + units[i];
+};
+
+// -----------------------------------------------------------
+// Global Layout — single source of truth for header, nav drawer,
+// and footer. Add/remove/reorder tools or site links here ONLY;
+// every page's header/menu/footer is generated from this.
+// -----------------------------------------------------------
+(function () {
+  var TOOLS = [
+    { name: "Audio &amp; MP3 Trimmer", slug: "mp3-trimmer.html", category: "audio" },
+    { name: "Image Compressor", slug: "image-compressor.html", category: "image" },
+    { name: "Image Metadata Cleaner", slug: "image-metadata-cleaner.html", category: "image" },
+    { name: "Image Resizer", slug: "image-resizer.html", category: "image" },
+    { name: "PDF Joiner", slug: "pdf-joiner.html", category: "pdf" },
+    { name: "QR Code Generator", slug: "qr-generator.html", category: "qr" },
+    { name: "Video Audio Extractor", slug: "video-audio-extractor.html", category: "video" },
+    { name: "Word &amp; Character Counter", slug: "word-counter.html", category: "text" }
+  ];
+
+  var SITE_LINKS = [
+    { name: "About", slug: "about.html" },
+    { name: "Contact", slug: "contact.html" },
+    { name: "Privacy Policy", slug: "privacy.html" }
+  ];
+
+  // Two small per-page globals, set by an inline <script> before script.js
+  // loads:
+  //   window.SITE_BASE     "" on root-level pages, "../" inside /tools/.
+  //   window.PAGE_TAGLINE  short line shown next to the logo in the header.
+  var base = typeof window.SITE_BASE === "string" ? window.SITE_BASE : "";
+  var tagline = typeof window.PAGE_TAGLINE === "string" ? window.PAGE_TAGLINE : "Select a tool to get started";
+  var atRoot = base === "";
+
+  function toolHref(slug) {
+    return atRoot ? "tools/" + slug : slug;
+  }
+  function siteHref(slug) {
+    return base + slug;
+  }
+
+  function navLinksHTML(items, hrefFn) {
+    return items
+      .map(function (item) {
+        var dot = item.category ? '<span class="nav-dot"></span>' : "";
+        var cat = item.category ? ' data-category="' + item.category + '"' : "";
+        return (
+          '<li><a class="nav-link"' +
+          cat +
+          ' href="' +
+          hrefFn(item.slug) +
+          '">' +
+          dot +
+          item.name +
+          "</a></li>"
+        );
+      })
+      .join("");
+  }
+
+  function buildHeaderHTML() {
+    return (
+      '<a class="skip-link" href="#main">Skip to content</a>' +
+      '<header class="site-header">' +
+      '<div class="container">' +
+      '<div class="header-left">' +
+      '<button class="icon-btn nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="siteNav">' +
+      '<svg class="icon-burger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>' +
+      '<svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>' +
+      "</button>" +
+      '<a href="' +
+      base +
+      'index.html" class="logo-link">' +
+      '<img src="' +
+      base +
+      'logo_transparent.png" alt="SimplerTools logo" class="site-logo" />' +
+      "</a>" +
+      '<p class="tagline">' +
+      tagline +
+      "</p>" +
+      "</div>" +
+      '<div class="header-right">' +
+      '<button class="icon-btn theme-toggle" type="button" aria-label="Toggle dark mode">' +
+      '<svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>' +
+      '<svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>' +
+      "</button>" +
+      "</div>" +
+      "</div>" +
+      "</header>"
+    );
+  }
+
+  function buildDrawerHTML() {
+    return (
+      '<div class="nav-overlay"></div>' +
+      '<nav class="nav-drawer" id="siteNav" aria-label="Site navigation">' +
+      '<div class="nav-drawer-header">' +
+      "<strong>Menu</strong>" +
+      '<button class="icon-btn nav-drawer-close" type="button" aria-label="Close menu">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>' +
+      "</button>" +
+      "</div>" +
+      '<p class="nav-section-label">Tools</p>' +
+      '<ul class="nav-list">' +
+      navLinksHTML(TOOLS, toolHref) +
+      "</ul>" +
+      '<p class="nav-section-label">Site</p>' +
+      '<ul class="nav-list">' +
+      navLinksHTML(SITE_LINKS, siteHref) +
+      "</ul>" +
+      '<div class="nav-drawer-footer">' +
+      '<div class="nav-theme-row">' +
+      "<span>Appearance</span>" +
+      '<div class="segmented" role="group" aria-label="Theme">' +
+      '<button type="button" data-theme-option="light">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>' +
+      "Light</button>" +
+      '<button type="button" data-theme-option="auto">Auto</button>' +
+      '<button type="button" data-theme-option="dark">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>' +
+      "Dark</button>" +
+      "</div>" +
+      "</div>" +
+      "</div>" +
+      "</nav>"
+    );
+  }
+
+  function buildFooterHTML() {
+    return (
+      '<footer class="site-footer">' +
+      '<div class="container">' +
+      '<div class="footer-content">' +
+      '<p>&copy; <span id="year"></span> SimplerTools &bull; Small apps, big impact.</p>' +
+      '<nav class="footer-links">' +
+      SITE_LINKS.map(function (item) {
+        return '<a href="' + siteHref(item.slug) + '">' + item.name + "</a>";
+      }).join("") +
+      "</nav>" +
+      "</div>" +
+      "</div>" +
+      "</footer>"
+    );
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    // Header + skip link + nav drawer: prepend as the first things in <body>.
+    if (!document.querySelector(".site-header")) {
+      var headerHolder = document.createElement("div");
+      headerHolder.innerHTML = buildHeaderHTML() + buildDrawerHTML();
+      while (headerHolder.firstChild) {
+        document.body.insertBefore(headerHolder.firstChild, document.body.firstChild);
+      }
+    }
+
+    // Footer: fill in the mount point left in each page's markup, right
+    // where the visible footer should sit (after the page content).
+    var footerMount = document.getElementById("site-footer-mount");
+    if (footerMount) {
+      var footerHolder = document.createElement("div");
+      footerHolder.innerHTML = buildFooterHTML();
+      footerMount.replaceWith(footerHolder.firstChild);
+    }
+
+    var year = document.getElementById("year");
+    if (year) year.textContent = new Date().getFullYear();
+  });
+})();
+
+// -----------------------------------------------------------
 // Theme Engine — Light / Dark / Auto (system), manual override
 // -----------------------------------------------------------
 (function () {

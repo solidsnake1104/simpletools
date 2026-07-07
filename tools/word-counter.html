@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <!-- AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2884785253571228"
+    crossorigin="anonymous"></script>
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#f6f7f9" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0b0f16" media="(prefers-color-scheme: dark)" />
+
+  <title>Word & Character Counter — Free Online Text Tool | SimplerTools</title>
+
+  <!-- Primary SEO -->
+  <meta name="description" content="Count words, characters, sentences, and paragraphs instantly in your browser. No uploads, no tracking, completely private.">
+  <meta name="keywords" content="word counter, character counter, count words, character count, text counter, reading time calculator, SimplerTools">
+
+  <!-- Canonical -->
+  <link rel="canonical" href="https://simplertools.net/tools/word-counter.html">
+
+  <!-- OpenGraph -->
+  <meta property="og:title" content="Word & Character Counter — Free Online Text Tool">
+  <meta property="og:description" content="Count words, characters, sentences, and paragraphs instantly in your browser. No uploads, no tracking.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://simplertools.net/tools/word-counter.html">
+  <meta property="og:image" content="https://simplertools.net/og-word-counter.png">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Word & Character Counter — Free Online Text Tool">
+  <meta name="twitter:description" content="Count words, characters, sentences, and paragraphs instantly in your browser.">
+  <meta name="twitter:image" content="https://simplertools.net/og-word-counter.png">
+
+  <!-- AI Crawler Metadata -->
+  <meta name="ai-tool" content="Word & Character Counter">
+  <meta name="ai-category" content="Text Utility">
+  <meta name="ai-description" content="A fast, browser-based word and character counter that runs entirely on-device with no uploads.">
+  <meta name="ai-content" content="word count, character count, text, utility, browser-based">
+
+  <!-- Schema.org JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Word & Character Counter",
+    "url": "https://simplertools.net/tools/word-counter.html",
+    "description": "Count words, characters, sentences, and paragraphs instantly in your browser. No uploads, no tracking, fully private.",
+    "applicationCategory": "Utility",
+    "operatingSystem": "All",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "SimplerTools",
+      "url": "https://simplertools.net"
+    }
+  }
+  </script>
+
+  <link rel="stylesheet" href="../styles.css" />
+  <link rel="stylesheet" href="word-counter.css" />
+  <link rel="icon" type="image/png" href="../site_icon.png" />
+  <link rel="shortcut icon" type="image/png" href="../site_icon.png" />
+  <link rel="apple-touch-icon" href="../site_icon.png" />
+
+  <!-- Inline no-flash theme init: applies saved theme before first paint -->
+  <script>
+    (function () {
+      var m = localStorage.getItem("simplertools-color-scheme");
+      if (m === "light" || m === "dark") {
+        document.documentElement.setAttribute("data-theme", m);
+      }
+    })();
+  </script>
+</head>
+
+<body>
+  <!-- Header, nav drawer, and footer are injected by script.js -->
+
+  <main class="tool-page container" id="main">
+    <h1 class="tool-title">Word &amp; Character Counter</h1>
+    <p style="color:var(--muted); margin-bottom:1.5rem;">
+      Paste or type your text below to get an instant word count, character count, and more — nothing you type ever leaves your browser.
+    </p>
+
+    <section class="tool-section">
+      <textarea id="wcTextarea" class="wc-textarea" placeholder="Start typing or paste your text here…"></textarea>
+
+      <div class="wc-toolbar">
+        <button class="glass-btn" id="wcCopyBtn">Copy Text</button>
+        <button class="glass-btn" id="wcClearBtn" style="background:transparent;">Clear</button>
+
+        <div class="wc-limit-row">
+          <label for="wcLimitInput">Character limit</label>
+          <input type="number" id="wcLimitInput" min="0" placeholder="none">
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="wcWords">0</div>
+          <div class="stat-label">Words</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="wcChars">0</div>
+          <div class="stat-label">Characters</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="wcCharsNoSpace">0</div>
+          <div class="stat-label">No Spaces</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="wcSentences">0</div>
+          <div class="stat-label">Sentences</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="wcParagraphs">0</div>
+          <div class="stat-label">Paragraphs</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="wcReadingTime">0 min</div>
+          <div class="stat-label">Reading Time</div>
+        </div>
+      </div>
+
+      <p class="wc-secondary-line">Reading time is estimated at 200 words per minute. Set a character limit above to get a warning when you go over (handy for tweets, meta descriptions, or SMS).</p>
+    </section>
+
+    <section class="tool-section" style="margin-top:3rem;padding-top:2rem;border-top:1px solid var(--border);">
+      <h3>About This Tool</h3>
+      <p>Count words, characters, sentences, and paragraphs directly in your browser — no files are uploaded to any server, and nothing you type ever leaves your device.</p>
+    </section>
+  </main>
+
+  <div id="site-footer-mount"></div>
+
+  <script>window.SITE_BASE = "../";</script>
+  <script>window.PAGE_TAGLINE = "Count words, characters, and more";</script>
+  <script src="../script.js"></script>
+  <script src="word-counter.js"></script>
+</body>
+</html>
