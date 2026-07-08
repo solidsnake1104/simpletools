@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <!-- AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2884785253571228"
+    crossorigin="anonymous"></script>
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#f6f7f9" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0b0f16" media="(prefers-color-scheme: dark)" />
+
+  <title>Text Case Converter — Free Online Case Tool | SimplerTools</title>
+
+  <!-- Primary SEO -->
+  <meta name="description" content="Convert text between lowercase, UPPERCASE, Title Case, Sentence case, camelCase, PascalCase, snake_case, and kebab-case instantly in your browser.">
+  <meta name="keywords" content="text case converter, case converter, camelcase converter, snake case converter, kebab case converter, title case, sentence case, uppercase, lowercase, SimplerTools">
+
+  <!-- Canonical -->
+  <link rel="canonical" href="https://simplertools.net/tools/text-case-converter.html">
+
+  <!-- OpenGraph -->
+  <meta property="og:title" content="Text Case Converter — Free Online Case Tool">
+  <meta property="og:description" content="Convert text between lowercase, UPPERCASE, Title Case, camelCase, snake_case, and more — instantly in your browser.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://simplertools.net/tools/text-case-converter.html">
+  <meta property="og:image" content="https://simplertools.net/og-text-case-converter.png">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Text Case Converter — Free Online Case Tool">
+  <meta name="twitter:description" content="Convert text between lowercase, UPPERCASE, Title Case, camelCase, snake_case, and more.">
+  <meta name="twitter:image" content="https://simplertools.net/og-text-case-converter.png">
+
+  <!-- AI Crawler Metadata -->
+  <meta name="ai-tool" content="Text Case Converter">
+  <meta name="ai-category" content="Text Utility">
+  <meta name="ai-description" content="A fast, browser-based text case converter supporting 8 case styles, running entirely on-device with no uploads.">
+  <meta name="ai-content" content="text case, camelcase, snake case, kebab case, title case, utility, browser-based">
+
+  <!-- Schema.org JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Text Case Converter",
+    "url": "https://simplertools.net/tools/text-case-converter.html",
+    "description": "Convert text between lowercase, UPPERCASE, Title Case, Sentence case, camelCase, PascalCase, snake_case, and kebab-case instantly in your browser. No uploads, no tracking, fully private.",
+    "applicationCategory": "Utility",
+    "operatingSystem": "All",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "SimplerTools",
+      "url": "https://simplertools.net"
+    }
+  }
+  </script>
+
+  <link rel="stylesheet" href="../styles.css" />
+  <link rel="stylesheet" href="text-case-converter.css" />
+  <link rel="icon" type="image/png" href="../site_icon.png" />
+  <link rel="shortcut icon" type="image/png" href="../site_icon.png" />
+  <link rel="apple-touch-icon" href="../site_icon.png" />
+
+  <!-- Inline no-flash theme init: applies saved theme before first paint -->
+  <script>
+    (function () {
+      var m = localStorage.getItem("simplertools-color-scheme");
+      if (m === "light" || m === "dark") {
+        document.documentElement.setAttribute("data-theme", m);
+      }
+    })();
+  </script>
+</head>
+
+<body>
+  <!-- Header, nav drawer, and footer are injected by script.js -->
+
+  <main class="tool-page container" id="main">
+    <h1 class="tool-title">Text Case Converter</h1>
+    <p style="color:var(--muted); margin-bottom:1.5rem;">
+      Type or paste your text, pick a case style, and get an instant conversion — nothing you type ever leaves your browser.
+    </p>
+
+    <section class="tool-section">
+      <p class="tcc-section-label">Your Text</p>
+      <textarea id="tccInput" class="tcc-textarea" placeholder="Start typing or paste your text here…"></textarea>
+
+      <p class="tcc-section-label">Case Style</p>
+      <div class="glass-group" id="tccModeGroup">
+        <button type="button" class="glass-option active" data-mode="lower">lowercase</button>
+        <button type="button" class="glass-option" data-mode="upper">UPPERCASE</button>
+        <button type="button" class="glass-option" data-mode="title">Title Case</button>
+        <button type="button" class="glass-option" data-mode="sentence">Sentence case</button>
+        <button type="button" class="glass-option" data-mode="camel">camelCase</button>
+        <button type="button" class="glass-option" data-mode="pascal">PascalCase</button>
+        <button type="button" class="glass-option" data-mode="snake">snake_case</button>
+        <button type="button" class="glass-option" data-mode="kebab">kebab-case</button>
+      </div>
+
+      <p class="tcc-section-label">Result</p>
+      <div class="tcc-output-row">
+        <textarea id="tccOutput" class="tcc-textarea" readonly placeholder="Your converted text will appear here…"></textarea>
+      </div>
+
+      <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+        <button class="glass-btn tcc-copy-btn" id="tccCopyBtn">Copy Result</button>
+        <button class="glass-btn tcc-copy-btn" id="tccClearBtn" style="background:transparent;">Clear</button>
+      </div>
+    </section>
+
+    <section class="tool-section" style="margin-top:3rem;padding-top:2rem;border-top:1px solid var(--border);">
+      <h3>About This Tool</h3>
+      <p>Convert text between lowercase, UPPERCASE, Title Case, Sentence case, camelCase, PascalCase, snake_case, and kebab-case — directly in your browser. No files are uploaded to any server, and nothing you type ever leaves your device.</p>
+    </section>
+  </main>
+
+  <div id="site-footer-mount"></div>
+
+  <script>window.SITE_BASE = "../";</script>
+  <script>window.PAGE_TAGLINE = "Switch between text case styles instantly";</script>
+  <script src="../script.js"></script>
+  <script src="text-case-converter.js"></script>
+</body>
+</html>

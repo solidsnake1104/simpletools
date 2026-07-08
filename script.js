@@ -70,6 +70,7 @@ SimplerTools.formatBytes = function (bytes) {
     { name: "Photo Map Explorer", slug: "photo-map-explorer.html", category: "image" },
     { name: "PDF Joiner", slug: "pdf-joiner.html", category: "pdf" },
     { name: "QR Code Generator", slug: "qr-generator.html", category: "qr" },
+    { name: "Text Case Converter", slug: "text-case-converter.html", category: "text" },
     { name: "Video Audio Extractor", slug: "video-audio-extractor.html", category: "video" },
     { name: "Word &amp; Character Counter", slug: "word-counter.html", category: "text" }
   ];

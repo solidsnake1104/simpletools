@@ -1,0 +1,44 @@
+/* Text Case Converter */
+
+.tcc-textarea {
+  width: 100%;
+  min-height: 180px;
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 1rem;
+  font-family: inherit;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.tcc-textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--bg-raised);
+}
+
+.tcc-textarea[readonly] {
+  background: var(--bg-raised);
+  cursor: text;
+}
+
+.tcc-section-label {
+  margin: 1.5rem 0 0.6rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.tcc-output-row {
+  position: relative;
+  margin-top: 0.6rem;
+}
+
+.tcc-copy-btn {
+  margin-top: 0.75rem;
+}
