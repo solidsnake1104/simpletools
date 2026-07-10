@@ -4,15 +4,28 @@
 window.SimplerTools = window.SimplerTools || {};
 
 // Wires up an upload-area + hidden file input with click / drag-drop /
-// change handling, and calls onFile(file) whenever a file is provided.
+// change handling. By default calls onFile(file) with the first file
+// provided; pass onFiles(fileArray) instead if the tool accepts multiple
+// files (e.g. joining several PDFs at once).
 // Tool-specific JS files should use this instead of re-implementing the
 // same click/dragover/dragleave/drop listeners each time.
 SimplerTools.bindUploadArea = function (options) {
   var area = document.getElementById(options.areaId);
   var input = document.getElementById(options.inputId);
   var onFile = options.onFile || function () {};
+  var onFiles = options.onFiles || null;
 
   if (!area || !input) return null;
+
+  function handleFiles(fileList) {
+    var files = Array.prototype.slice.call(fileList || []);
+    if (!files.length) return;
+    if (onFiles) {
+      onFiles(files);
+    } else {
+      onFile(files[0]);
+    }
+  }
 
   area.addEventListener("click", function () {
     input.click();
@@ -30,13 +43,11 @@ SimplerTools.bindUploadArea = function (options) {
   area.addEventListener("drop", function (e) {
     e.preventDefault();
     area.classList.remove("dragover");
-    var file = e.dataTransfer.files && e.dataTransfer.files[0];
-    if (file) onFile(file);
+    handleFiles(e.dataTransfer.files);
   });
 
   input.addEventListener("change", function () {
-    var file = input.files && input.files[0];
-    if (file) onFile(file);
+    handleFiles(input.files);
   });
 
   return { area: area, input: input };
@@ -56,6 +67,45 @@ SimplerTools.formatBytes = function (bytes) {
   return value.toFixed(value < 10 ? 1 : 0) + " " + units[i];
 };
 
+// Small bottom-corner confirmation toast, e.g. "Merged PDF Ready".
+SimplerTools.showToast = function (message) {
+  var toast = document.createElement("div");
+
+  toast.textContent = message;
+  toast.style.position = "fixed";
+  toast.style.bottom = "20px";
+  toast.style.right = "20px";
+  toast.style.padding = "12px 18px";
+  toast.style.background = "rgba(0,0,0,0.65)";
+  toast.style.color = "white";
+  toast.style.borderRadius = "8px";
+  toast.style.fontSize = "0.95rem";
+  toast.style.backdropFilter = "blur(6px)";
+  toast.style.zIndex = "9999";
+  toast.style.opacity = "0";
+  toast.style.transition = "opacity .3s ease";
+
+  document.body.appendChild(toast);
+
+  requestAnimationFrame(function () {
+    toast.style.opacity = "1";
+  });
+
+  setTimeout(function () {
+    toast.style.opacity = "0";
+    setTimeout(function () {
+      toast.remove();
+    }, 300);
+  }, 2500);
+};
+
+// Escapes a string for safe insertion into innerHTML (filenames, etc.)
+SimplerTools.escapeHtml = function (value) {
+  var div = document.createElement("div");
+  div.textContent = value;
+  return div.innerHTML;
+};
+
 // -----------------------------------------------------------
 // Global Layout — single source of truth for header, nav drawer,
 // and footer. Add/remove/reorder tools or site links here ONLY;
@@ -69,6 +119,7 @@ SimplerTools.formatBytes = function (bytes) {
     { name: "Image Resizer", slug: "image-resizer.html", category: "image" },
     { name: "Photo Map Explorer", slug: "photo-map-explorer.html", category: "image" },
     { name: "PDF Joiner", slug: "pdf-joiner.html", category: "pdf" },
+    { name: "PDF Splitter", slug: "pdf-splitter.html", category: "pdf" },
     { name: "QR Code Generator", slug: "qr-generator.html", category: "qr" },
     { name: "Text Case Converter", slug: "text-case-converter.html", category: "text" },
     { name: "Video Audio Extractor", slug: "video-audio-extractor.html", category: "video" },
@@ -338,190 +389,6 @@ SimplerTools.formatBytes = function (bytes) {
 // DOMContentLoaded — Initialize Tools
 // -----------------------------------------------------------
 document.addEventListener("DOMContentLoaded", () => {
-  // ===========================================================
-  // PDF JOINER
-  // ===========================================================
-  const uploadAreaJoin = document.getElementById("uploadAreaJoin");
-  const fileInputJoin = document.getElementById("fileInputJoin");
-  const fileListJoin = document.getElementById("fileListJoin");
-  const processJoinBtn = document.getElementById("processJoinBtn");
-
-  let filesJoin = [];
-  let dragIndex = null;
-
-  function updateJoinButton() {
-    if (processJoinBtn) {
-      processJoinBtn.disabled = filesJoin.length < 2;
-    }
-  }
-
-  function showToast(message) {
-    const toast = document.createElement("div");
-
-    toast.textContent = message;
-    toast.style.position = "fixed";
-    toast.style.bottom = "20px";
-    toast.style.right = "20px";
-    toast.style.padding = "12px 18px";
-    toast.style.background = "rgba(0,0,0,0.65)";
-    toast.style.color = "white";
-    toast.style.borderRadius = "8px";
-    toast.style.fontSize = "0.95rem";
-    toast.style.backdropFilter = "blur(6px)";
-    toast.style.zIndex = "9999";
-    toast.style.opacity = "0";
-    toast.style.transition = "opacity .3s ease";
-
-    document.body.appendChild(toast);
-
-    requestAnimationFrame(() => {
-      toast.style.opacity = "1";
-    });
-
-    setTimeout(() => {
-      toast.style.opacity = "0";
-      setTimeout(() => toast.remove(), 300);
-    }, 2500);
-  }
-
-  async function mergePDFs() {
-    const { PDFDocument } = PDFLib;
-    const mergedPdf = await PDFDocument.create();
-
-    for (const file of filesJoin) {
-      const bytes = await file.arrayBuffer();
-      const pdf = await PDFDocument.load(bytes);
-      const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
-
-      copiedPages.forEach((p) => mergedPdf.addPage(p));
-    }
-
-    const mergedBytes = await mergedPdf.save();
-    const blob = new Blob([mergedBytes], { type: "application/pdf" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-
-    a.href = url;
-    a.download = "merged.pdf";
-    a.click();
-
-    URL.revokeObjectURL(url);
-    showToast("Merged PDF Ready");
-  }
-
-  if (processJoinBtn) {
-    processJoinBtn.addEventListener("click", async () => {
-      processJoinBtn.disabled = true;
-      processJoinBtn.textContent = "Merging...";
-
-      try {
-        await mergePDFs();
-      } catch (err) {
-        console.error("PDF merge error:", err);
-        alert("Could not merge PDFs. Please check the files and try again.");
-      } finally {
-        processJoinBtn.textContent = "Join Documents";
-        updateJoinButton();
-      }
-    });
-  }
-
-  if (uploadAreaJoin && fileInputJoin) {
-    uploadAreaJoin.addEventListener("click", () => fileInputJoin.click());
-
-    uploadAreaJoin.addEventListener("dragover", (e) => {
-      e.preventDefault();
-      uploadAreaJoin.classList.add("dragover");
-    });
-
-    uploadAreaJoin.addEventListener("dragleave", () => {
-      uploadAreaJoin.classList.remove("dragover");
-    });
-
-    uploadAreaJoin.addEventListener("drop", (e) => {
-      e.preventDefault();
-      uploadAreaJoin.classList.remove("dragover");
-      appendJoinFiles(Array.from(e.dataTransfer.files));
-    });
-  }
-
-  if (fileInputJoin) {
-    fileInputJoin.addEventListener("change", () => {
-      appendJoinFiles(Array.from(fileInputJoin.files));
-    });
-  }
-
-  function appendJoinFiles(newFiles) {
-    newFiles.forEach((file) => {
-      const exists = filesJoin.some(
-        (f) => f.name === file.name && f.size === file.size
-      );
-
-      if (!exists) {
-        filesJoin.push(file);
-      }
-    });
-
-    renderJoinList();
-    updateJoinButton();
-  }
-
-  function renderJoinList() {
-    if (!fileListJoin) return;
-
-    fileListJoin.innerHTML = filesJoin
-      .map(
-        (f, i) => `
-      <li class="file-item" draggable="true" data-index="${i}">
-        <span class="drag-handle">☰</span>
-        <span class="file-name">${escapeHtmlGlobal(f.name)}</span>
-        <button class="file-remove" onclick="removeFileJoin(${i})">Remove</button>
-      </li>
-    `
-      )
-      .join("");
-
-    enableDragReorder();
-    updateJoinButton();
-  }
-
-  function enableDragReorder() {
-    if (!fileListJoin) return;
-
-    const items = fileListJoin.querySelectorAll(".file-item");
-
-    items.forEach((item) => {
-      item.addEventListener("dragstart", (e) => {
-        dragIndex = Number(e.target.dataset.index);
-        e.dataTransfer.effectAllowed = "move";
-      });
-
-      item.addEventListener("dragover", (e) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = "move";
-      });
-
-      item.addEventListener("drop", (e) => {
-        e.preventDefault();
-
-        const target = e.target.closest(".file-item");
-        if (!target) return;
-
-        const dropIndex = Number(target.dataset.index);
-        const moved = filesJoin.splice(dragIndex, 1)[0];
-
-        filesJoin.splice(dropIndex, 0, moved);
-        renderJoinList();
-      });
-    });
-  }
-
-  window.removeFileJoin = function (i) {
-    filesJoin.splice(i, 1);
-    renderJoinList();
-    updateJoinButton();
-  };
-
   // ===========================================================
   // MP3 TRIMMER — WaveSurfer v7 + custom overlay handles
   // ===========================================================
@@ -987,7 +854,7 @@ async function trimLargeFileWithFFmpeg(file, start, end) {
           a.download = "trimmed.mp3";
           a.click();
           setTimeout(() => URL.revokeObjectURL(url), 10000);
-          showToast("Trimmed audio downloaded!");
+          SimplerTools.showToast("Trimmed audio downloaded!");
         } catch (err) {
           console.error("FFmpeg trim error:", err);
           alert("Trim failed: " + (err && err.message ? err.message : err));
@@ -1040,7 +907,7 @@ async function trimLargeFileWithFFmpeg(file, start, end) {
         a.click();
 
         setTimeout(() => URL.revokeObjectURL(url), 10000);
-        showToast("Trimmed audio downloaded!");
+        SimplerTools.showToast("Trimmed audio downloaded!");
       } catch (err) {
         console.error("Trim error:", err);
         alert("Trim failed — see browser console for details.");
@@ -1149,7 +1016,7 @@ async function trimLargeFileWithFFmpeg(file, start, end) {
 
         if (videoMeta) {
           videoMeta.innerHTML =
-            `<span>📄 ${escapeHtmlGlobal(file.name)}</span>` +
+            `<span>📄 ${SimplerTools.escapeHtml(file.name)}</span>` +
             `<span>⏱ ${mins}m ${secs}s</span>` +
             `<span>💾 ${mb} MB</span>`;
         }
@@ -1163,16 +1030,6 @@ async function trimLargeFileWithFFmpeg(file, start, end) {
     if (extractBtn) extractBtn.disabled = false;
 
     setProgress(0, "");
-  }
-
-  function escapeHtmlGlobal(value) {
-    return String(value).replace(/[&<>'"]/g, (ch) => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      "'": "&#39;",
-      '"': "&quot;"
-    }[ch]));
   }
 
   function setProgress(pct, msg) {
@@ -1594,7 +1451,7 @@ async function trimLargeFileWithFFmpeg(file, start, end) {
         }
 
         setProgress(100, "Done!");
-        showToast("Audio extracted!");
+        SimplerTools.showToast("Audio extracted!");
       } catch (err) {
         console.error("Extraction error:", err);
 
@@ -1632,7 +1489,7 @@ async function trimLargeFileWithFFmpeg(file, start, end) {
 
       setTimeout(() => URL.revokeObjectURL(url), 10000);
 
-      showToast("Download started!");
+      SimplerTools.showToast("Download started!");
     });
   }
 

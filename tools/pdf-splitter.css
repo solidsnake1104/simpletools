@@ -1,0 +1,161 @@
+/* PDF Splitter */
+
+.ps-file-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  margin-bottom: 1.5rem;
+}
+
+.ps-file-summary .ps-name {
+  font-weight: 650;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ps-file-summary .ps-pages {
+  color: var(--muted);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+/* Toolbar above the thumbnail grid */
+.ps-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.ps-toolbar .glass-option {
+  padding: 0.45rem 0.85rem;
+  font-size: 0.88rem;
+}
+
+.ps-count {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+/* Thumbnail grid */
+.ps-thumb-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.85rem;
+  padding: 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  max-height: 560px;
+  overflow-y: auto;
+}
+
+.ps-thumb {
+  position: relative;
+  cursor: pointer;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--bg-raised);
+  transition: border-color 0.12s ease, transform 0.12s ease;
+}
+
+.ps-thumb:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+.ps-thumb.is-selected {
+  border-color: var(--accent);
+}
+
+.ps-thumb canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #fff;
+}
+
+.ps-thumb-badge {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.ps-thumb-check {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.ps-thumb.is-selected .ps-thumb-check {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.ps-thumb-check svg {
+  width: 12px;
+  height: 12px;
+  color: #fff;
+  opacity: 0;
+}
+
+.ps-thumb.is-selected .ps-thumb-check svg {
+  opacity: 1;
+}
+
+.ps-thumb-loading {
+  aspect-ratio: 3 / 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+/* Action buttons below the grid */
+.ps-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 1.5rem;
+}
+
+.ps-actions .glass-btn {
+  margin-top: 0;
+}
+
+.ps-status-line {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.ps-status-line.is-error {
+  color: var(--danger);
+}

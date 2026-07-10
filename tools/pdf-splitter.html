@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2884785253571228"
+     crossorigin="anonymous"></script>
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#f6f7f9" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0b0f16" media="(prefers-color-scheme: dark)" />
+
+  <!-- Primary SEO -->
+  <title>PDF Splitter — Extract or Split PDF Pages • SimplerTools</title>
+  <meta name="description" content="Preview every page and pick exactly which ones to keep. Extract a selection into one PDF or split it into separate files, instantly with SimplerTools PDF Splitter. 100% browser‑based, no uploads.">
+  <meta name="keywords" content="pdf splitter, split pdf, extract pdf pages, pdf page extractor, pdf preview, pdf tool, simplertools, browser tools, no upload pdf splitter">
+
+  <!-- Canonical -->
+  <link rel="canonical" href="https://simplertools.net/tools/pdf-splitter.html">
+
+  <!-- OpenGraph -->
+  <meta property="og:title" content="PDF Splitter — Extract or Split PDF Pages • SimplerTools">
+  <meta property="og:description" content="Preview every page and pick exactly which ones to keep. Fast, private, browser‑based PDF splitting. No uploads.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://simplertools.net/tools/pdf-splitter.html">
+  <meta property="og:image" content="https://simplertools.net/og-pdf-splitter.png">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="PDF Splitter — Extract or Split PDF Pages • SimplerTools">
+  <meta name="twitter:description" content="Preview every page and pick exactly which ones to keep, instantly in your browser.">
+  <meta name="twitter:image" content="https://simplertools.net/og-pdf-splitter.png">
+
+  <!-- AI Crawler Metadata -->
+  <meta name="ai-tool" content="PDF Splitter">
+  <meta name="ai-category" content="PDF Utility">
+  <meta name="ai-description" content="A fast, browser‑based PDF splitting tool with visual page previews that runs entirely on-device with no uploads.">
+  <meta name="ai-content" content="pdf, split, extract pages, preview, utility, browser-based">
+
+  <!-- Schema.org JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "PDF Splitter",
+    "url": "https://simplertools.net/tools/pdf-splitter.html",
+    "description": "Preview every page of a PDF and pick exactly which ones to keep. Extract a selection into one PDF or split it into separate files, instantly in your browser with SimplerTools PDF Splitter. No uploads, no tracking, fully private.",
+    "applicationCategory": "Utility",
+    "operatingSystem": "All",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "SimplerTools",
+      "url": "https://simplertools.net"
+    }
+  }
+  </script>
+
+  <link rel="stylesheet" href="../styles.css" />
+  <link rel="stylesheet" href="pdf-splitter.css" />
+  <link rel="icon" type="image/png" href="../site_icon.png" />
+  <link rel="shortcut icon" type="image/png" href="../site_icon.png" />
+  <link rel="apple-touch-icon" href="../site_icon.png" />
+
+  <!-- Inline no-flash theme init: applies saved theme before first paint -->
+  <script>
+    (function () {
+      var m = localStorage.getItem("simplertools-color-scheme");
+      if (m === "light" || m === "dark") {
+        document.documentElement.setAttribute("data-theme", m);
+      }
+    })();
+  </script>
+</head>
+
+<body>
+  <!-- Header, nav drawer, and footer are injected by script.js -->
+
+  <main class="tool-page container" id="main">
+    <h1 class="tool-title">PDF Splitter</h1>
+
+    <section class="tool-section">
+      <h2>Select a PDF File</h2>
+
+      <div class="upload-area" id="uploadAreaSplit">
+        <p><strong>Click to upload or drag and drop</strong></p>
+        <p style="color:var(--muted);font-size:0.9rem;">Select a single PDF file</p>
+        <input type="file" id="fileInputSplit" class="file-input" accept=".pdf" />
+      </div>
+
+      <div class="ps-file-summary" id="psFileSummary" style="display:none;">
+        <span class="ps-name" id="psFileName"></span>
+        <span class="ps-pages" id="psPageCount"></span>
+      </div>
+
+      <div id="psModeSection" style="display:none;">
+        <p style="color:var(--muted); font-size:0.9rem; margin-bottom:1rem;">
+          Every page is previewed below. Click a page to select or deselect it, then choose how you want your selection delivered.
+        </p>
+
+        <div class="ps-toolbar">
+          <button type="button" class="glass-option" id="psSelectAllBtn">Select All</button>
+          <button type="button" class="glass-option" id="psSelectNoneBtn">Select None</button>
+          <button type="button" class="glass-option" id="psInvertBtn">Invert</button>
+          <span class="ps-count" id="psCount">0 of 0 pages selected</span>
+        </div>
+
+        <div class="ps-thumb-grid" id="psThumbGrid"></div>
+
+        <div class="ps-actions">
+          <button class="glass-btn" id="psExtractBtn" disabled>Download Selected as One PDF</button>
+          <button class="glass-btn" id="psSeparateBtn" disabled>Download Selected as Separate Files</button>
+        </div>
+
+        <p class="ps-status-line" id="psStatusLine"></p>
+      </div>
+    </section>
+
+    <section class="tool-section" style="margin-top:2rem;">
+      <h3>About This Tool</h3>
+      <p>Split PDFs directly in your browser — no files are uploaded to any server. Page previews are rendered locally too, so nothing you upload ever leaves your device.</p>
+    </section>
+  </main>
+
+  <div id="site-footer-mount"></div>
+
+  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+  <script src="https://unpkg.com/jszip/dist/jszip.min.js"></script>
+  <script src="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+  <script>window.SITE_BASE = "../";</script>
+  <script>window.PAGE_TAGLINE = "Preview pages, then extract or split";</script>
+  <script src="../script.js"></script>
+  <script src="pdf-splitter.js"></script>
+</body>
+</html>
