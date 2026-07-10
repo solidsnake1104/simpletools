@@ -325,7 +325,7 @@ h1,h2,h3{
 .nav-drawer-header strong{ font-size: 1.05rem; letter-spacing:-0.01em; }
 
 .nav-section-label{
-  padding: 1.1rem 1.25rem 0.4rem;
+  padding: 0.75rem 1.25rem 0.35rem;
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -337,6 +337,14 @@ h1,h2,h3{
   list-style:none;
   margin:0;
   padding: 0 0.6rem;
+}
+
+.nav-list:first-of-type{
+  padding-top: 0.35rem;
+}
+
+.nav-list + .nav-section-label{
+  padding-top: 0.45rem;
 }
 
 .nav-link{
