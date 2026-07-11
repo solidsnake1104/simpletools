@@ -11,31 +11,31 @@
   <meta name="theme-color" content="#f6f7f9" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#0b0f16" media="(prefers-color-scheme: dark)" />
 
-  <title>Image Metadata Cleaner — Remove EXIF Data | SimplerTools</title>
+  <title>Image Metadata Cleaner — Batch EXIF Cleaner for Single or Multiple Images | SimplerTools</title>
 
   <!-- Primary SEO -->
-  <meta name="description" content="Remove hidden EXIF metadata from images instantly in your browser. No uploads, no tracking, fully private.">
-  <meta name="keywords" content="image metadata cleaner, exif remover, remove gps data, privacy image tool, SimplerTools">
+  <meta name="description" content="Remove hidden EXIF metadata from JPG, PNG, WebP, and HEIC images, individually or in batches, instantly in your browser. No uploads, no tracking, fully private.">
+  <meta name="keywords" content="batch image metadata cleaner, HEIC metadata cleaner, multiple image exif cleaner, image metadata cleaner, exif remover, remove gps data, privacy image tool, SimplerTools">
 
   <!-- Canonical -->
   <link rel="canonical" href="https://simplertools.io/tools/image-metadata-cleaner.html">
 
   <!-- OpenGraph -->
-  <meta property="og:title" content="Image Metadata Cleaner — Remove EXIF Data">
-  <meta property="og:description" content="Remove hidden EXIF metadata from images instantly in your browser. No uploads, no tracking, fully private.">
+  <meta property="og:title" content="Image Metadata Cleaner — Batch EXIF Cleaner for Images">
+  <meta property="og:description" content="Remove hidden EXIF metadata from JPG, PNG, WebP, and HEIC images, individually or in batches, instantly in your browser. No uploads, no tracking, fully private.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://simplertools.io/tools/image-metadata-cleaner.html">
   <meta property="og:image" content="https://simplertools.io/og-image.png">
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Image Metadata Cleaner — Remove EXIF Data">
-  <meta name="twitter:description" content="Remove hidden EXIF metadata from images instantly in your browser. No uploads, no tracking, fully private.">
+  <meta name="twitter:title" content="Image Metadata Cleaner — Batch EXIF Cleaner for Images">
+  <meta name="twitter:description" content="Remove hidden EXIF metadata from JPG, PNG, WebP, and HEIC images, individually or in batches, instantly in your browser. No uploads, no tracking, fully private.">
   <meta name="twitter:image" content="https://simplertools.io/og-image.png">
 
   <!-- AI Agent Metadata -->
   <meta name="ai-tool-name" content="Image Metadata Cleaner">
-  <meta name="ai-tool-description" content="Remove hidden EXIF metadata from images. No uploads. Fully private.">
+  <meta name="ai-tool-description" content="Remove hidden EXIF metadata from JPG, PNG, WebP, and HEIC images, single or batch. No uploads. Fully private.">
   <meta name="ai-tool-category" content="Image Tools">
 
   <!-- JSON-LD Schema -->
@@ -45,7 +45,7 @@
     "@type": "WebApplication",
     "name": "Image Metadata Cleaner",
     "url": "https://simplertools.io/tools/image-metadata-cleaner.html",
-    "description": "Remove hidden EXIF metadata from images instantly in your browser. No uploads, no tracking, fully private.",
+    "description": "Remove hidden EXIF metadata from single images or batch-clean multiple images instantly in your browser. No uploads, no tracking, fully private.",
     "applicationCategory": "Utility",
     "operatingSystem": "Any",
     "browserRequirements": "Requires JavaScript",
@@ -80,17 +80,38 @@
 
     <h1 class="tool-title">Image Metadata Cleaner</h1>
     <p style="color:var(--muted); margin-bottom:1.5rem;">
-      View and remove hidden EXIF metadata from your images — all processing happens locally.
+      View and remove hidden EXIF metadata from single images or batch-clean multiple images — all processing happens locally in your browser.
     </p>
 
     <p class="privacy-badge">🔒 All processing happens locally on your device.</p>
 
     <!-- Upload Area -->
     <div class="upload-area" id="uploadAreaMeta">
-      <p><strong>Click to upload or drag an image here</strong></p>
-      <p style="color:var(--muted);font-size:0.9rem;">Supported: JPG, PNG, WebP</p>
-      <input type="file" id="fileInputMeta" class="file-input" accept="image/*" />
+      <p><strong>Click to upload or drag images here</strong></p>
+      <p style="color:var(--muted);font-size:0.9rem;">Supported: JPG, PNG, WebP, HEIC</p>
+      <input type="file" id="fileInputMeta" class="file-input" multiple accept="image/jpeg,image/png,image/webp,image/heic,image/heif" />
     </div>
+
+    <div class="output-format-row" style="margin-top:0.95rem;">
+      <label for="outputFormatSelect">Output format:</label>
+      <select id="outputFormatSelect">
+        <option value="image/jpeg">JPG</option>
+        <option value="image/png">PNG</option>
+        <option value="image/webp">WebP</option>
+        <option value="image/heic">HEIC</option>
+      </select>
+      <span class="output-format-note">HEIC export may fallback to JPG if not supported by your browser.</span>
+    </div>
+
+    <button class="glass-btn" id="cleanMetadataBtn" disabled>
+      Clean All Images
+    </button>
+
+    <details id="fileListDetails" class="file-list-details" style="display:none; margin-top:0.75rem;">
+      <summary id="fileListSummary">0 images selected</summary>
+      <p style="color:var(--muted); font-size:0.95rem; margin:0.5rem 0 0;">Click a filename to preview it and view metadata.</p>
+      <ul class="file-list" id="imageFileList"></ul>
+    </details>
 
     <!-- Small Image Preview -->
     <div id="smallPreviewWrapper" style="display:none; margin-top:1rem;">
@@ -99,12 +120,6 @@
 
     <!-- Metadata Table (READ ONLY) -->
     <div id="metadataSection" style="display:none; margin-top:1.5rem;">
-
-      <!-- Clean Button ABOVE table -->
-      <button class="glass-btn" id="cleanMetadataBtn">
-        Clean Metadata
-      </button>
-
       <table id="metadataTable">
         <thead>
           <tr>
@@ -114,7 +129,6 @@
         </thead>
         <tbody></tbody>
       </table>
-
     </div>
 
   </main>
@@ -122,9 +136,11 @@
   <div id="site-footer-mount"></div>
 
   <script>window.SITE_BASE = "../";</script>
-  <script>window.PAGE_TAGLINE = "Clean hidden EXIF metadata";</script>
+  <script>window.PAGE_TAGLINE = "Clean hidden EXIF metadata for one or many images";</script>
   <script src="../script.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/exifreader@4.12.0/dist/exif-reader.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/heic-to@1.5.2/dist/iife/heic-to.js"></script>
+  <script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src="image-metadata-cleaner.js"></script>
 
 </body>
