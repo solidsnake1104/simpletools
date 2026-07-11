@@ -1,208 +1,204 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const fileSummary = document.getElementById("psFileSummary");
-  const fileNameEl = document.getElementById("psFileName");
-  const pageCountEl = document.getElementById("psPageCount");
-  const modeSection = document.getElementById("psModeSection");
-  const thumbGrid = document.getElementById("psThumbGrid");
-
-  const selectAllBtn = document.getElementById("psSelectAllBtn");
-  const selectNoneBtn = document.getElementById("psSelectNoneBtn");
-  const invertBtn = document.getElementById("psInvertBtn");
-  const countEl = document.getElementById("psCount");
-
-  const extractBtn = document.getElementById("psExtractBtn");
-  const separateBtn = document.getElementById("psSeparateBtn");
-  const statusLine = document.getElementById("psStatusLine");
-
-  let originalFile = null;
-  let pageCount = 0;
-  let selected = new Set(); // 0-indexed page numbers
-
-  if (!modeSection) return;
-
-  // PDF.js needs its worker pointed at the matching version on the CDN.
-  if (window.pdfjsLib) {
-    pdfjsLib.GlobalWorkerOptions.workerSrc =
-      "https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
-  }
+  const fileListEl = document.getElementById("fileListJoin");
+  const processBtn = document.getElementById("processJoinBtn");
+  let selectedFiles = [];
 
   SimplerTools.bindUploadArea({
-    areaId: "uploadAreaSplit",
-    inputId: "fileInputSplit",
-    onFile: handleFile,
+    areaId: "uploadAreaJoin",
+    inputId: "fileInputJoin",
+    onFiles: handleFiles,
   });
 
-  async function handleFile(file) {
-    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
-      alert("Please select a PDF file.");
+  function handleFiles(files) {
+    const pdfFiles = Array.prototype.slice.call(files || []).filter((file) => {
+      return file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+    });
+
+    if (!pdfFiles.length) {
+      alert("Please select one or more PDF files.");
       return;
     }
 
-    setStatus("");
-    thumbGrid.innerHTML = "";
-    selected = new Set();
-    modeSection.style.display = "none";
-    fileSummary.style.display = "none";
-
-    try {
-      // pdf-lib reads the page count reliably up front; PDF.js (below)
-      // handles the actual visual rendering of each page.
-      const bytes = await file.arrayBuffer();
-      const { PDFDocument } = PDFLib;
-      const pdf = await PDFDocument.load(bytes);
-
-      originalFile = file;
-      pageCount = pdf.getPageCount();
-
-      fileNameEl.textContent = file.name;
-      pageCountEl.textContent = pageCount + (pageCount === 1 ? " page" : " pages");
-      fileSummary.style.display = "flex";
-      modeSection.style.display = "block";
-
-      // Default to everything selected — deselecting a few pages is
-      // usually less work than picking them all one by one.
-      for (let i = 0; i < pageCount; i++) selected.add(i);
-
-      await renderThumbnails(file);
-      updateCount();
-    } catch (err) {
-      console.error("PDF read error:", err);
-      alert("Could not read this PDF. It may be corrupted or password-protected.");
-    }
+    selectedFiles = pdfFiles;
+    renderFileList();
   }
 
-  async function renderThumbnails(file) {
-    if (!window.pdfjsLib) {
-      setStatus("Page previews aren't available right now, but selection still works below.", true);
-      buildFallbackGrid();
+  let dragState = null;
+
+  function renderFileList() {
+    fileListEl.innerHTML = "";
+
+    if (!selectedFiles.length) {
+      fileListEl.innerHTML = '<li class="file-list-empty">Drop or choose PDF files to start.</li>';
+      processBtn.disabled = true;
       return;
     }
 
-    const arrayBuffer = await file.arrayBuffer();
-    const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
-    const doc = await loadingTask.promise;
+    selectedFiles.forEach((file, index) => {
+      const item = document.createElement("li");
+      item.className = "file-item";
+      item._file = file;
 
-    const targetWidth = 150;
+      const handle = document.createElement("button");
+      handle.type = "button";
+      handle.className = "drag-handle";
+      handle.textContent = "☰";
+      handle.title = "Drag to reorder";
+      handle.setAttribute("aria-label", "Drag to reorder");
+      handle.style.touchAction = "none";
+      handle.addEventListener("pointerdown", (event) => {
+        if (event.button !== 0) return;
+        event.preventDefault();
+        startDrag(event, item);
+      });
 
-    for (let i = 1; i <= pageCount; i++) {
-      setStatus(`Rendering page previews… (${i} of ${pageCount})`);
+      const label = document.createElement("div");
+      label.className = "file-name";
+      label.textContent = `${index + 1}. ${file.name} (${SimplerTools.formatBytes(file.size)})`;
 
-      const thumb = document.createElement("div");
-      thumb.className = "ps-thumb is-selected";
-      thumb.dataset.index = String(i - 1);
+      const removeButton = document.createElement("button");
+      removeButton.type = "button";
+      removeButton.className = "file-remove";
+      removeButton.textContent = "Remove";
+      removeButton.addEventListener("click", () => {
+        selectedFiles.splice(index, 1);
+        renderFileList();
+      });
 
-      const loading = document.createElement("div");
-      loading.className = "ps-thumb-loading";
-      loading.textContent = "…";
-      thumb.appendChild(loading);
+      item.append(handle, label, removeButton);
+      fileListEl.appendChild(item);
+    });
 
-      const badge = document.createElement("span");
-      badge.className = "ps-thumb-badge";
-      badge.textContent = "Page " + i;
-      thumb.appendChild(badge);
+    processBtn.disabled = selectedFiles.length === 0;
+  }
 
-      const check = document.createElement("span");
-      check.className = "ps-thumb-check";
-      check.innerHTML =
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
-      thumb.appendChild(check);
+  function startDrag(event, item) {
+    if (dragState) return;
 
-      thumb.addEventListener("click", () => toggleSelection(i - 1, thumb));
-      thumbGrid.appendChild(thumb);
+    const rect = item.getBoundingClientRect();
+    const placeholder = document.createElement("li");
+    placeholder.className = "file-item placeholder";
+    placeholder.style.height = `${rect.height}px`;
 
-      try {
-        const page = await doc.getPage(i);
-        const baseViewport = page.getViewport({ scale: 1 });
-        const scale = targetWidth / baseViewport.width;
-        const viewport = page.getViewport({ scale });
+    item.classList.add("dragging");
+    item.style.width = `${rect.width}px`;
+    item.style.position = "absolute";
+    item.style.left = `${rect.left}px`;
+    item.style.top = `${rect.top}px`;
+    item.style.zIndex = "1000";
+    item.style.pointerEvents = "none";
 
-        const canvas = document.createElement("canvas");
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        const ctx = canvas.getContext("2d");
+    fileListEl.insertBefore(placeholder, item.nextSibling);
+    fileListEl.appendChild(item);
+    item.setPointerCapture(event.pointerId);
 
-        await page.render({ canvasContext: ctx, viewport }).promise;
+    dragState = {
+      item,
+      placeholder,
+      pointerId: event.pointerId,
+      offsetY: event.clientY - rect.top,
+    };
 
-        thumb.replaceChild(canvas, loading);
-      } catch (err) {
-        console.error("Page render error:", err);
-        loading.textContent = "Preview unavailable";
+    document.addEventListener("pointermove", onPointerMove);
+    document.addEventListener("pointerup", onPointerUp);
+    document.addEventListener("pointercancel", onPointerUp);
+  }
+
+  function onPointerMove(event) {
+    if (!dragState || event.pointerId !== dragState.pointerId) return;
+
+    const y = event.clientY - dragState.offsetY;
+    dragState.item.style.top = `${y}px`;
+
+    const siblings = Array.from(fileListEl.querySelectorAll(".file-item:not(.dragging):not(.placeholder)"));
+    let insertBefore = null;
+
+    for (const sibling of siblings) {
+      const rect = sibling.getBoundingClientRect();
+      if (event.clientY < rect.top + rect.height / 2) {
+        insertBefore = sibling;
+        break;
       }
     }
 
-    setStatus("");
-  }
-
-  // If PDF.js isn't available for some reason, still let people pick
-  // pages by number instead of leaving the tool unusable.
-  function buildFallbackGrid() {
-    for (let i = 0; i < pageCount; i++) {
-      const thumb = document.createElement("div");
-      thumb.className = "ps-thumb is-selected";
-      thumb.dataset.index = String(i);
-      thumb.style.aspectRatio = "3 / 4";
-      thumb.style.display = "flex";
-      thumb.style.alignItems = "center";
-      thumb.style.justifyContent = "center";
-      thumb.style.fontWeight = "700";
-      thumb.textContent = "Page " + (i + 1);
-
-      const check = document.createElement("span");
-      check.className = "ps-thumb-check";
-      check.innerHTML =
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
-      thumb.appendChild(check);
-
-      thumb.addEventListener("click", () => toggleSelection(i, thumb));
-      thumbGrid.appendChild(thumb);
-    }
-  }
-
-  function toggleSelection(index, thumbEl) {
-    if (selected.has(index)) {
-      selected.delete(index);
-      thumbEl.classList.remove("is-selected");
+    if (insertBefore) {
+      fileListEl.insertBefore(dragState.placeholder, insertBefore);
     } else {
-      selected.add(index);
-      thumbEl.classList.add("is-selected");
+      fileListEl.appendChild(dragState.placeholder);
     }
-    updateCount();
   }
 
-  function setAllThumbs(isSelected) {
-    selected = new Set();
-    thumbGrid.querySelectorAll(".ps-thumb").forEach((thumbEl) => {
-      thumbEl.classList.toggle("is-selected", isSelected);
-      if (isSelected) selected.add(Number(thumbEl.dataset.index));
-    });
-    updateCount();
+  function onPointerUp(event) {
+    if (!dragState || event.pointerId !== dragState.pointerId) return;
+
+    if (dragState.placeholder.parentNode === fileListEl) {
+      fileListEl.insertBefore(dragState.item, dragState.placeholder);
+    }
+
+    cleanupDrag();
+    rebuildOrderFromList();
   }
 
-  selectAllBtn.addEventListener("click", () => setAllThumbs(true));
-  selectNoneBtn.addEventListener("click", () => setAllThumbs(false));
+  function cleanupDrag() {
+    const { item, placeholder } = dragState;
+    item.classList.remove("dragging");
+    item.style.position = "";
+    item.style.width = "";
+    item.style.left = "";
+    item.style.top = "";
+    item.style.zIndex = "";
+    item.style.pointerEvents = "";
+    placeholder.remove();
 
-  invertBtn.addEventListener("click", () => {
-    const next = new Set();
-    thumbGrid.querySelectorAll(".ps-thumb").forEach((thumbEl) => {
-      const index = Number(thumbEl.dataset.index);
-      const willBeSelected = !selected.has(index);
-      thumbEl.classList.toggle("is-selected", willBeSelected);
-      if (willBeSelected) next.add(index);
-    });
-    selected = next;
-    updateCount();
+    document.removeEventListener("pointermove", onPointerMove);
+    document.removeEventListener("pointerup", onPointerUp);
+    document.removeEventListener("pointercancel", onPointerUp);
+    dragState = null;
+  }
+
+  function rebuildOrderFromList() {
+    selectedFiles = Array.from(fileListEl.querySelectorAll(".file-item")).map((item) => item._file);
+    renderFileList();
+  }
+
+  processBtn.addEventListener("click", async () => {
+    if (!selectedFiles.length) return;
+
+    processBtn.disabled = true;
+    processBtn.textContent = "Joining…";
+
+    try {
+      const { PDFDocument } = PDFLib;
+      const output = await PDFDocument.create();
+
+      for (const file of selectedFiles) {
+        const bytes = await file.arrayBuffer();
+        const source = await PDFDocument.load(bytes);
+        const pageIndices = Array.from({ length: source.getPageCount() }, (_, i) => i);
+        const copiedPages = await output.copyPages(source, pageIndices);
+
+        copiedPages.forEach((page) => output.addPage(page));
+      }
+
+      const mergedBytes = await output.save();
+      const blob = new Blob([mergedBytes], { type: "application/pdf" });
+      const filename = getOutputFilename();
+
+      downloadBlob(blob, filename);
+      SimplerTools.showToast("Merged PDF ready");
+    } catch (err) {
+      console.error("PDF join error:", err);
+      alert("Could not join these PDFs. Please make sure the files are valid PDF documents.");
+    } finally {
+      processBtn.textContent = "Join Documents";
+      processBtn.disabled = selectedFiles.length === 0;
+    }
   });
 
-  function updateCount() {
-    countEl.textContent = `${selected.size} of ${pageCount} pages selected`;
-    const hasSelection = selected.size > 0;
-    extractBtn.disabled = !hasSelection;
-    separateBtn.disabled = !hasSelection;
-  }
-
-  function setStatus(message, isError) {
-    statusLine.textContent = message;
-    statusLine.classList.toggle("is-error", !!isError);
+  function getOutputFilename() {
+    if (!selectedFiles.length) return "merged.pdf";
+    const firstName = selectedFiles[0].name.replace(/\.pdf$/i, "");
+    return `${firstName}-merged.pdf`;
   }
 
   function downloadBlob(blob, filename) {
@@ -214,92 +210,5 @@ document.addEventListener("DOMContentLoaded", () => {
     URL.revokeObjectURL(url);
   }
 
-  function sortedSelection() {
-    return Array.from(selected).sort((a, b) => a - b);
-  }
-
-  extractBtn.addEventListener("click", async () => {
-    if (!originalFile || !selected.size) return;
-
-    extractBtn.disabled = true;
-    extractBtn.textContent = "Extracting…";
-    setStatus("");
-
-    try {
-      const { PDFDocument } = PDFLib;
-      const bytes = await originalFile.arrayBuffer();
-      const source = await PDFDocument.load(bytes);
-      const output = await PDFDocument.create();
-
-      const copiedPages = await output.copyPages(source, sortedSelection());
-      copiedPages.forEach((p) => output.addPage(p));
-
-      const outBytes = await output.save();
-      const blob = new Blob([outBytes], { type: "application/pdf" });
-      const base = originalFile.name.replace(/\.pdf$/i, "");
-
-      downloadBlob(blob, `${base}-selected.pdf`);
-      SimplerTools.showToast("Selected pages ready");
-    } catch (err) {
-      console.error("PDF extract error:", err);
-      setStatus("Could not extract those pages. Please try again.", true);
-    } finally {
-      extractBtn.textContent = "Download Selected as One PDF";
-      updateCount();
-    }
-  });
-
-  separateBtn.addEventListener("click", async () => {
-    if (!originalFile || !selected.size) return;
-
-    separateBtn.disabled = true;
-    separateBtn.textContent = "Splitting…";
-    setStatus("");
-
-    try {
-      const { PDFDocument } = PDFLib;
-      const bytes = await originalFile.arrayBuffer();
-      const source = await PDFDocument.load(bytes);
-      const base = originalFile.name.replace(/\.pdf$/i, "");
-      const pages = sortedSelection();
-      const digits = String(pageCount).length;
-
-      if (pages.length === 1) {
-        // Single page selected — skip the ZIP, just hand back the PDF.
-        const output = await PDFDocument.create();
-        const [copiedPage] = await output.copyPages(source, pages);
-        output.addPage(copiedPage);
-        const outBytes = await output.save();
-        const pageNumber = String(pages[0] + 1).padStart(digits, "0");
-
-        downloadBlob(
-          new Blob([outBytes], { type: "application/pdf" }),
-          `${base}-page-${pageNumber}.pdf`
-        );
-      } else {
-        const zip = new JSZip();
-
-        for (const pageIndex of pages) {
-          const output = await PDFDocument.create();
-          const [copiedPage] = await output.copyPages(source, [pageIndex]);
-          output.addPage(copiedPage);
-
-          const outBytes = await output.save();
-          const pageNumber = String(pageIndex + 1).padStart(digits, "0");
-          zip.file(`${base}-page-${pageNumber}.pdf`, outBytes);
-        }
-
-        const zipBlob = await zip.generateAsync({ type: "blob" });
-        downloadBlob(zipBlob, `${base}-split-pages.zip`);
-      }
-
-      SimplerTools.showToast("Split PDFs ready");
-    } catch (err) {
-      console.error("PDF split error:", err);
-      setStatus("Could not split this PDF. Please try again.", true);
-    } finally {
-      separateBtn.textContent = "Download Selected as Separate Files";
-      updateCount();
-    }
-  });
+  renderFileList();
 });
