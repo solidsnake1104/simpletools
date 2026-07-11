@@ -88,7 +88,7 @@
     <!-- Upload Area -->
     <div class="upload-area" id="uploadAreaMeta">
       <p><strong>Click to upload or drag images here</strong></p>
-      <p style="color:var(--muted);font-size:0.9rem;">Supported: JPG, PNG, WebP, HEIC</p>
+      <p style="color:var(--muted);font-size:0.9rem;">Supported: JPG, PNG, WebP, HEIC input</p>
       <input type="file" id="fileInputMeta" class="file-input" multiple accept="image/jpeg,image/png,image/webp,image/heic,image/heif" />
     </div>
 
@@ -98,9 +98,7 @@
         <option value="image/jpeg">JPG</option>
         <option value="image/png">PNG</option>
         <option value="image/webp">WebP</option>
-        <option value="image/heic">HEIC</option>
       </select>
-      <span class="output-format-note">HEIC export may fallback to JPG if not supported by your browser.</span>
     </div>
 
     <button class="glass-btn" id="cleanMetadataBtn" disabled>

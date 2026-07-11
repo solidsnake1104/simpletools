@@ -11,6 +11,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let selectedFiles = [];
   let activeIndex = 0;
+  let cleaningInterval = null;
+  let cleaningState = 0;
+  const loadingStates = ["Cleaning", "Cleaning.", "Cleaning..", "Cleaning..."];
 
   SimplerTools.bindUploadArea({
     areaId: "uploadAreaMeta",
@@ -165,7 +168,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!selectedFiles.length) return;
 
     cleanBtn.disabled = true;
-    cleanBtn.textContent = "Cleaning…";
+    startCleaningIndicator();
 
     try {
       const desiredOutputType = outputSelect.value;
@@ -193,8 +196,26 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("Clean metadata error:", err);
       alert("Could not clean metadata from these images. Please try again.");
     } finally {
+      stopCleaningIndicator();
       cleanBtn.disabled = false;
       cleanBtn.textContent = selectedFiles.length > 1 ? "Clean All Images" : "Clean Metadata";
+    }
+  }
+
+  function startCleaningIndicator() {
+    stopCleaningIndicator();
+    cleaningState = 0;
+    cleanBtn.textContent = loadingStates[cleaningState];
+    cleaningInterval = setInterval(() => {
+      cleaningState = (cleaningState + 1) % loadingStates.length;
+      cleanBtn.textContent = loadingStates[cleaningState];
+    }, 500);
+  }
+
+  function stopCleaningIndicator() {
+    if (cleaningInterval) {
+      clearInterval(cleaningInterval);
+      cleaningInterval = null;
     }
   }
 
@@ -214,6 +235,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ctx.drawImage(img, 0, 0);
 
         const requestedType = outputType || sourceFile.type || "image/png";
+        const quality = requestedType === "image/jpeg" || requestedType === "image/webp" ? 1.0 : undefined;
         canvas.toBlob(
           (blob) => {
             URL.revokeObjectURL(url);
@@ -221,13 +243,10 @@ document.addEventListener("DOMContentLoaded", () => {
               reject(new Error("Unable to create cleaned image."));
               return;
             }
-            if (requestedType === "image/heic" && blob.type !== "image/heic") {
-              console.warn("Requested HEIC output not supported; falling back to JPEG.");
-            }
             resolve(blob);
           },
           requestedType,
-          requestedType === "image/jpeg" ? 0.92 : undefined
+          quality
         );
       };
 
@@ -259,8 +278,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function getCleanedFilename(filename, blobType, requestedType) {
-    const outputType = requestedType === "image/heic" && blobType !== "image/heic" ? "image/jpeg" : requestedType || blobType;
-    const ext = outputType === "image/png" ? "png" : outputType === "image/webp" ? "webp" : outputType === "image/heic" ? "heic" : "jpg";
+    const outputType = requestedType || blobType;
+    const ext = outputType === "image/png" ? "png" : outputType === "image/webp" ? "webp" : "jpg";
     const base = filename.replace(/\.[^/.]+$/, "");
     return `${base}-cleaned.${ext}`;
   }
